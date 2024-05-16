@@ -1,0 +1,11 @@
+[versions]
+kotlinx-serialization = "1.6.3"
+kore = "1.9.0-1.20.5-pre1"
+
+[libraries]
+kotlinx-serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kore = { module = "io.github.ayfri.kore:kore", version.ref = "kore" }
+kore-oop = { module = "io.github.ayfri.kore:oop ", version.ref = "kore" }
+
+[plugins]
+
