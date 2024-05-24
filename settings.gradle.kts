@@ -8,7 +8,6 @@ pluginManagement {
 
 
 include(":core")
-
 include(":smithed")
 include(":smithed-crafter")
 // include(":smithed-custom-blocks")

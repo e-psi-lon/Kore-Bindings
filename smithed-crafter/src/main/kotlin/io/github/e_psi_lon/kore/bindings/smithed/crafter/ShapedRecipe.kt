@@ -1,10 +1,19 @@
 package io.github.e_psi_lon.kore.bindings.smithed.crafter
 
+import io.github.ayfri.kore.arguments.ItemSlotType
+import io.github.ayfri.kore.arguments.maths.vec3
+import io.github.ayfri.kore.arguments.selector.scores
+import io.github.ayfri.kore.arguments.types.literals.self
+import io.github.ayfri.kore.arguments.types.resources.LootTableArgument
+import io.github.ayfri.kore.commands.execute.execute
+import io.github.ayfri.kore.commands.loot
 import io.github.ayfri.kore.functions.Function
-import io.github.e_psi_lon.kore.bindings.core.CustomItemArgument
+import io.github.e_psi_lon.kore.bindings.smithed.Smithed
+import kotlinx.serialization.encodeToString
+import net.benwoodworth.knbt.StringifiedNbt
 
 class ShapedRecipe: Recipe {
-    override var result: CustomItemArgument? = null
+    override var result: LootTableArgument? = null
     private val pattern: MutableList<MutableList<Char>> = mutableListOf()
     private val keys: MutableMap<Char, Item?> = mutableMapOf()
 
@@ -26,7 +35,7 @@ class ShapedRecipe: Recipe {
         keys[key] = item
     }
 
-    fun result(item: CustomItemArgument) {
+    fun result(item: LootTableArgument) {
         result = item
     }
 
@@ -81,16 +90,16 @@ class ShapedRecipe: Recipe {
                 val recipe = items.mapIndexed { index, list ->
                     index.toString() to list.map { it!! }
                 }.toMap()
-                data(Crafter.input(), "{recipe:${snbt.encodeToString(recipe)}}")
+                data(Crafter.input(), "{recipe:${StringifiedNbt { }.encodeToString(recipe)}}")
             }
 
             run {
                 loot {
                     target {
-                        replaceBlock2(vec3(), ItemSlotType.invoke { "container.16" })
+                        replaceBlock(vec3(), ItemSlotType.invoke { "container.16" })
                     }
                     source {
-                        loot(result!!.lootTable)
+                        loot(result!!)
                     }
                 }
             }

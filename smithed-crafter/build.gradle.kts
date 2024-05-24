@@ -1,6 +1,6 @@
 plugins {
-    kotlin("jvm") version "1.9.23"
-    kotlin("plugin.serialization") version "1.9.23"
+    kotlin("jvm") version "2.0.0"
+    kotlin("plugin.serialization") version "2.0.0"
 }
 
 group = "io.github.e_psi_lon.kore"
@@ -11,9 +11,9 @@ repositories {
 }
 
 dependencies {
+    implementation(libs.kotlinx.serialization.json)
     api(project(":smithed"))
     implementation(libs.kore.oop)
-    implementation(libs.kotlinx.serialization)
     testImplementation(kotlin("test"))
 }
 

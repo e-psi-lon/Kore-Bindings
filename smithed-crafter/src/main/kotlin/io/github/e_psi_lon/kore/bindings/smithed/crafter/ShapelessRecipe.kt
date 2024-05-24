@@ -1,12 +1,23 @@
 package io.github.e_psi_lon.kore.bindings.smithed.crafter
 
+import io.github.ayfri.kore.arguments.CONTAINER
+import io.github.ayfri.kore.arguments.maths.vec3
+import io.github.ayfri.kore.arguments.numbers.ranges.IntRangeOrInt
+import io.github.ayfri.kore.arguments.scores.equalTo
+import io.github.ayfri.kore.arguments.selector.scores
+import io.github.ayfri.kore.arguments.types.literals.literal
+import io.github.ayfri.kore.arguments.types.literals.self
+import io.github.ayfri.kore.arguments.types.resources.LootTableArgument
 import io.github.ayfri.kore.functions.Function
+import io.github.ayfri.kore.commands.execute.execute
+import io.github.ayfri.kore.commands.loot
 import kotlinx.serialization.encodeToString
-import io.github.e_psi_lon.kore.bindings.core.CustomItemArgument
+import io.github.e_psi_lon.kore.bindings.smithed.Smithed
+import net.benwoodworth.knbt.StringifiedNbt
 
 class ShapelessRecipe: Recipe {
     private val ingredients = mutableListOf<Item>()
-    override var result: CustomItemArgument? = null
+    override var result: LootTableArgument? = null
 
     fun ingredient(ingredient: Item) {
         if (ingredients.size >= 9)
@@ -18,7 +29,7 @@ class ShapelessRecipe: Recipe {
         ingredients.add(ingredient)
     }
 
-    fun result(item: CustomItemArgument) {
+    fun result(item: LootTableArgument) {
         result = item
     }
 
@@ -51,16 +62,16 @@ class ShapelessRecipe: Recipe {
                 )
             }
             ifCondition {
-                data(Crafter.input(), "{recipe:${snbt.encodeToString(ingredients)}}")
+                data(Crafter.input(), "{recipe:${StringifiedNbt {  }.encodeToString(ingredients)}}")
             }
             run {
                 loot {
                     target {
-                        replaceBlock2(vec3(), ItemSlotType.invoke { "container.16" })
+                        replaceBlock(vec3(), CONTAINER[16])
                     }
 
                     source {
-                        loot(result!!.lootTable)
+                        loot(result!!)
                     }
                 }
             }
