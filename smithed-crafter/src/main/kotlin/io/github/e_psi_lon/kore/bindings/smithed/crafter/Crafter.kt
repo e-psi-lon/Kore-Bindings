@@ -9,9 +9,8 @@ import io.github.e_psi_lon.kore.bindings.smithed.Smithed
 object Crafter {
     val namespace: String = "${Smithed.namespace}.crafter"
 
-    context(DataPack)
-    fun recipes(namespace: String, directory: String = "calls/smithed", block: RecipesBuilder.() -> Unit) {
-        val recipes = RecipesBuilder(namespace)
+    fun DataPack.recipes(namespace: String, directory: String = "calls/smithed", block: RecipesBuilder.() -> Unit) {
+        val recipes = RecipesBuilder(namespace, this)
         recipes.block()
         function("shaped_recipes", namespace, directory) {
             for (recipe in recipes.recipes.filterIsInstance<ShapedRecipe>()) {

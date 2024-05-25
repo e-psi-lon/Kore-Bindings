@@ -11,5 +11,5 @@ data class Item(
     val slot: Byte? = null,
     val itemTags: List<String>? = null
 ) {
-    fun addSlot(slot: Int) = Item(count, id, tags, slot.toByte(), itemTags)
+    fun setSlot(slot: Int) = Item(count, id, tags, slot.toByte(), itemTags)
 }

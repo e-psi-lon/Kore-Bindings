@@ -1,13 +1,14 @@
 package io.github.e_psi_lon.kore.bindings.smithed.crafter
 
+import io.github.ayfri.kore.DataPack
 import io.github.ayfri.kore.arguments.CONTAINER
 import io.github.ayfri.kore.arguments.maths.vec3
 import io.github.ayfri.kore.arguments.numbers.ranges.IntRangeOrInt
-import io.github.ayfri.kore.arguments.scores.equalTo
 import io.github.ayfri.kore.arguments.selector.scores
 import io.github.ayfri.kore.arguments.types.literals.literal
 import io.github.ayfri.kore.arguments.types.literals.self
 import io.github.ayfri.kore.arguments.types.resources.LootTableArgument
+import io.github.ayfri.kore.commands.Command
 import io.github.ayfri.kore.functions.Function
 import io.github.ayfri.kore.commands.execute.execute
 import io.github.ayfri.kore.commands.loot
@@ -15,9 +16,10 @@ import kotlinx.serialization.encodeToString
 import io.github.e_psi_lon.kore.bindings.smithed.Smithed
 import net.benwoodworth.knbt.StringifiedNbt
 
-class ShapelessRecipe: Recipe {
+
+class ShapelessRecipe(override val dataPack: DataPack): Recipe {
     private val ingredients = mutableListOf<Item>()
-    override var result: LootTableArgument? = null
+    override var result: Command? = null
 
     fun ingredient(ingredient: Item) {
         if (ingredients.size >= 9)
@@ -30,7 +32,14 @@ class ShapelessRecipe: Recipe {
     }
 
     fun result(item: LootTableArgument) {
-        result = item
+        result = Function("", "", "", dataPack).loot {
+            target {
+                replaceBlock(vec3(), CONTAINER[16])
+            }
+            source {
+                loot(item)
+            }
+        }
     }
 
     context(Function)
@@ -65,15 +74,7 @@ class ShapelessRecipe: Recipe {
                 data(Crafter.input(), "{recipe:${StringifiedNbt {  }.encodeToString(ingredients)}}")
             }
             run {
-                loot {
-                    target {
-                        replaceBlock(vec3(), CONTAINER[16])
-                    }
-
-                    source {
-                        loot(result!!)
-                    }
-                }
+                result!!
             }
         }
     }
