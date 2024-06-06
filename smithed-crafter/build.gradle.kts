@@ -3,8 +3,10 @@ plugins {
     kotlin("plugin.serialization") version "2.0.0"
 }
 
-group = "io.github.e_psi_lon.kore"
+
+group = "io.github.e_psi_lon.kore.bindings.smithed"
 version = "1.0"
+
 
 repositories {
     mavenCentral()
@@ -14,12 +16,22 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     api(project(":smithed"))
     implementation(libs.kore.oop)
-    testImplementation(kotlin("test"))
+}
+
+var runUnitTests = tasks.register<JavaExec>("runUnitTests") {
+    description = "Runs the unit tests."
+    group = "verification"
+
+    classpath = sourceSets.test.get().runtimeClasspath
+    mainClass = "$group.crafter.MainKt"
+    shouldRunAfter("test")
 }
 
 tasks.test {
-    useJUnitPlatform()
+    dependsOn(runUnitTests)
 }
+
+
 kotlin {
     jvmToolchain(21)
     compilerOptions {

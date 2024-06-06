@@ -6,13 +6,15 @@ class RecipesBuilder(val namespace: String, private val dataPack: DataPack) {
     val recipes = mutableListOf<Recipe>()
 
     fun shapelessRecipe(block: ShapelessRecipe.() -> Unit) {
-        val recipe = ShapelessRecipe(dataPack)
+        val recipe = ShapelessRecipe()
+        recipe.initialize(dataPack)
         recipe.block()
         recipes.add(recipe)
     }
 
     fun shapedRecipe(block: ShapedRecipe.() -> Unit) {
-        val recipe = ShapedRecipe(dataPack)
+        val recipe = ShapedRecipe()
+        recipe.initialize(dataPack)
         recipe.block()
         recipes.add(recipe)
     }

@@ -1,26 +1,30 @@
 package io.github.e_psi_lon.kore.bindings.smithed.crafter
 
 import io.github.ayfri.kore.DataPack
-import io.github.ayfri.kore.arguments.CONTAINER
-import io.github.ayfri.kore.arguments.maths.vec3
-import io.github.ayfri.kore.arguments.selector.scores
-import io.github.ayfri.kore.arguments.types.literals.self
-import io.github.ayfri.kore.arguments.types.resources.LootTableArgument
 import io.github.ayfri.kore.commands.Command
-import io.github.ayfri.kore.commands.execute.execute
-import io.github.ayfri.kore.commands.function
-import io.github.ayfri.kore.commands.loot
 import io.github.ayfri.kore.functions.Function
-import io.github.ayfri.kore.functions.generatedFunction
-import io.github.e_psi_lon.kore.bindings.smithed.Smithed
-import jdk.javadoc.internal.doclets.formats.html.markup.RawHtml.comment
-import kotlinx.serialization.encodeToString
-import net.benwoodworth.knbt.StringifiedNbt
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.*
+import net.benwoodworth.knbt.*
 
-class ShapedRecipe(override val dataPack: DataPack): Recipe {
+@Serializable(ShapedRecipe.Companion.RecipeSerializer::class)
+@SerialName("recipe")
+class ShapedRecipe: Recipe {
+    override lateinit var dataPack: DataPack
     override var result: Command? = null
     private val pattern: MutableList<MutableList<Char>> = mutableListOf()
     private val keys: MutableMap<Char, Item?> = mutableMapOf()
+
+    fun initialize(dataPack: DataPack) {
+        this.dataPack = dataPack
+    }
 
     fun pattern(vararg rows: String) {
         pattern.clear()
@@ -37,74 +41,62 @@ class ShapedRecipe(override val dataPack: DataPack): Recipe {
         if (!pattern.flatten().contains(key)) {
             throw IllegalArgumentException("Pattern does not contain '$key'.")
         }
+        if (key == ' ') {
+            throw IllegalArgumentException("key ' ' always represent an empty slot")
+        }
         keys[key] = item
     }
 
-    fun result(item: LootTableArgument) {
-        result = Function("", "", "", dataPack).loot {
-            target { replaceBlock(vec3(), CONTAINER[16]) }
-            source { loot(item) }
-        }
-    }
-
-    fun result(function: Function.() -> Unit) {
-        val name = "generated_${hashCode()}"
-        val generatedFunction = dataPack.generatedFunction(name) { function() }
-        if (generatedFunction.name == name) comment("Generated function ${hashCode()}")
-        result = Function("", "", "", dataPack).function(generatedFunction.name)
-    }
-
-    fun result(command: Command) {
-        result = command
-    }
-
-    context(Function)
-    override fun build() {
-        check(result != null) { "Result must be set." }
-        check(pattern.isNotEmpty()) { "Pattern must be set." }
-        check(keys.isNotEmpty()) { "Keys must be set." }
-        val items = mutableListOf(
-            mutableListOf<Item?>(),
-            mutableListOf(),
-            mutableListOf()
-        )
-        for ((index, row) in pattern.withIndex()) {
-            check(row.size == 3) { "Row must be 3 characters long." }
-            for ((index2, char) in row.withIndex()) {
-                check(keys.containsKey(char)) { "Key $char is not set." }
-                if (char != ' ') {
-                    items[index].add(keys[char]?.setSlot(index2))
-                }
+    companion object {
+        object RecipeSerializer : KSerializer<ShapedRecipe> {
+            override val descriptor: SerialDescriptor = buildClassSerialDescriptor("ShapedRecipe") {
+                element("0", ListSerializer(Item.serializer()).descriptor, isOptional = true)
+                element("1", ListSerializer(Item.serializer()).descriptor, isOptional = true)
+                element("2", ListSerializer(Item.serializer()).descriptor, isOptional = true)
             }
-        }
-        check(items.flatten().contains(null)) { "Some slots are not set." }
 
-        execute {
-            storeResult {
-                Smithed.data(self())
-            }
-            ifCondition {
-                entity(
-                    self {
-                        scores {
-                            Smithed.data() equalTo 0
+            override fun serialize(encoder: Encoder, value: ShapedRecipe) {
+                val nbtEncoder = encoder as? NbtEncoder ?: error("This serializer can be used only with NBT format. Expected Encoder to be NbtEncoder, got ${this::class}")
+                val nbtObject = buildNbtCompound {
+                    value.pattern.forEachIndexed { rowIndex, row ->
+                        val items = row.mapIndexed { colIndex, char ->
+                            if (char != ' ') {
+                                check(value.keys[char] != null) { "Unset key" }
+                                value.keys[char]?.copy(slot = colIndex.toByte())
+                            } else {
+                                null
+                            }
+                        }.filterNotNull()
+                        if (items.isNotEmpty()) {
+                            put(rowIndex.toString(), StringifiedNbt {  }.encodeToNbtTag(items))
                         }
                     }
-                )
+                }
+                nbtEncoder.encodeNbtTag(nbtObject)
             }
 
-            ifCondition {
-                val recipe = items.mapIndexed { index, list ->
-                    index.toString() to list.map { it!! }
-                }.toMap()
-                data(Crafter.input(), "{recipe:${StringifiedNbt { }.encodeToString(recipe)}}")
-            }
+            override fun deserialize(decoder: Decoder): ShapedRecipe {
+                val nbtDecoder = decoder as? NbtDecoder ?: error("This serializer can be used only with NBT format. Expected Decoder to be NbtDecoder, got ${this::class}")
+                val nbtObject = nbtDecoder.decodeNbtTag().nbtCompound
 
-            run {
-                result!!
+                // Create a new instance of ShapedRecipe (you might need a way to pass DataPack)
+                val shapedRecipe = ShapedRecipe()
+
+                // Deserialize each row
+                nbtObject.forEach { (key, nbtElement) ->
+                    val rowIndex = key.toIntOrNull() ?: return@forEach
+                    val items = StringifiedNbt {  }.decodeFromNbtTag<List<Item>>(nbtElement)
+                    items.forEach { item ->
+                        val col = item.slot?.toInt() ?: 0
+                        val char = shapedRecipe.pattern[rowIndex][col]
+                        shapedRecipe.keys[char] = item
+                    }
+                }
+
+                return shapedRecipe
             }
         }
-
     }
+
 
 }
