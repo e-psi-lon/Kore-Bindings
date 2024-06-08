@@ -1,8 +1,8 @@
 package io.github.e_psi_lon.kore.bindings.smithed.crafter
 
 import io.github.ayfri.kore.DataPack
+import io.github.ayfri.kore.arguments.types.resources.ItemArgument
 import io.github.ayfri.kore.commands.Command
-import io.github.ayfri.kore.functions.Function
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -11,7 +11,6 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.json.*
 import net.benwoodworth.knbt.*
 
 @Serializable(ShapedRecipe.Companion.RecipeSerializer::class)
@@ -47,6 +46,10 @@ class ShapedRecipe: Recipe {
         keys[key] = item
     }
 
+    fun key(key: Char, item: ItemArgument) {
+        key(key, Item(id = item))
+    }
+
     companion object {
         object RecipeSerializer : KSerializer<ShapedRecipe> {
             override val descriptor: SerialDescriptor = buildClassSerialDescriptor("ShapedRecipe") {
@@ -68,7 +71,7 @@ class ShapedRecipe: Recipe {
                             }
                         }.filterNotNull()
                         if (items.isNotEmpty()) {
-                            put(rowIndex.toString(), StringifiedNbt {  }.encodeToNbtTag(items))
+                            put(rowIndex.toString(), Crafter.nbtSerializer.encodeToNbtTag(items))
                         }
                     }
                 }
@@ -79,13 +82,10 @@ class ShapedRecipe: Recipe {
                 val nbtDecoder = decoder as? NbtDecoder ?: error("This serializer can be used only with NBT format. Expected Decoder to be NbtDecoder, got ${this::class}")
                 val nbtObject = nbtDecoder.decodeNbtTag().nbtCompound
 
-                // Create a new instance of ShapedRecipe (you might need a way to pass DataPack)
                 val shapedRecipe = ShapedRecipe()
-
-                // Deserialize each row
                 nbtObject.forEach { (key, nbtElement) ->
                     val rowIndex = key.toIntOrNull() ?: return@forEach
-                    val items = StringifiedNbt {  }.decodeFromNbtTag<List<Item>>(nbtElement)
+                    val items = Crafter.nbtSerializer.decodeFromNbtTag<List<Item>>(nbtElement)
                     items.forEach { item ->
                         val col = item.slot?.toInt() ?: 0
                         val char = shapedRecipe.pattern[rowIndex][col]
