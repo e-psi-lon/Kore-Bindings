@@ -8,10 +8,6 @@ import io.github.ayfri.kore.commands.Command
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import org.intellij.lang.annotations.Language
-import java.util.zip.ZipInputStream
-import kotlin.io.path.absolute
-import kotlin.io.path.absolutePathString
-import kotlin.io.path.exists
 
 @OptIn(ExperimentalSerializationApi::class)
 private val jsonStringifier = Json {

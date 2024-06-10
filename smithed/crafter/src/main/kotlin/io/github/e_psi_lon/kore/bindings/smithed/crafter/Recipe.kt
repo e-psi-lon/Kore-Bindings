@@ -5,7 +5,6 @@ import io.github.ayfri.kore.arguments.CONTAINER
 import io.github.ayfri.kore.arguments.maths.vec3
 import io.github.ayfri.kore.arguments.types.resources.LootTableArgument
 import io.github.ayfri.kore.commands.Command
-import io.github.ayfri.kore.commands.command
 import io.github.ayfri.kore.commands.function
 import io.github.ayfri.kore.commands.loot
 import io.github.ayfri.kore.functions.Function
@@ -23,13 +22,12 @@ interface Recipe {
     }
 
 
-    fun result(block: Function.() -> Unit) {
-        val name = "generated_${hashCode()}"
+    fun result(block: Function.() -> Command) {
         val function = Function("", "", "", dataPack).apply { block() }
-        if (function.lines.size == 1) {
-            result = command(function.lines.first())
-            println(result.toString())
+        if (function.isInlinable) {
+            result = Function("", "", "", dataPack).block()
         } else {
+            val name = "generated_${hashCode()}"
             val generatedFunction = dataPack.generatedFunction(name) {
                 comment("Generated function ${asString()}")
                 block()

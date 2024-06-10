@@ -46,7 +46,6 @@ object Crafter {
                     }
 
                     run {
-                        println(recipe.result.toString())
                         recipe.result!!
                     }
                 }

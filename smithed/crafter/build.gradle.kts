@@ -1,16 +1,14 @@
 plugins {
-    kotlin("jvm") version "2.0.0"
-    kotlin("plugin.serialization") version "2.0.0"
+    kotlin("jvm")
 }
 
-
-group = "io.github.e_psi_lon.kore.bindings.smithed"
+group = "io.github.e_psi_lon.kore.smithed"
 version = "1.0"
-
 
 repositories {
     mavenCentral()
 }
+
 
 dependencies {
     implementation(libs.kotlinx.serialization.json)
