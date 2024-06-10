@@ -1,4 +1,5 @@
 [versions]
+kotlin = "2.0.0"
 kotlinx-serialization = "1.7.0-RC"
 kore = "1.10.1-1.20.6"
 
@@ -8,4 +9,4 @@ kore = { module = "io.github.ayfri.kore:kore", version.ref = "kore" }
 kore-oop = { module = "io.github.ayfri.kore:oop ", version.ref = "kore" }
 
 [plugins]
-
+plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version = "2.0.0" }

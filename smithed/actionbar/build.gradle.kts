@@ -1,14 +1,14 @@
 plugins {
-    kotlin("jvm") version "2.0"
+    kotlin("jvm")
+    alias(libs.plugins.plugin.serialization)
 }
 
 group = "io.github.e_psi_lon.kore.smithed"
-version = "1.0-SNAPSHOT"
+version = "1.0"
 
 repositories {
     mavenCentral()
 }
-
 
 dependencies {
     implementation(libs.kotlinx.serialization.json)
@@ -28,7 +28,6 @@ var runUnitTests = tasks.register<JavaExec>("runUnitTests") {
 tasks.test {
     dependsOn(runUnitTests)
 }
-
 
 kotlin {
     jvmToolchain(21)
