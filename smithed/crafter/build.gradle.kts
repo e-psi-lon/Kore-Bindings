@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.plugin.serialization)
 }
 
-group = "io.github.e_psi_lon.kore.smithed"
+group = "io.github.e_psi_lon.kore.bindings.smithed"
 version = "1.0"
 
 repositories {

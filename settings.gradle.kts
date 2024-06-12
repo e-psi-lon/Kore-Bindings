@@ -8,6 +8,9 @@ pluginManagement {
 
 
 include(":core")
-// include("smithed:custom-blocks")
-include("smithed:actionbar")
-include("smithed:crafter")
+include("smithed")
+include("bookshelf")
+// include(":energy")
+// include(":item-io")
+// include(":furnace-nbt-recipes")
+// include(":smart-ore-generation")

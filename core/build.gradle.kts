@@ -1,9 +1,9 @@
 plugins {
-    kotlin("jvm") version "2.0.0"
+    kotlin("jvm")
     kotlin("plugin.serialization") version "2.0.0"
 }
 
-group = "io.github.e_psi_lon.kore"
+group = "io.github.e_psi_lon.kore.bindings"
 version = "unspecified"
 
 repositories {

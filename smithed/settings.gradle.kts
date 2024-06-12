@@ -1,5 +1,7 @@
 include(":crafter")
 include(":actionbar")
+// include(":custom-blocks")
+// include(":prevent-aggression")
 
 
 pluginManagement {

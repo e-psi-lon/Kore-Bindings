@@ -9,10 +9,9 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/bookshelf" />
             <option value="$PROJECT_DIR$/core" />
             <option value="$PROJECT_DIR$/smithed" />
-            <option value="$PROJECT_DIR$/smithed/actionbar" />
-            <option value="$PROJECT_DIR$/smithed/crafter" />
           </set>
         </option>
       </GradleProjectSettings>
