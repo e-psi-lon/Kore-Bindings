@@ -9,17 +9,28 @@ import io.github.ayfri.kore.arguments.types.resources.storage
 import io.github.ayfri.kore.commands.execute.execute
 import io.github.ayfri.kore.functions.function
 import io.github.ayfri.kore.functions.setTag
+import io.github.e_psi_lon.kore.bindings.core.Library
+import io.github.e_psi_lon.kore.bindings.core.SupportedSource
 import io.github.e_psi_lon.kore.bindings.smithed.Smithed
+import io.github.e_psi_lon.kore.bindings.smithed.custom_block.CustomBlock
 import kotlinx.serialization.encodeToString
 import net.benwoodworth.knbt.StringifiedNbt
 
 
-object Crafter {
+object Crafter: Library {
     internal val nbtSerializer
         get() = StringifiedNbt {
             this.nameRootClasses = false
         }
-    val namespace: String = "${Smithed.namespace}.crafter"
+    override val namespace: String = "${Smithed.namespace}.crafter"
+    override val version: String
+        get() = "0.2.0"
+    override val source: SupportedSource
+        get() = SupportedSource.SMITHED
+    override val url: String
+        get() = "crafter"
+    override val externalDependencies: List<Library>
+        get() = listOf(CustomBlock)
 
     context(DataPack)
     fun smithedRecipes(dataPack: DataPack, recipeNamespace: String, directory: String = "calls/smithed", block: RecipesBuilder.() -> Unit) {

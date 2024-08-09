@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm")
+    alias(libs.plugins.plugin.serialization)
 }
 
 group = "io.github.e_psi_lon.kore.bindings.smithed"
@@ -13,7 +14,6 @@ repositories {
 dependencies {
     implementation(libs.kotlinx.serialization.json)
     api(project(":smithed"))
-    implementation(project(":smithed:custom-block"))
     implementation(libs.kore.oop)
 }
 

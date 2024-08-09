@@ -1,6 +1,6 @@
 include(":crafter")
 include(":actionbar")
-// include(":custom-blocks")
+include(":custom-block")
 // include(":prevent-aggression")
 
 

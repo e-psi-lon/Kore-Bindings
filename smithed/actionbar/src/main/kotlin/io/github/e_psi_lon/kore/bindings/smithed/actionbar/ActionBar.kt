@@ -8,11 +8,19 @@ import io.github.ayfri.kore.commands.function
 import io.github.ayfri.kore.features.tags.tag
 import io.github.ayfri.kore.functions.Function
 import io.github.ayfri.kore.functions.function
+import io.github.e_psi_lon.kore.bindings.core.Library
+import io.github.e_psi_lon.kore.bindings.core.SupportedSource
 import kotlinx.serialization.encodeToString
 import net.benwoodworth.knbt.StringifiedNbt
 
-object ActionBar {
-    val namespace = "${Smithed.namespace}.actionbar"
+object ActionBar: Library {
+    override val namespace = "${Smithed.namespace}.actionbar"
+    override val version: String
+        get() = "0.4.1"
+    override val source: SupportedSource
+        get() = SupportedSource.SMITHED
+    override val url: String
+        get() = "actionbar"
 
     fun message() = storage("message", namespace)
 
@@ -20,9 +28,9 @@ object ActionBar {
     private fun messageSend() = function("#$namespace", "message")
 
     context(Function)
-    fun send(message: Message) {
+    fun send(message: Message.() -> Unit) {
         data(message()) {
-            modify("input", StringifiedNbt.encodeToString(message))
+            modify("input", StringifiedNbt.encodeToString(Message().apply(message)))
             messageSend()
         }
 
@@ -36,3 +44,6 @@ object ActionBar {
         }
     }
 }
+
+val Smithed.actionBar
+    get() = ActionBar
