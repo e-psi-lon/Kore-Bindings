@@ -1,5 +1,5 @@
-// include(":biome")
-// include(":bitwise")
+include(":biome")
+include(":bitwise")
 // include(":block")
 // include(":color")
 // include(":health")

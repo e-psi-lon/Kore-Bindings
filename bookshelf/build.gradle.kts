@@ -11,7 +11,7 @@ repositories {
 
 dependencies {
     api(libs.kore)
-    parent?.subprojects?.find { it.name == "core" }?.let { api(it) }
+    api(project(":core"))
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kore.oop)
     testImplementation(kotlin("test"))
