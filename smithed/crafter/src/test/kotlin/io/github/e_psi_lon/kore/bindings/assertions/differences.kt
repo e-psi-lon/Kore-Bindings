@@ -4,7 +4,9 @@ fun generateDiffString(expected: String, got: String): String {
     val minLength = minOf(expected.length, got.length)
     var firstDifferenceIndex = (0..<minLength).firstOrNull { expected[it] != got[it] } ?: -1
 
-    if (firstDifferenceIndex == -1 && expected.length > got.length) return "Expected: '$expected'\nGot     : '$got'\n" + " ".repeat("Expected: '".length + got.length) + "^".repeat(
+    if (firstDifferenceIndex == -1 && expected.length > got.length) return "Expected: '$expected'\nGot     : '$got'\n" + " ".repeat(
+        "Expected: '".length + got.length
+    ) + "^".repeat(
         expected.length - got.length
     )
 
@@ -16,7 +18,8 @@ fun generateDiffString(expected: String, got: String): String {
         )
     }
 
-    val lastDifferenceIndex = ((minLength - 1) downTo firstDifferenceIndex).firstOrNull { expected[it] != got[it] } ?: -1
+    val lastDifferenceIndex =
+        ((minLength - 1) downTo firstDifferenceIndex).firstOrNull { expected[it] != got[it] } ?: -1
 
     val expectedDiff = expected.substring(firstDifferenceIndex..lastDifferenceIndex)
     val gotDiff = got.substring(firstDifferenceIndex..lastDifferenceIndex)

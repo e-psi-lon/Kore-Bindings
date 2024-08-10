@@ -17,7 +17,7 @@ import kotlinx.serialization.encodeToString
 import net.benwoodworth.knbt.StringifiedNbt
 
 
-object Crafter: Library {
+object Crafter : Library {
     internal val nbtSerializer
         get() = StringifiedNbt {
             this.nameRootClasses = false
@@ -33,7 +33,12 @@ object Crafter: Library {
         get() = listOf(CustomBlock)
 
     context(DataPack)
-    fun smithedRecipes(dataPack: DataPack, recipeNamespace: String, directory: String = "calls/smithed", block: RecipesBuilder.() -> Unit) {
+    fun smithedRecipes(
+        dataPack: DataPack,
+        recipeNamespace: String,
+        directory: String = "calls/smithed",
+        block: RecipesBuilder.() -> Unit
+    ) {
         val recipes = RecipesBuilder(recipeNamespace, dataPack)
         recipes.block()
         function("shaped_recipes", recipeNamespace, directory) {

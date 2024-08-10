@@ -4,7 +4,7 @@ import io.github.e_psi_lon.kore.bindings.core.Library
 import io.github.e_psi_lon.kore.bindings.core.SupportedSource
 import io.github.e_psi_lon.kore.bindings.smithed.Smithed
 
-object PreventAggression: Library {
+object PreventAggression : Library {
     override val namespace: String = "${Smithed.namespace}.prevent_aggression"
     override val version: String
         get() = "0.2.0"

@@ -15,7 +15,7 @@ import net.benwoodworth.knbt.*
 
 @Serializable(ShapedRecipe.Companion.RecipeSerializer::class)
 @SerialName("recipe")
-class ShapedRecipe: Recipe {
+class ShapedRecipe : Recipe {
     override lateinit var dataPack: DataPack
     override var result: Command? = null
     private val pattern: MutableList<MutableList<Char>> = mutableListOf()
@@ -59,7 +59,8 @@ class ShapedRecipe: Recipe {
             }
 
             override fun serialize(encoder: Encoder, value: ShapedRecipe) {
-                val nbtEncoder = encoder as? NbtEncoder ?: error("This serializer can be used only with NBT format. Expected Encoder to be NbtEncoder, got ${this::class}")
+                val nbtEncoder = encoder as? NbtEncoder
+                    ?: error("This serializer can be used only with NBT format. Expected Encoder to be NbtEncoder, got ${this::class}")
                 val nbtObject = buildNbtCompound {
                     value.pattern.forEachIndexed { rowIndex, row ->
                         val items = row.mapIndexed { colIndex, char ->
@@ -79,7 +80,8 @@ class ShapedRecipe: Recipe {
             }
 
             override fun deserialize(decoder: Decoder): ShapedRecipe {
-                val nbtDecoder = decoder as? NbtDecoder ?: error("This serializer can be used only with NBT format. Expected Decoder to be NbtDecoder, got ${this::class}")
+                val nbtDecoder = decoder as? NbtDecoder
+                    ?: error("This serializer can be used only with NBT format. Expected Decoder to be NbtDecoder, got ${this::class}")
                 val nbtObject = nbtDecoder.decodeNbtTag().nbtCompound
 
                 val shapedRecipe = ShapedRecipe()

@@ -1,14 +1,14 @@
 package io.github.e_psi_lon.kore.bindings.bookshelf.bitwise
 
 import io.github.ayfri.kore.arguments.types.literals.literal
+import io.github.ayfri.kore.commands.function
+import io.github.ayfri.kore.commands.scoreboard.scoreboard
 import io.github.ayfri.kore.functions.Function
 import io.github.e_psi_lon.kore.bindings.bookshelf.Bookshelf
 import io.github.e_psi_lon.kore.bindings.core.Library
 import io.github.e_psi_lon.kore.bindings.core.SupportedSource
-import io.github.ayfri.kore.commands.function
-import io.github.ayfri.kore.commands.scoreboard.scoreboard
 
-object Bitwise: Library {
+object Bitwise : Library {
     override val namespace: String = "${Bookshelf.namespace}.bitwise"
     override val version: String
         get() = "2.1.1"

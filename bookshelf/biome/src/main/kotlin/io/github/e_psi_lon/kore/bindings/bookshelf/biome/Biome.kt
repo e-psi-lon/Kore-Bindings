@@ -8,7 +8,7 @@ import io.github.e_psi_lon.kore.bindings.bookshelf.Bookshelf
 import io.github.e_psi_lon.kore.bindings.core.Library
 import io.github.e_psi_lon.kore.bindings.core.SupportedSource
 
-object Biome: Library {
+object Biome : Library {
     override val namespace = "${Bookshelf.namespace}.biome"
     override val version: String
         get() = "2.1.1"

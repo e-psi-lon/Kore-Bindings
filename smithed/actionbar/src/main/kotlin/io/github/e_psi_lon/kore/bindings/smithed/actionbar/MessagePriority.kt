@@ -9,7 +9,8 @@ enum class MessagePriority {
     NOTIFICATION,
     CONDITIONAL,
     PERSISTENT;
+
     companion object {
-        data object MessagePrioritySerializer: LowercaseSerializer<MessagePriority>(entries)
+        data object MessagePrioritySerializer : LowercaseSerializer<MessagePriority>(entries)
     }
 }

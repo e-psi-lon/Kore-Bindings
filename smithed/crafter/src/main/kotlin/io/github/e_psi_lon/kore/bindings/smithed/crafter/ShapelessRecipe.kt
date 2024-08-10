@@ -15,7 +15,7 @@ import net.benwoodworth.knbt.*
 
 @Serializable(with = ShapelessRecipe.Companion.RecipeSerializer::class)
 @SerialName("recipe")
-class ShapelessRecipe: Recipe {
+class ShapelessRecipe : Recipe {
     override lateinit var dataPack: DataPack
     internal val ingredients = mutableListOf<Item>()
     override var result: Command? = null
@@ -41,20 +41,22 @@ class ShapelessRecipe: Recipe {
             }
 
             override fun serialize(encoder: Encoder, value: ShapelessRecipe) {
-                val nbtEncoder = encoder as? NbtEncoder ?: error("This serializer can be used only with NBT format. Expected Encoder to be NbtEncoder, got ${encoder::class}")
+                val nbtEncoder = encoder as? NbtEncoder
+                    ?: error("This serializer can be used only with NBT format. Expected Encoder to be NbtEncoder, got ${encoder::class}")
                 val nbtObject = buildNbtCompound {
-                    put("ingredients", StringifiedNbt {  }.encodeToNbtTag(value.ingredients))
+                    put("ingredients", StringifiedNbt { }.encodeToNbtTag(value.ingredients))
                 }
                 nbtEncoder.encodeNbtTag(nbtObject)
             }
 
             override fun deserialize(decoder: Decoder): ShapelessRecipe {
-                val nbtDecoder = decoder as? NbtDecoder ?: error("This serializer can be used only with NBT format. Expected Decoder to be NbtDecoder, got ${decoder::class}")
+                val nbtDecoder = decoder as? NbtDecoder
+                    ?: error("This serializer can be used only with NBT format. Expected Decoder to be NbtDecoder, got ${decoder::class}")
                 val nbtObject = nbtDecoder.decodeNbtTag().nbtCompound
 
                 val shapelessRecipe = ShapelessRecipe()
                 val ingredientsTag = nbtObject["ingredients"] ?: error("Expected ingredients tag")
-                val ingredients = StringifiedNbt {  }.decodeFromNbtTag<List<Item>>(ingredientsTag)
+                val ingredients = StringifiedNbt { }.decodeFromNbtTag<List<Item>>(ingredientsTag)
 
                 shapelessRecipe.ingredients.addAll(ingredients)
                 return shapelessRecipe
