@@ -9,4 +9,4 @@ kore = { module = "io.github.ayfri.kore:kore", version.ref = "kore" }
 kore-oop = { module = "io.github.ayfri.kore:oop ", version.ref = "kore" }
 
 [plugins]
-plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version = "2.0.10" }
+serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
