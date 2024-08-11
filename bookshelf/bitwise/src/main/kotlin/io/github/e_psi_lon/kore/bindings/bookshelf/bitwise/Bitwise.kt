@@ -24,7 +24,7 @@ object Bitwise : Library {
                 set(literal("\$bitwise.bit_count.n"), Bookshelf.inScoreboard(), number)
             }
         }
-        function("bit_count", namespace, true)
+        function(namespace, "bit_count", true)
     }
 
     context(Function)
@@ -34,7 +34,7 @@ object Bitwise : Library {
                 set(literal("\$bitwise.bit_length.n"), Bookshelf.inScoreboard(), number)
             }
         }
-        function("bit_length", namespace, true)
+        function(namespace, "bit_length", true)
     }
 
     context(Function)
@@ -44,7 +44,7 @@ object Bitwise : Library {
                 set(literal("\$bitwise.two_complement.n"), Bookshelf.inScoreboard(), number)
             }
         }
-        function("two_complement", namespace, true)
+        function(namespace, "two_complement", true)
     }
 
     context(Function)
@@ -55,7 +55,7 @@ object Bitwise : Library {
                 set(literal("\$bitwise.and.b"), Bookshelf.inScoreboard(), b)
             }
         }
-        function("and", namespace, true)
+        function(namespace,"and", true)
     }
 
     context(Function)
@@ -66,7 +66,7 @@ object Bitwise : Library {
                 set(literal("\$bitwise.or.b"), Bookshelf.inScoreboard(), b)
             }
         }
-        function("or", namespace, true)
+        function(namespace, "or", true)
     }
 
     context(Function)
@@ -77,7 +77,7 @@ object Bitwise : Library {
                 set(literal("\$bitwise.xor.b"), Bookshelf.inScoreboard(), b)
             }
         }
-        function("xor", namespace, true)
+        function(namespace, "xor", true)
     }
 
     context(Function)
@@ -87,7 +87,7 @@ object Bitwise : Library {
                 set(literal("\$bitwise.not.n"), Bookshelf.inScoreboard(), number)
             }
         }
-        function("not", namespace, true)
+        function(namespace, "not", true)
     }
 
 }
