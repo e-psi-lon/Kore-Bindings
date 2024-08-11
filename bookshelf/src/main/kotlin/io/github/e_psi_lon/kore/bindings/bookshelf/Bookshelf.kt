@@ -7,6 +7,10 @@ object Bookshelf {
 
     fun outStorage() = storage("out", namespace)
 
+    fun inStorage() = storage("in", namespace)
+
+    fun constStorage() = storage("const", namespace)
+
     fun outScoreboard() = "${namespace}:out"
 
     fun inScoreboard() = "${namespace}:in"

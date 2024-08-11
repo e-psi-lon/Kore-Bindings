@@ -6,7 +6,6 @@ pluginManagement {
     }
 }
 
-
 include(":core")
 include("smithed")
 include("smithed:crafter")
@@ -16,7 +15,7 @@ include("smithed:prevent-aggression")
 include("bookshelf")
 include("bookshelf:biome")
 include("bookshelf:bitwise")
-// include("bookshelf:block")
+include("bookshelf:block")
 // include("bookshelf:color")
 // include("bookshelf:health")
 // include("bookshelf:hitbox")
