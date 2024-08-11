@@ -17,12 +17,14 @@ import net.benwoodworth.knbt.*
 @SerialName("recipe")
 class ShapedRecipe : Recipe {
     override lateinit var dataPack: DataPack
+    override lateinit var recipeNamespace: String
     override var result: Command? = null
     private val pattern: MutableList<MutableList<Char>> = mutableListOf()
     private val keys: MutableMap<Char, Item?> = mutableMapOf()
 
-    fun initialize(dataPack: DataPack) {
+    fun initialize(dataPack: DataPack, recipeNamespace: String) {
         this.dataPack = dataPack
+        this.recipeNamespace = recipeNamespace
     }
 
     fun pattern(vararg rows: String) {

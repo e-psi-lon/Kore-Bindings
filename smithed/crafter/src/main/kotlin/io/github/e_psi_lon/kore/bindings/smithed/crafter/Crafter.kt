@@ -62,7 +62,7 @@ object Crafter : Library {
                     }
 
                     run {
-                        recipe.result!!
+                        addLine(recipe.result!!)
                     }
                 }
 
@@ -95,7 +95,7 @@ object Crafter : Library {
                         data(input(), "recipe${nbtSerializer.encodeToString(recipe)}")
                     }
                     run {
-                        recipe.result!!
+                        addLine(recipe.result!!)
                     }
                 }
             }

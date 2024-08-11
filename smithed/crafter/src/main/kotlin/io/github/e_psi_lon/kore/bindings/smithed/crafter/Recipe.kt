@@ -12,6 +12,7 @@ import io.github.ayfri.kore.functions.generatedFunction
 
 interface Recipe {
     var dataPack: DataPack
+    var recipeNamespace: String
     var result: Command?
 
     fun result(item: LootTableArgument) {
@@ -25,14 +26,13 @@ interface Recipe {
     fun result(block: Function.() -> Command) {
         val function = Function("", "", "", dataPack).apply { block() }
         if (function.isInlinable) {
-            result = Function("", "", "", dataPack).block()
+            result = Function("", recipeNamespace, "", dataPack).block()
         } else {
             val name = "generated_${hashCode()}"
-            val generatedFunction = dataPack.generatedFunction(name) {
-                comment("Generated function ${asString()}")
+            val generatedFunction = dataPack.generatedFunction(name, recipeNamespace, dataPack.configuration.generatedFunctionsFolder) {
                 block()
             }
-            result = Function("", "", "", dataPack).function(generatedFunction.name)
+            result = Function("", "", "", dataPack).function(recipeNamespace, "${dataPack.configuration.generatedFunctionsFolder}/${generatedFunction.name}")
         }
     }
 }

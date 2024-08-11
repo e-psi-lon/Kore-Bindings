@@ -17,12 +17,14 @@ import net.benwoodworth.knbt.*
 @SerialName("recipe")
 class ShapelessRecipe : Recipe {
     override lateinit var dataPack: DataPack
+    override lateinit var recipeNamespace: String
     internal val ingredients = mutableListOf<Item>()
     override var result: Command? = null
 
 
-    internal fun initialize(dataPack: DataPack) {
+    internal fun initialize(dataPack: DataPack, recipeNamespace: String) {
         this.dataPack = dataPack
+        this.recipeNamespace = recipeNamespace
     }
 
 
