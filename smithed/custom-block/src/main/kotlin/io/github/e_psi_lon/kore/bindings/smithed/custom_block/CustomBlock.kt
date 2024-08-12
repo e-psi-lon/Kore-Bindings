@@ -4,8 +4,11 @@ import io.github.ayfri.kore.DataPack
 import io.github.ayfri.kore.arguments.types.resources.storage
 import io.github.ayfri.kore.commands.Command
 import io.github.ayfri.kore.commands.execute.execute
+import io.github.ayfri.kore.commands.function
 import io.github.ayfri.kore.features.tags.tag
+import io.github.ayfri.kore.functions.Function
 import io.github.ayfri.kore.functions.function
+import io.github.ayfri.kore.functions.generatedFunction
 import io.github.e_psi_lon.kore.bindings.core.Library
 import io.github.e_psi_lon.kore.bindings.core.SupportedSource
 import io.github.e_psi_lon.kore.bindings.smithed.Smithed
@@ -22,15 +25,25 @@ object CustomBlock : Library {
     fun main() = storage("place", namespace)
 
     context(DataPack)
-    fun onPlace(namespace: String, vararg blockAndFunction: Pair<String, Command>) {
+    fun onPlace(namespace: String, vararg blockAndFunction: Pair<String, Function.() -> Command>) {
         function("on_place", namespace) {
-            blockAndFunction.forEach { (block, function) ->
+            blockAndFunction.forEach { (block, onPlace) ->
+                val createdFunction = Function("", "", "", datapack).apply { onPlace() }
+                val command: Command = if (createdFunction.isInlinable) {
+                    Function("", "", "", datapack).onPlace()
+                } else {
+                    val name = "generated_${hashCode()}"
+                    val generatedFunction = datapack.generatedFunction(name, namespace, datapack.configuration.generatedFunctionsFolder) {
+                        onPlace()
+                    }
+                    Function("", "", "", datapack).function(namespace, "${datapack.configuration.generatedFunctionsFolder}/${generatedFunction.name}")
+                }
                 execute {
                     ifCondition {
                         data(main(), "{blockApi:{id:\"$block\"}}")
                     }
                     run {
-                        function
+                        addLine(command)
                     }
                 }
             }
