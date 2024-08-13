@@ -22,7 +22,7 @@ you to use them with Kore.
 - [x] Color: Bookshelf module for color manipulation.
 - [x] Health: Bookshelf module for an easy health management.
 - [x] Hitbox: Bookshelf module for hitbox detection.
-- [ ] ID: Bookshelf module
+- [x] ID: Bookshelf module for managing entity through ID.
 - [ ] Link: Bookshelf module
 - [ ] Math: Bookshelf module for math functions.
 - [ ] Move: Bookshelf module for customized movement.

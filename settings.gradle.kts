@@ -7,6 +7,7 @@ pluginManagement {
 }
 
 include(":core")
+include(":test")
 include("smithed")
 include("smithed:crafter")
 include("smithed:actionbar")
@@ -19,7 +20,7 @@ include("bookshelf:block")
 include("bookshelf:color")
 include("bookshelf:health")
 include("bookshelf:hitbox")
-// include("bookshelf:id")
+include("bookshelf:id")
 // include("bookshelf:link")
 // include("bookshelf:move")
 // include("bookshelf:math")
