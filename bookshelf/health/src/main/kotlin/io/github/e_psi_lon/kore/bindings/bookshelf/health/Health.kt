@@ -13,7 +13,7 @@ import net.benwoodworth.knbt.NbtFloat
 object Health : Library {
     override val namespace = "health"
     override val version
-        get() = "unspecified"
+        get() = "2.1.1"
     override val source
         get() = TODO("Not yet implemented")
     override val url = "health"
