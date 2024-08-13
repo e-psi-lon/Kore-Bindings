@@ -10,18 +10,18 @@ you to use them with Kore.
 - [x] Actionbar: A library that allows you to show messages via the actionbar.
 - [x] Custom Block: A library that provides an easy way to create custom blocks.
 - [ ] Prevent Aggression: A library to protect custom wandering traders from zombies.
-----------------
+---
 - [ ] Datapack Energy: A library that provides a common energy system for datapacks.
-----------------
+---
 - [ ] ItemIO: A library for item transportation in datapacks.
-----------------
+---
 #### Bookshelf: Large collection of datapacks utilities.
 - [x] Biome: Bookshelf module for biome data retrieval.
 - [x] Bitwise: Bookshelf module for bitwise operations.
 - [x] Block: Bookshelf module for block manipulation.
 - [x] Color: Bookshelf module for color manipulation.
 - [x] Health: Bookshelf module for an easy health management.
-- [ ] Hitbox: Bookshelf module
+- [x] Hitbox: Bookshelf module for hitbox detection.
 - [ ] ID: Bookshelf module
 - [ ] Link: Bookshelf module
 - [ ] Math: Bookshelf module for math functions.
@@ -36,9 +36,9 @@ you to use them with Kore.
 - [ ] View: Bookshelf module
 - [ ] Weather: Bookshelf module
 - [ ] XP: Bookshelf module
-----------------
+---
 - [ ] LanternLoad: A library for controlling datapacks (and their dependencies) versioning and loading.
-----------------
+---
 - [ ] FurnaceNBTRecipes: A library that allows to create NBT recipes for furnaces.
-----------------
+---
 - [ ] SmartOreGeneration: A library that allows to generate custom ores.
