@@ -27,7 +27,7 @@ object Crafter : Library {
         get() = "0.2.0"
     override val source: SupportedSource
         get() = SupportedSource.SMITHED
-    override val url: String
+    override val location: String
         get() = "crafter"
     override val externalDependencies: List<Library>
         get() = listOf(CustomBlock)

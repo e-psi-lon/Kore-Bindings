@@ -5,7 +5,7 @@ interface Library {
     val namespace: String
     val version: String
     val source: SupportedSource
-    val url: String
+    val location: String
     val externalDependencies: List<Library> get() = emptyList()
     fun generate() {}
     fun generateZip() {}

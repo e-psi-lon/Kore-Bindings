@@ -19,7 +19,7 @@ object ActionBar : Library {
         get() = "0.4.1"
     override val source: SupportedSource
         get() = SupportedSource.SMITHED
-    override val url: String
+    override val location: String
         get() = "actionbar"
 
     fun message() = storage("message", namespace)

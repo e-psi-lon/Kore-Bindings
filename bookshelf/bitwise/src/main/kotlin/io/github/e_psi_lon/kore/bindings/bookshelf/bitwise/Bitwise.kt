@@ -14,7 +14,7 @@ object Bitwise : Library {
         get() = "2.1.1"
     override val source: SupportedSource
         get() = TODO("Not yet implemented") // SupportedSource.BOOKSHELF not yet implemented
-    override val url: String
+    override val location: String
         get() = "bitwise"
 
     context(Function)

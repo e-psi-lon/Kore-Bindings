@@ -20,7 +20,7 @@ object Block : Library {
         get() = "2.1.1"
     override val source: SupportedSource
         get() = TODO("Not yet implemented")
-    override val url: String
+    override val location: String
         get() = "block"
 
     context(Function)

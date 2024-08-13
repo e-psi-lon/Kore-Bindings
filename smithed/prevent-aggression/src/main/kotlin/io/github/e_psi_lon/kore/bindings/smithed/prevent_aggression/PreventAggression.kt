@@ -10,7 +10,7 @@ object PreventAggression : Library {
         get() = "0.2.0"
     override val source: SupportedSource
         get() = SupportedSource.SMITHED
-    override val url: String
+    override val location: String
         get() = "prevent-aggression"
 
 }

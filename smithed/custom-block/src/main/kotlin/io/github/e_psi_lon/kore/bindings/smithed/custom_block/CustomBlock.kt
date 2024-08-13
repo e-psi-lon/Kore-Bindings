@@ -19,7 +19,7 @@ object CustomBlock : Library {
         get() = "0.2.0"
     override val source: SupportedSource
         get() = SupportedSource.SMITHED
-    override val url: String
+    override val location: String
         get() = "custom-block"
 
     fun main() = storage("place", namespace)

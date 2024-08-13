@@ -16,7 +16,7 @@ object Health : Library {
         get() = "2.1.1"
     override val source
         get() = TODO("Not yet implemented")
-    override val url = "health"
+    override val location = "health"
 
     context(Function)
     fun addHealth(health: Float) {
