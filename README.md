@@ -11,7 +11,7 @@ you to use them with Kore.
 - [x] Custom Block: A library that provides an easy way to create custom blocks.
 - [ ] Prevent Aggression: A library to protect custom wandering traders from zombies.
 ---
-- [ ] Datapack Energy: A library that provides a common energy system for datapacks.
+- [x] Datapack Energy: A library that provides a common energy system for datapacks.
 ---
 - [ ] ItemIO: A library for item transportation in datapacks.
 ---

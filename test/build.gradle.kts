@@ -35,6 +35,24 @@ dependencies {
     implementation(project(":bookshelf:health"))
     implementation(project(":bookshelf:hitbox"))
     implementation(project(":bookshelf:id"))
+    // implementation(project("bookshelf:link"))
+    // implementation(project("bookshelf:move"))
+    // implementation(project("bookshelf:math"))
+    // implementation(project("bookshelf:position"))
+    // implementation(project("bookshelf:raycast"))
+    // implementation(project("bookshelf:schedule"))
+    // implementation(project("bookshelf:sidebar"))
+    // implementation(project("bookshelf:time"))
+    // implementation(project("bookshelf:tree"))
+    // implementation(project("bookshelf:vector"))
+    // implementation(project("bookshelf:view"))
+    // implementation(project("bookshelf:weather"))
+    // implementation(project("bookshelf:xp"))
+    implementation(project(":energy"))
+    // implementation(project(":item-io"))
+    // implementation(project(":furnace-nbt-recipes"))
+    // implementation(project(":smart-ore-generation"))
+
 
 }
 
