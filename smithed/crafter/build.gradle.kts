@@ -13,8 +13,8 @@ repositories {
 
 dependencies {
     implementation(libs.kotlinx.serialization.json)
-    api(project(":smithed"))
-    implementation(project(":smithed:custom-block"))
+    api(projects.smithed)
+    implementation(projects.smithed.customBlock)
     implementation(libs.kore.oop)
 }
 

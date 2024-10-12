@@ -11,7 +11,7 @@ repositories {
 
 dependencies {
     api(libs.kore)
-    api(project(":core"))
+    api(projects.core)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kore.oop)
     testImplementation(kotlin("test"))

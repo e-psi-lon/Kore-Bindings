@@ -12,7 +12,7 @@ repositories {
 
 dependencies {
     implementation(libs.kotlinx.serialization.json)
-    api(project(":smithed"))
+    api(projects.smithed)
     implementation(libs.kore.oop)
 }
 

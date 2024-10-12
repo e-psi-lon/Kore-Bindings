@@ -14,7 +14,7 @@ dependencies {
     implementation(libs.kore.oop)
     api(libs.kore)
     implementation(libs.kotlinx.serialization.json)
-    api(project(":bookshelf"))
+    api(projects.bookshelf)
 }
 
 var runUnitTests = tasks.register<JavaExec>("runUnitTests") {

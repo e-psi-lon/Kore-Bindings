@@ -1,4 +1,5 @@
 rootProject.name = "Kore-Bindings"
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
     repositories {

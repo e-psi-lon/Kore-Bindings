@@ -12,7 +12,7 @@ repositories {
 
 dependencies {
     api(libs.kore)
-    api(project(":core"))
+    api(projects.core)
     implementation(libs.kore.oop)
     testImplementation(kotlin("test"))
 }
