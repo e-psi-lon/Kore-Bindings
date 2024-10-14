@@ -5,7 +5,6 @@ import io.github.ayfri.kore.commands.Command
 import io.github.ayfri.kore.commands.data
 import io.github.ayfri.kore.commands.execute.execute
 import io.github.ayfri.kore.commands.function
-import io.github.ayfri.kore.features.enchantment.effects.value.Set
 import io.github.ayfri.kore.functions.Function
 import io.github.e_psi_lon.kore.bindings.bookshelf.Bookshelf
 import io.github.e_psi_lon.kore.bindings.core.Library
@@ -62,7 +61,12 @@ object Block : Library {
     context(Function)
     fun keepBlockProperties(pos: Vec3, properties: List<Map<String, String>>) {
         getBlock(pos)
-        function(namespace, "keep_properties", true, NbtCompound(mapOf("properties" to StringifiedNbt.encodeToNbtTag(properties))))
+        function(
+            namespace,
+            "keep_properties",
+            true,
+            NbtCompound(mapOf("properties" to StringifiedNbt.encodeToNbtTag(properties)))
+        )
     }
 
     context(Function)
@@ -71,7 +75,12 @@ object Block : Library {
         execute {
             positioned(pos2)
             run {
-                function(namespace, "merge_properties", true, NbtCompound(mapOf("properties" to StringifiedNbt.encodeToNbtTag(properties))))
+                function(
+                    namespace,
+                    "merge_properties",
+                    true,
+                    NbtCompound(mapOf("properties" to StringifiedNbt.encodeToNbtTag(properties)))
+                )
             }
         }
     }
@@ -79,13 +88,23 @@ object Block : Library {
     context(Function)
     fun removeBlockProperties(pos: Vec3, properties: List<Map<String, String>>) {
         getBlock(pos)
-        function(namespace, "remove_properties", true, NbtCompound(mapOf("properties" to StringifiedNbt.encodeToNbtTag(properties))))
+        function(
+            namespace,
+            "remove_properties",
+            true,
+            NbtCompound(mapOf("properties" to StringifiedNbt.encodeToNbtTag(properties)))
+        )
     }
 
     context(Function)
     fun replaceBlockProperties(pos: Vec3, properties: List<Map<String, String>>) {
         getBlock(pos)
-        function(namespace, "replace_properties", true, NbtCompound(mapOf("properties" to StringifiedNbt.encodeToNbtTag(properties))))
+        function(
+            namespace,
+            "replace_properties",
+            true,
+            NbtCompound(mapOf("properties" to StringifiedNbt.encodeToNbtTag(properties)))
+        )
     }
 
     context(Function)
@@ -95,19 +114,35 @@ object Block : Library {
     }
 
     context(Function)
-    fun replaceType(pos: Vec3,type: String) {
+    fun replaceType(pos: Vec3, type: String) {
         getBlock(pos)
         function(namespace, "replace_type", true, NbtCompound(mapOf("type" to StringifiedNbt.encodeToNbtTag(type))))
     }
 
     context(Function)
-    fun mapType(pos: Vec3, type: String, namespace: String, mapping: List<Map<String, String>>, mappingName: String? = null) {
+    fun mapType(
+        pos: Vec3,
+        type: String,
+        namespace: String,
+        mapping: List<Map<String, String>>,
+        mappingName: String? = null
+    ) {
         getBlock(pos)
         val path = if (mappingName == null) "$namespace.${mapping.hashCode()}" else "$namespace.$mappingName"
         data(Bookshelf.constStorage()) {
             modify("block.mapping_registry.$path", StringifiedNbt { nameRootClasses = false }.encodeToNbtTag(mapping))
         }
-        function(namespace, "map_type", true, NbtCompound(mapOf("type" to StringifiedNbt.encodeToNbtTag(type), "mapping_registry" to StringifiedNbt.encodeToNbtTag(path))))
+        function(
+            namespace,
+            "map_type",
+            true,
+            NbtCompound(
+                mapOf(
+                    "type" to StringifiedNbt.encodeToNbtTag(type),
+                    "mapping_registry" to StringifiedNbt.encodeToNbtTag(path)
+                )
+            )
+        )
     }
 
     context(Function)
@@ -214,7 +249,10 @@ object Block : Library {
     context(Function)
     fun setCustomRegistry(namespace: String, name: String, registry: List<MappingRegistry>) {
         data(Bookshelf.constStorage()) {
-            modify("block.mapping_registry.$namespace.$name", StringifiedNbt { nameRootClasses = false }.encodeToNbtTag(registry))
+            modify(
+                "block.mapping_registry.$namespace.$name",
+                StringifiedNbt { nameRootClasses = false }.encodeToNbtTag(registry)
+            )
         }
     }
 }

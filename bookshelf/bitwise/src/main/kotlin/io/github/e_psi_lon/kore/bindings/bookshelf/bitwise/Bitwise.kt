@@ -55,7 +55,7 @@ object Bitwise : Library {
                 set(literal("\$bitwise.and.b"), Bookshelf.inScoreboard(), b)
             }
         }
-        function(namespace,"and", true)
+        function(namespace, "and", true)
     }
 
     context(Function)

@@ -33,10 +33,14 @@ object CustomBlock : Library {
                     Function("", "", "", datapack).onPlace()
                 } else {
                     val name = "generated_${hashCode()}"
-                    val generatedFunction = datapack.generatedFunction(name, namespace, datapack.configuration.generatedFunctionsFolder) {
-                        onPlace()
-                    }
-                    Function("", "", "", datapack).function(namespace, "${datapack.configuration.generatedFunctionsFolder}/${generatedFunction.name}")
+                    val generatedFunction =
+                        datapack.generatedFunction(name, namespace, datapack.configuration.generatedFunctionsFolder) {
+                            onPlace()
+                        }
+                    Function("", "", "", datapack).function(
+                        namespace,
+                        "${datapack.configuration.generatedFunctionsFolder}/${generatedFunction.name}"
+                    )
                 }
                 execute {
                     ifCondition {

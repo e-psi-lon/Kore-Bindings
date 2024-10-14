@@ -29,10 +29,14 @@ interface Recipe {
             result = Function("", recipeNamespace, "", dataPack).block()
         } else {
             val name = "generated_${hashCode()}"
-            val generatedFunction = dataPack.generatedFunction(name, recipeNamespace, dataPack.configuration.generatedFunctionsFolder) {
-                block()
-            }
-            result = Function("", "", "", dataPack).function(recipeNamespace, "${dataPack.configuration.generatedFunctionsFolder}/${generatedFunction.name}")
+            val generatedFunction =
+                dataPack.generatedFunction(name, recipeNamespace, dataPack.configuration.generatedFunctionsFolder) {
+                    block()
+                }
+            result = Function("", "", "", dataPack).function(
+                recipeNamespace,
+                "${dataPack.configuration.generatedFunctionsFolder}/${generatedFunction.name}"
+            )
         }
     }
 }

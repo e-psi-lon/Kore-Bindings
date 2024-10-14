@@ -11,7 +11,7 @@ import io.github.ayfri.kore.functions.function
 import io.github.e_psi_lon.kore.bindings.core.Library
 import io.github.e_psi_lon.kore.bindings.core.SupportedSource
 
-object LanternLoad: Library {
+object LanternLoad : Library {
     override val namespace: String
         get() = "load"
     override val version: String
@@ -112,7 +112,7 @@ object LanternLoad: Library {
     fun checkDependenciesBeforeLoad(version: Int, vararg dependencies: Pair<String, Int>) = execute {
         dependencies.forEach { (dependency, version) ->
             ifCondition {
-                score(literal(dependency), status(), IntRangeOrInt(int=version))
+                score(literal(dependency), status(), IntRangeOrInt(int = version))
             }
         }
 

@@ -22,7 +22,12 @@ object Color : Library {
 
     context(Function)
     fun rgbToHex(r: Int, g: Int, b: Int) {
-        function(namespace, "rgb_to_hex", true, StringifiedNbt.encodeToNbtTag(mapOf("color" to listOf(r, g, b))).nbtCompound)
+        function(
+            namespace,
+            "rgb_to_hex",
+            true,
+            StringifiedNbt.encodeToNbtTag(mapOf("color" to listOf(r, g, b))).nbtCompound
+        )
     }
 
     context(Function)
@@ -42,7 +47,12 @@ object Color : Library {
 
     context(Function)
     fun rgbToInt(r: Int, g: Int, b: Int) {
-        function(namespace, "rgb_to_int", true, StringifiedNbt.encodeToNbtTag(mapOf("color" to listOf(r, g, b))).nbtCompound)
+        function(
+            namespace,
+            "rgb_to_int",
+            true,
+            StringifiedNbt.encodeToNbtTag(mapOf("color" to listOf(r, g, b))).nbtCompound
+        )
     }
 
     context(Function)

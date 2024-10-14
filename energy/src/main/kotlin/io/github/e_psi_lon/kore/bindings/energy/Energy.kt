@@ -12,7 +12,7 @@ import io.github.e_psi_lon.kore.bindings.core.SupportedSource
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-object Energy: Library {
+object Energy : Library {
     override val namespace: String = "energy"
     override val version: String
         get() = ""
@@ -21,7 +21,8 @@ object Energy: Library {
     override val location: String
         get() = ""
 
-    val api = Api
+    val api
+        get() = Api
 
     fun send(selector: SelectorArgument, reverse: Boolean = false): SelectorArgument {
         selector.selector.nbtData.apply {
@@ -35,11 +36,7 @@ object Energy: Library {
     }
 
     fun sender(selector: SelectorArgument): SelectorArgument {
-        selector.selector.nbtData.apply {
-            tag = "$namespace.send"
-            tag = !"$namespace.receive"
-        }
-        return selector
+        return receive(send(selector), true)
     }
 
     fun receive(selector: SelectorArgument, reverse: Boolean = false): SelectorArgument {
@@ -54,11 +51,7 @@ object Energy: Library {
     }
 
     fun receiver(selector: SelectorArgument): SelectorArgument {
-        selector.selector.nbtData.apply {
-            tag = "$namespace.receive"
-            tag = !"$namespace.send"
-        }
-        return selector
+        return receive(send(selector, true))
     }
 
     fun cable(selector: SelectorArgument, reverse: Boolean = false): SelectorArgument {
@@ -73,11 +66,7 @@ object Energy: Library {
     }
 
     fun senderAndReceiver(selector: SelectorArgument): SelectorArgument {
-        selector.selector.nbtData.apply {
-            tag = "$namespace.send"
-            tag = "$namespace.receive"
-        }
-        return selector
+        return send(receive(selector))
     }
 
     context(Function)
@@ -87,7 +76,7 @@ object Energy: Library {
     fun cableUpdate() = function(namespace, "v1/cable_update", true)
 
     context(Function)
-    fun energyUpdate() = function(namespace, "v1/energy_update",  true)
+    fun energyUpdate() = function(namespace, "v1/energy_update", true)
 
     context(Function)
     fun updateEnergyItem() = function("namespace, v1/update_energy_item", true)

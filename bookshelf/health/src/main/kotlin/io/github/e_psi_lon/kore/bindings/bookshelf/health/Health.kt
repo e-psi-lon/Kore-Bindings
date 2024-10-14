@@ -5,10 +5,8 @@ import io.github.ayfri.kore.commands.function
 import io.github.ayfri.kore.functions.Function
 import io.github.ayfri.kore.functions.generatedFunction
 import io.github.ayfri.kore.utils.nbt
-import io.github.e_psi_lon.kore.bindings.core.Library
 import io.github.e_psi_lon.kore.bindings.bookshelf.Bookshelf
-import net.benwoodworth.knbt.NbtCompound
-import net.benwoodworth.knbt.NbtFloat
+import io.github.e_psi_lon.kore.bindings.core.Library
 
 object Health : Library {
     override val namespace = "health"
@@ -55,10 +53,14 @@ object Health : Library {
             Function("", generatedNamespace, "", datapack).onDeath()
         } else {
             val name = "generated_${hashCode()}"
-            val generatedFunction = datapack.generatedFunction(name, generatedNamespace, datapack.configuration.generatedFunctionsFolder) {
-                onDeath()
-            }
-            Function("", "", "", datapack).function(generatedFunction.namespace, "${generatedFunction.directory}/${generatedFunction.name}")
+            val generatedFunction =
+                datapack.generatedFunction(name, generatedNamespace, datapack.configuration.generatedFunctionsFolder) {
+                    onDeath()
+                }
+            Function("", "", "", datapack).function(
+                generatedFunction.namespace,
+                "${generatedFunction.directory}/${generatedFunction.name}"
+            )
         }
         function(namespace, "time_to_live", true, nbt {
             "time" to time
