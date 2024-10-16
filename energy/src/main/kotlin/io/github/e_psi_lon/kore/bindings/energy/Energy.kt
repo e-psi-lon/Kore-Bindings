@@ -9,6 +9,7 @@ import io.github.ayfri.kore.commands.function
 import io.github.ayfri.kore.functions.Function
 import io.github.e_psi_lon.kore.bindings.core.Library
 import io.github.e_psi_lon.kore.bindings.core.SupportedSource
+import io.github.e_psi_lon.kore.bindings.lantern_load.LanternLoad
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -20,6 +21,8 @@ object Energy : Library {
         get() = SupportedSource.DOWNLOAD
     override val location: String
         get() = ""
+    override val externalDependencies: List<Library>
+        get() = listOf(LanternLoad)
 
     val api
         get() = Api

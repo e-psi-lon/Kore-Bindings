@@ -13,6 +13,7 @@ repositories {
 dependencies {
     api(libs.kore)
     api(projects.core)
+    api(projects.load)
     implementation(libs.kore.oop)
     testImplementation(kotlin("test"))
 }
