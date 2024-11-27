@@ -1,7 +1,7 @@
 [versions]
-kotlin = "2.0.20"
+kotlin = "2.0.21"
 kotlinx-serialization = "1.7.3"
-kore = "1.15.1-1.21.1"
+kore = "1.21.0-24w39a"
 
 [libraries]
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
