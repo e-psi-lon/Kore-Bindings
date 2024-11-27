@@ -49,7 +49,7 @@ dependencies {
     // implementation(projects.bookshelf.weather)
     // implementation(projects.bookshelf.xp)
     implementation(projects.energy)
-    // implementation(projects.itemIo)
+    implementation(projects.itemIo)
     // implementation(projects.furnaceNbtRecipes)
     // implementation(projects.smartOreGeneration)
     // implementation(projects.load)
