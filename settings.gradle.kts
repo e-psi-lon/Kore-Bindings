@@ -4,6 +4,7 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 pluginManagement {
     repositories {
         mavenCentral()
+        gradlePluginPortal()
     }
 }
 
@@ -40,3 +41,4 @@ include(":item-io")
 // include(":furnace-nbt-recipes")
 // include(":smart-ore-generation")
 include(":load")
+include("generation")

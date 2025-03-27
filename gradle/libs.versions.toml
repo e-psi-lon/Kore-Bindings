@@ -1,12 +1,18 @@
 [versions]
-kotlin = "2.0.21"
+kotlin = "2.1.10"
 kotlinx-serialization = "1.7.3"
+kotlinx-coroutines = "1.10.1"
 kore = "1.21.0-24w39a"
+kotlin-poet = "2.1.0"
+shadow = "8.3.6"
 
 [libraries]
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kore = { module = "io.github.ayfri.kore:kore", version.ref = "kore" }
 kore-oop = { module = "io.github.ayfri.kore:oop ", version.ref = "kore" }
+kotlin-poet = { module = "com.squareup:kotlinpoet", version.ref = "kotlin-poet" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 
 [plugins]
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
