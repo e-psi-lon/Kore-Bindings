@@ -6,6 +6,7 @@ pluginManagement {
         mavenCentral()
         gradlePluginPortal()
     }
+    includeBuild("generation")
 }
 
 include(":core")
@@ -41,4 +42,4 @@ include(":item-io")
 // include(":furnace-nbt-recipes")
 // include(":smart-ore-generation")
 include(":load")
-include("generation")
+// include("generation")

@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.shadow)
 }
 
+
 group = "io.github.e_psi_lon.kore.bindings"
 version = "0.1.0-SNAPSHOT"
 
@@ -28,7 +29,7 @@ gradlePlugin {
     plugins {
         create("koreBindingsGenerator") {
             id = "io.github.e_psi_lon.kore.bindings.generation"
-            implementationClass = "io.github.e_psi_lon.kore.bindings.generation.GenerateDatapackBindings.kt"
+            implementationClass = "io.github.e_psi_lon.kore.bindings.generation.BindingGradlePlugin"
         }
     }
 }
