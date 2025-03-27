@@ -7,6 +7,21 @@ import io.github.ayfri.kore.utils.pascalCase
 import java.io.File
 import java.util.zip.ZipFile
 
+/**
+ * Generates Kotlin Kore DSL bindings for a Minecraft datapack.
+ *
+ * This class takes a folder or zip file containing a Minecraft datapack and generates Kotlin bindings
+ * for all datapack's components. The generated bindings are written to the specified output directory.
+ *
+ * @param folder The folder containing the datapack. If null, the zipFile parameter must be provided.
+ * @param zipFile The zip file containing the datapack. If null, the folder parameter must be provided.
+ * @param outputDir The directory where the generated bindings will be written.
+ * @param packageName The package name for the generated bindings.
+ *
+ * @throws IllegalArgumentException If neither folder nor zipFile is provided, or if both are provided.
+ * Can also be thrown if the provided folder or zip file is invalid.
+ *
+ */
 @OptIn(ExperimentalKotlinPoetApi::class)
 class GenerateDatapackBindings(
 	val folder: File? = null,
