@@ -1,7 +1,13 @@
 plugins {
     kotlin("jvm")
     alias(libs.plugins.serialization)
+    id("io.github.e_psi_lon.kore.bindings.generation")
 }
+
+bindings {
+    packageName.set("io.github.e_psi_lon.kore.bindings")
+}
+
 
 group = "io.github.e_psi_lon.kore.bindings"
 version = "1.0-SNAPSHOT"

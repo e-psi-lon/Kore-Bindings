@@ -1,6 +1,7 @@
 plugins {
     kotlin("jvm")
     alias(libs.plugins.serialization)
+    id("io.github.e_psi_lon.kore.bindings.generation")
 }
 
 group = "io.github.e_psi_lon.kore.bindings"
@@ -8,6 +9,10 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+}
+
+bindings {
+    packageName.set("io.github.e_psi_lon.kore.bindings")
 }
 
 dependencies {
