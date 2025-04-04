@@ -20,7 +20,7 @@ fun main(args: Array<String>) {
 		}
 	var outputPath = getArgValue(arguments, "-o", "--output")
 	val originalOutputPath = outputPath ?: "generated"
-	println("Output path: $outputPath")
+	println("Output path: ${outputPath ?: "generated"}")
 	var bundled = false
 	if (outputPath != null && outputPath.endsWith(".zip")) {
 		bundled = true

@@ -8,9 +8,11 @@ import io.github.ayfri.kore.arguments.types.resources.tagged.*
 import io.github.ayfri.kore.arguments.types.resources.worldgen.*
 import io.github.ayfri.kore.commands.Command
 import io.github.ayfri.kore.functions.Function
+import io.github.ayfri.kore.utils.pascalCase
 
 
 interface DatapackComponent {
+	val name: String
 	val folderName: String
 	val fileExtension: String
 		// The default value is "json" because it's the most common case.
@@ -26,6 +28,8 @@ interface DatapackComponent {
 			ParameterSpec.builder("name", String::class).build() to null,
 			ParameterSpec.builder("namespace", String::class).build() to null
 		)
+	val duplicateSuffix: String
+		get() = name.lowercase().pascalCase()
 }
 
 enum class DatapackComponentType: DatapackComponent {
@@ -120,6 +124,10 @@ enum class DatapackComponentType: DatapackComponent {
 	ENTITY_TYPE_TAG {
 		override val folderName = "tags/entity_type"
 		override val koreMethodOrClass = EntityTypeTagArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("tagName", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null,
+		)
 	},
 	FLUID_TAG {
 		override val folderName = "tags/fluid"

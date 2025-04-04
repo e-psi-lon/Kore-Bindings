@@ -2,9 +2,10 @@ package io.github.e_psi_lon.kore.bindings.generation
 
 import com.squareup.kotlinpoet.*
 import io.github.ayfri.kore.commands.Command
-import io.github.ayfri.kore.generated.Gamerules.Companion.camelCase
 import io.github.ayfri.kore.utils.pascalCase
+import io.github.e_psi_lon.kore.bindings.generation.poet.*
 import java.io.File
+import java.util.*
 import java.util.zip.ZipFile
 
 /**
@@ -87,9 +88,9 @@ class GenerateDatapackBindings(
 			val capitalizedPrefix = prefix.sanitizePascal()
 			val prefixFile = fileSpec(packageName, capitalizedPrefix) {
 				objectBuilder(capitalizedPrefix) {
-					addProperty(PropertySpec.builder("namespace", String::class)
-						.initializer("%S", prefix)
-						.build())
+					property<String>("namespace") {
+						initializer("%S", prefix)
+					}
 				}
 			}
 			prefixFile.writeTo(outputDir)
@@ -108,10 +109,9 @@ class GenerateDatapackBindings(
 				val suffixFile = fileSpec(packageName, fullCapitalized) {
 					// Créer l'objet principal du sous namespace
 					objectBuilder(fullCapitalized) {
-						addProperty(PropertySpec.builder("namespace", String::class)
-							.initializer("%S", fullNamespace)
-							.build())
-
+						property<String>("namespace") {
+							initializer("%S", fullNamespace)
+						}
 						// Traiter tous les composants
 						for (dpComponent in DatapackComponentType.values()) {
 							val componentFolder = namespaceFolder.resolve(dpComponent.folderName)
@@ -140,10 +140,9 @@ class GenerateDatapackBindings(
 		val capitalizedName = namespaceName.sanitizePascal()
 		val file = fileSpec(packageName, capitalizedName) {
 			objectBuilder(capitalizedName) {
-				addProperty(PropertySpec.builder("namespace", String::class, KModifier.PUBLIC)
-					.initializer("%S", namespaceName)
-					.build())
-
+				property<String>("namespace") {
+					initializer("%S", namespaceName)
+				}
 				for (dpComponent in DatapackComponentType.values()) {
 					val componentFolder = namespace.resolve(dpComponent.folderName)
 					if (componentFolder.exists() && componentFolder.isDirectory) {
@@ -158,9 +157,7 @@ class GenerateDatapackBindings(
 
 
 
-	private fun TypeSpec.Builder.handleComponent(componentType: DatapackComponentType, namespace: File, namespaceName: String, mainObject: TypeSpec.Builder, parentClassName: String = "") {
-		// Recursively go through the functions in the namespace folder (data/$namespace/function)
-		// Knowing that the first folder won't have a parent "path", only a namespace
+	private fun TypeBuilder.handleComponent(componentType: DatapackComponentType, namespace: File, namespaceName: String, mainObject: TypeBuilder, parentClassName: String = "") {
 		for (componentOrSubFolder in namespace.listFiles()!!) {
 			if (componentOrSubFolder.isDirectory) {
 				// Create a new sub-object and call handleFunctions on it
@@ -174,7 +171,7 @@ class GenerateDatapackBindings(
 						}
 					} else {
 						property<String>("path") {
-							initializer("%P", '$'+"{${namespaceName.sanitizePascal()}.namespace}:$subFolderName")
+							initializer("%P", "\$namespace:$subFolderName")
 						}
 					}
 					handleComponent(componentType, componentOrSubFolder, namespaceName, mainObject, if (hasParent) "$parentClassName.$sanitizedSubFolderName" else sanitizedSubFolderName)
@@ -187,9 +184,11 @@ class GenerateDatapackBindings(
 					println("Skipping $fileName because it's a ${componentOrSubFolder.extension} file instead of ${componentType.fileExtension}")
 					continue
 				}
-				val sanitizedFileName = fileName.sanitizeCamel()
+				var sanitizedFileName = fileName.sanitizeCamel()
+				if (functions.containsKey(sanitizedFileName))
+					sanitizedFileName = "${sanitizedFileName}${componentType.duplicateSuffix}"
 				val context = mapOf("namespace" to namespaceName, "name" to fileName)
-				if (componentType.returnType != componentType.koreMethodOrClass)
+				if (componentType.returnType != componentType.koreMethodOrClass) {
 					function(sanitizedFileName) {
 						if (componentType.requiredContext != null) {
 							contextReceivers(componentType.requiredContext!!)
@@ -201,7 +200,7 @@ class GenerateDatapackBindings(
 							handleComponentParameters(componentType.parameters, context)
 						)
 					}
-				else
+				} else {
 					property(sanitizedFileName, componentType.returnType) {
 						initializer(
 							"%T(%L)",
@@ -209,6 +208,7 @@ class GenerateDatapackBindings(
 							handleComponentParameters(componentType.parameters, context)
 						)
 					}
+				}
 			}
 		}
 	}
@@ -218,8 +218,8 @@ class GenerateDatapackBindings(
 			val parameterName = parameter.name
 			if (value == null) {
 				"$parameterName = ${when (parameterName) {
-					"name" -> "\"${context["name"]}\""
-					"namespace" -> "${context["namespace"]?.sanitizePascal()}.namespace"
+					"name", "tagName" -> "\"${context["name"]}\""
+					"namespace" -> "namespace"
 					else -> if (context.containsKey(parameterName)) "\"${context[parameterName]}\"" else throw IllegalArgumentException("Unknown base parameter name: $parameterName")
 				}}"
 			} else {
@@ -229,9 +229,8 @@ class GenerateDatapackBindings(
 	}
 }
 
-fun String.sanitizeCamel() = camelCase()
-	.replace('-', '_')
-	.replace(".", "_")
+fun String.sanitizeCamel() = sanitizePascal().replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+
 
 fun String.sanitizePascal() = pascalCase()
 	.replace('-', '_')
