@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm")
+    kotlin("jvm") version "2.1.20"
 }
 
 group = "io.github.e_psi_lon.kore.bindings"
@@ -11,7 +11,7 @@ repositories {
 
 dependencies {
     api(libs.kore)
-    api(projects.core)
+    //api(projects.core)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kore.oop)
     testImplementation(kotlin("test"))
