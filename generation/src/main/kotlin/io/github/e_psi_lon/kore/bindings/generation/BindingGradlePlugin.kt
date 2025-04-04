@@ -2,14 +2,10 @@ package io.github.e_psi_lon.kore.bindings.generation
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.Task
 import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.file.ProjectLayout
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.SourceSetContainer
-import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.getByType
-import java.io.File
 
 /**
  * Gradle plugin to generate Kotlin bindings for Minecraft datapacks.
@@ -46,13 +42,13 @@ class BindingGradlePlugin : Plugin<Project> {
 					project.logger.error("Datapack folder does not exist: ${datapackFolder.asFile.absolutePath}")
 					return@doLast
 				}
+				outputDir.get().asFile.mkdirs()
 				for (datapack in datapackFolder.asFile.listFiles()!!) {
 					project.logger.lifecycle("Generating ${datapack.name}...")
 					val packageName = extension.packageName.orNull ?: project.group.toString()
 					val sanitizedPackageName = packageName.sanitizePackageName()
 
 					if (datapack.isDirectory || datapack.extension == "zip") {
-						outputDir.get().asFile.mkdirs()
 
 						GenerateDatapackBindings(
 							folder = if (datapack.isDirectory) datapack else null,
@@ -67,19 +63,17 @@ class BindingGradlePlugin : Plugin<Project> {
 			}
 		}
 		project.tasks.getByName("compileKotlin").dependsOn(generateTask)
-		/*if (extension.configureSourceSet.get()) {
-			sourceSet {
+		if (extension.configureSourceSet.get()) {
+			sourceSet.configure {
+				java.srcDir(outputDir)
 
-				java {
-					srcDir(outputDir)
-				}
-
+				// Configurer la sortie pour inclure les fichiers générés
 				output.dir(
 					mapOf("builtBy" to generateTask),
-					outputDir,
+					outputDir
 				)
 			}
-		}*/
+		}
 	}
 
 }
