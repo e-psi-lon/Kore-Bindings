@@ -3,21 +3,21 @@ package io.github.e_psi_lon.kore.bindings.generation.poet
 import com.squareup.kotlinpoet.*
 
 class TypeBuilder(
-	private val name: String,
-	private val type: String
+	name: String,
+	type: TypeSpec.Kind
 ) {
+	private var builder = when (type) {
+		TypeSpec.Kind.INTERFACE -> TypeSpec.interfaceBuilder(name)
+		TypeSpec.Kind.CLASS -> TypeSpec.classBuilder(name)
+		TypeSpec.Kind.OBJECT -> TypeSpec.objectBuilder(name)
+		else -> throw IllegalArgumentException("Unknown type: $type")
+	}
 	val properties = mutableMapOf<String, PropertyBuilder>()
 	val functions = mutableMapOf<String, FunSpec.Builder>()
 	private val typeSpecs = mutableMapOf<String, TypeBuilder>()
 
 	fun build(): TypeSpec {
-		return when (type) {
-			"interface" -> TypeSpec.interfaceBuilder(name)
-			"class" -> TypeSpec.classBuilder(name)
-			"enum" -> TypeSpec.enumBuilder(name)
-			"object" -> TypeSpec.objectBuilder(name)
-			else -> throw IllegalArgumentException("Unknown type: $type")
-		}.apply {
+		return builder.apply {
 			properties.forEach { (_, builder) ->
 				addProperty(builder.build())
 			}
@@ -29,6 +29,11 @@ class TypeBuilder(
 			}
 		}.build()
 	}
+
+	fun superclass(name: ClassName) {
+		builder = builder.superclass(name)
+	}
+
 
 	inline fun <reified T : Any> property(name: String, block: PropertyBuilder.() -> Unit) {
 		properties[name] = if (properties.containsKey(name)) {
@@ -72,7 +77,7 @@ class TypeBuilder(
 		typeSpecs[name] = if (typeSpecs.containsKey(name)) {
 			typeSpecs[name]!!.apply(block)
 		} else {
-			TypeBuilder(name, "class").apply(block)
+			TypeBuilder(name, TypeSpec.Kind.INTERFACE).apply(block)
 		}
 	}
 
@@ -80,17 +85,10 @@ class TypeBuilder(
 		typeSpecs[name] = if (typeSpecs.containsKey(name)) {
 			typeSpecs[name]!!.apply(block)
 		} else {
-			TypeBuilder(name, "interface").apply(block)
+			TypeBuilder(name, TypeSpec.Kind.INTERFACE).apply(block)
 		}
 	}
 
-	fun enumBuilder(name: String, block: TypeBuilder.() -> Unit) {
-		typeSpecs[name] = if (typeSpecs.containsKey(name)) {
-			typeSpecs[name]!!.apply(block)
-		} else {
-			TypeBuilder(name, "enum").apply(block)
-		}
-	}
 
 	fun objectBuilder(name: String, block: TypeBuilder.() -> Unit) {
 		val contains = typeSpecs.containsKey(name)
@@ -101,7 +99,7 @@ class TypeBuilder(
 			println("It had the following types: ${typeSpecs[name]!!.typeSpecs.keys}")
 			typeSpecs[name]!!.apply(block)
 		} else {
-			TypeBuilder(name, "object").apply(block)
+			TypeBuilder(name, TypeSpec.Kind.OBJECT).apply(block)
 		}
 		if (contains) {
 			println("And now it has the following properties: ${typeSpecs[name]!!.properties.keys}")
@@ -112,19 +110,15 @@ class TypeBuilder(
 
 	companion object {
 		fun classBuilder(name: String, block: TypeBuilder.() -> Unit): TypeBuilder {
-			return TypeBuilder(name, "class").apply(block)
+			return TypeBuilder(name, TypeSpec.Kind.CLASS).apply(block)
 		}
 
 		fun interfaceBuilder(name: String, block: TypeBuilder.() -> Unit): TypeBuilder {
-			return TypeBuilder(name, "interface").apply(block)
-		}
-
-		fun enumBuilder(name: String, block: TypeBuilder.() -> Unit): TypeBuilder {
-			return TypeBuilder(name, "enum").apply(block)
+			return TypeBuilder(name, TypeSpec.Kind.INTERFACE).apply(block)
 		}
 
 		fun objectBuilder(name: String, block: TypeBuilder.() -> Unit): TypeBuilder {
-			return TypeBuilder(name, "object").apply(block)
+			return TypeBuilder(name, TypeSpec.Kind.OBJECT).apply(block)
 		}
 
 	}
