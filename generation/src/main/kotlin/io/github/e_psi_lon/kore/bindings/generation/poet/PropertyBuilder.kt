@@ -19,7 +19,7 @@ class PropertyBuilder(
 		getterFunc = if (this::getterFunc.isInitialized) {
 			getterFunc.apply(block)
 		} else {
-			FunSpec.builder(name).apply(block)
+			FunSpec.getterBuilder().apply(block)
 		}
 	}
 
@@ -27,7 +27,7 @@ class PropertyBuilder(
 		setterFunc = if (this::setterFunc.isInitialized) {
 			setterFunc.apply(block)
 		} else {
-			FunSpec.builder("").apply(block)
+			FunSpec.setterBuilder().apply(block)
 		}
 	}
 

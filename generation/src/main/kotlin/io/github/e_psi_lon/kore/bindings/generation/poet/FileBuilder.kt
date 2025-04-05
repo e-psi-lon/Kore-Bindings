@@ -24,13 +24,6 @@ class FileBuilder(
 		}
 	}
 
-	fun enumBuilder(name: String, block: TypeBuilder.() -> Unit) {
-		typeSpecs[name] = if (typeSpecs.containsKey(name)) {
-			typeSpecs[name]!!.apply(block)
-		} else {
-			TypeBuilder.enumBuilder(name, block)
-		}
-	}
 
 	fun interfaceBuilder(name: String, block: TypeBuilder.() -> Unit) {
 		typeSpecs[name] = if (typeSpecs.containsKey(name)) {
