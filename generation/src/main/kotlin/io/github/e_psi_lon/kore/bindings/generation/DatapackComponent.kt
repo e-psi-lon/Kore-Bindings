@@ -169,6 +169,15 @@ enum class DatapackComponentType: DatapackComponent {
 			ParameterSpec.builder("group", Boolean::class).build() to true
 		)
 	},
+	FUNCTION_TAG_ARGUMENT {
+		override val folderName = "tags/function"
+		override val koreMethodOrClass = FunctionTagArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("tagName", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null,
+		)
+		override val duplicateSuffix = "FunctionTagArgument"
+	},
 	GAME_EVENT_TAG {
 		override val folderName = "tags/game_event"
 		override val koreMethodOrClass = GameEventTagArgument::class.asClassName()
