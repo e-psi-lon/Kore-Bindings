@@ -11,6 +11,9 @@ repositories {
     mavenCentral()
 }
 
+bindings {
+    packageName.set("io.github.e_psi_lon.kore.bindings.smithed.crafter")
+}
 
 dependencies {
     implementation(libs.kotlinx.serialization.json)

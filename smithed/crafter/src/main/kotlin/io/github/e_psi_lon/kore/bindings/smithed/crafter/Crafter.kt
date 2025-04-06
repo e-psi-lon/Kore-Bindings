@@ -9,102 +9,83 @@ import io.github.ayfri.kore.arguments.types.resources.storage
 import io.github.ayfri.kore.commands.execute.execute
 import io.github.ayfri.kore.functions.function
 import io.github.ayfri.kore.functions.setTag
-import io.github.e_psi_lon.kore.bindings.core.Library
-import io.github.e_psi_lon.kore.bindings.core.SupportedSource
 import io.github.e_psi_lon.kore.bindings.smithed.Smithed
-import io.github.e_psi_lon.kore.bindings.smithed.custom_block.CustomBlock
 import kotlinx.serialization.encodeToString
 import net.benwoodworth.knbt.StringifiedNbt
 
-
-object Crafter : Library {
-    internal val nbtSerializer
-        get() = StringifiedNbt {
-            this.nameRootClasses = false
-        }
-    override val namespace: String = "${Smithed.namespace}.crafter"
-    override val version: String
-        get() = "0.2.0"
-    override val source: SupportedSource
-        get() = SupportedSource.SMITHED
-    override val location: String
-        get() = "crafter"
-    override val externalDependencies: List<Library>
-        get() = listOf(CustomBlock)
-
-    context(DataPack)
-    fun smithedRecipes(
-        dataPack: DataPack,
-        recipeNamespace: String,
-        directory: String = "calls/smithed",
-        block: RecipesBuilder.() -> Unit
-    ) {
-        val recipes = RecipesBuilder(recipeNamespace, dataPack)
-        recipes.block()
-        function("shaped_recipes", recipeNamespace, directory) {
-            for (recipe in recipes.recipes.filterIsInstance<ShapedRecipe>()) {
-                execute {
-                    storeResult {
-                        Smithed.data(self())
-                    }
-                    ifCondition {
-                        entity(
-                            self {
-                                scores {
-                                    Smithed.data() equalTo 0
-                                }
-                            }
-                        )
-                    }
-
-                    ifCondition {
-                        data(input(), "recipe${nbtSerializer.encodeToString(recipe)}")
-                    }
-
-                    run {
-                        addLine(recipe.result!!)
-                    }
-                }
-
-                setTag("event/shaped_recipes", namespace)
-            }
-        }
-        function("shapeless_recipes", recipeNamespace, directory) {
-            for (recipe in recipes.recipes.filterIsInstance<ShapelessRecipe>()) {
-                execute {
-                    storeResult {
-                        Smithed.data(self())
-                    }
-                    ifCondition {
-                        entity(
-                            self {
-                                scores {
-                                    Smithed.data() equalTo 0
-                                }
-                            }
-                        )
-                    }
-                    ifCondition {
-                        score(
-                            literal("count"),
-                            Smithed.data(),
-                            IntRangeOrInt(int = recipe.ingredients.size)
-                        )
-                    }
-                    ifCondition {
-                        data(input(), "recipe${nbtSerializer.encodeToString(recipe)}")
-                    }
-                    run {
-                        addLine(recipe.result!!)
-                    }
-                }
-            }
-            setTag("event/shapeless_recipes", namespace)
-        }
+internal val nbtSerializer
+    get() = StringifiedNbt {
+        this.nameRootClasses = false
     }
 
-    fun input() = storage("input", namespace)
+context(DataPack)
+fun SmithedCrafter.smithedRecipes(
+    recipeNamespace: String,
+    directory: String = "calls/smithed",
+    block: RecipesBuilder.() -> Unit
+) {
+    val recipes = RecipesBuilder(recipeNamespace, this@DataPack)
+    recipes.block()
+    function("shaped_recipes", recipeNamespace, directory) {
+        for (recipe in recipes.recipes.filterIsInstance<ShapedRecipe>()) {
+            execute {
+                storeResult {
+                    Smithed.data(self())
+                }
+                ifCondition {
+                    entity(
+                        self {
+                            scores {
+                                Smithed.data() equalTo 0
+                            }
+                        }
+                    )
+                }
+
+                ifCondition {
+                    data(input(), "recipe${nbtSerializer.encodeToString(recipe)}")
+                }
+
+                run {
+                    addLine(recipe.result!!)
+                }
+            }
+
+            setTag("event/shaped_recipes", namespace)
+        }
+    }
+    function("shapeless_recipes", recipeNamespace, directory) {
+        for (recipe in recipes.recipes.filterIsInstance<ShapelessRecipe>()) {
+            execute {
+                storeResult {
+                    Smithed.data(self())
+                }
+                ifCondition {
+                    entity(
+                        self {
+                            scores {
+                                Smithed.data() equalTo 0
+                            }
+                        }
+                    )
+                }
+                ifCondition {
+                    score(
+                        literal("count"),
+                        Smithed.data(),
+                        IntRangeOrInt(int = recipe.ingredients.size)
+                    )
+                }
+                ifCondition {
+                    data(input(), "recipe${nbtSerializer.encodeToString(recipe)}")
+                }
+                run {
+                    addLine(recipe.result!!)
+                }
+            }
+        }
+        setTag(SmithedCrafter.Event.shapelessRecipes)
+    }
 }
 
-
-val Smithed.crafter get() = Crafter
+fun SmithedCrafter.input() = storage("input", namespace)

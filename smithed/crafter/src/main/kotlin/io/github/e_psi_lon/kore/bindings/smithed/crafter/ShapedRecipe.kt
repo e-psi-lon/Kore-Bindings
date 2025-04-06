@@ -74,7 +74,7 @@ class ShapedRecipe : Recipe {
                             }
                         }.filterNotNull()
                         if (items.isNotEmpty()) {
-                            put(rowIndex.toString(), Crafter.nbtSerializer.encodeToNbtTag(items))
+                            put(rowIndex.toString(), nbtSerializer.encodeToNbtTag(items))
                         }
                     }
                 }
@@ -89,7 +89,7 @@ class ShapedRecipe : Recipe {
                 val shapedRecipe = ShapedRecipe()
                 nbtObject.forEach { (key, nbtElement) ->
                     val rowIndex = key.toIntOrNull() ?: return@forEach
-                    val items = Crafter.nbtSerializer.decodeFromNbtTag<List<Item>>(nbtElement)
+                    val items = nbtSerializer.decodeFromNbtTag<List<Item>>(nbtElement)
                     items.forEach { item ->
                         val col = item.slot?.toInt() ?: 0
                         val char = shapedRecipe.pattern[rowIndex][col]
