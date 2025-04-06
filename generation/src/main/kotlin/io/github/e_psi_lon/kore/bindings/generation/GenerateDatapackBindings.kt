@@ -229,7 +229,7 @@ class GenerateDatapackBindings(
 	}
 }
 
-fun String.sanitizeCamel() = sanitizePascal().replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+fun String.sanitizeCamel() = sanitizePascal().replaceFirstChar { if (!it.isLowerCase()) it.lowercase() else it.toString() }
 
 
 fun String.sanitizePascal() = pascalCase()
