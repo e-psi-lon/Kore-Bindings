@@ -108,7 +108,7 @@ class GenerateDatapackBindings(
 							val componentFolder = namespaceFolder.resolve(dpComponent.folderName)
 							if (componentFolder.exists() && componentFolder.isDirectory) {
 								println("Adding ${dpComponent.name.lowercase()} in namespace $fullNamespace")
-								handleComponent(dpComponent, componentFolder, fullNamespace, this)
+								handleComponent(dpComponent, componentFolder, fullNamespace)
 							}
 						}
 					}
@@ -129,9 +129,10 @@ class GenerateDatapackBindings(
 					val componentFolder = namespace.resolve(dpComponent.folderName)
 					if (componentFolder.exists() && componentFolder.isDirectory) {
 						println("Adding ${dpComponent.name.lowercase()} in namespace $namespaceName")
-						handleComponent(dpComponent, componentFolder, namespaceName, this)
+						handleComponent(dpComponent, componentFolder, namespaceName)
 					}
 				}
+				// Parse the mcfunctions files in
 			}
 		}
 		file.writeTo(outputDir)
@@ -139,58 +140,92 @@ class GenerateDatapackBindings(
 
 
 
-	private fun TypeBuilder.handleComponent(componentType: DatapackComponentType, namespace: File, namespaceName: String, mainObject: TypeBuilder, parentClassName: String = "") {
-		for (componentOrSubFolder in namespace.listFiles()!!) {
-			if (componentOrSubFolder.isDirectory) {
-				// Create a new sub-object and call handleFunctions on it
-				val subFolderName = componentOrSubFolder.name.substringAfterLast('/')
-				val sanitizedSubFolderName = subFolderName.sanitizePascal()
-				objectBuilder(sanitizedSubFolderName) {
-					val hasParent = parentClassName.isNotEmpty()
-					if (hasParent) {
-						property<String>("path") {
-							initializer("%P", '$'+"{$parentClassName.path}/$subFolderName")
+	private fun TypeBuilder.handleComponent(
+		componentType: DatapackComponentType,
+		namespace: File,
+		namespaceName: String,
+		parentClassName: String = ""
+	) {
+		// Utiliser une pile pour stocker les dossiers à traiter avec leur contexte complet
+		data class FolderContext(
+			val folder: File,
+			val parentPath: String,
+			val parentClassName: String,
+			val builder: TypeBuilder  // Ajout du TypeBuilder au contexte
+		)
+
+		val stack = mutableListOf<FolderContext>()
+		stack.add(FolderContext(namespace, "", parentClassName, this))
+
+		while (stack.isNotEmpty()) {
+			val (currentFolder, parentPath, currentParentClassName, currentBuilder) = stack.removeAt(stack.lastIndex)
+
+			for (componentOrSubFolder in currentFolder.listFiles() ?: emptyArray()) {
+				if (componentOrSubFolder.isDirectory) {
+					val subFolderName = componentOrSubFolder.name.substringAfterLast('/')
+					val sanitizedSubFolderName = subFolderName.sanitizePascal()
+
+					val newParentPath = if (parentPath.isEmpty()) subFolderName else "$parentPath/$subFolderName"
+					val hasParent = currentParentClassName.isNotEmpty()
+					val newParentClassName = if (!hasParent)
+						sanitizedSubFolderName else
+						"$currentParentClassName.$sanitizedSubFolderName"
+
+					// Créer l'objet pour ce dossier dans le TypeBuilder courant
+					val subObjectBuilder = currentBuilder.objectBuilder(sanitizedSubFolderName) {
+						if (hasParent) {
+							property<String>("path") {
+								initializer("%P", "\${$currentParentClassName.path}/$subFolderName")
+							}
+						} else {
+							property<String>("path") {
+								initializer("%P", "\$namespace:$subFolderName")
+							}
+						}
+					}
+
+					// Ajouter le sous-dossier à la pile avec son propre builder
+					stack.add(FolderContext(
+						componentOrSubFolder,
+						newParentPath,
+						newParentClassName,
+						subObjectBuilder
+					))
+				} else {
+					// Traitement des fichiers (inchangé)
+					val fileName = componentOrSubFolder.nameWithoutExtension
+					if (componentOrSubFolder.extension != componentType.fileExtension) {
+						println("Skipping $fileName because it's a ${componentOrSubFolder.extension} file instead of ${componentType.fileExtension}")
+						continue
+					}
+
+					var sanitizedFileName = fileName.sanitizeCamel()
+					val context = mapOf("namespace" to namespaceName, "name" to fileName)
+
+					if (componentType.returnType != componentType.koreMethodOrClass) {
+						if (currentBuilder.functions.containsKey(sanitizedFileName))
+							sanitizedFileName = "${sanitizedFileName}${componentType.duplicateSuffix}"
+						currentBuilder.function(sanitizedFileName) {
+							if (componentType.requiredContext != null) {
+								contextReceivers(componentType.requiredContext!!)
+							}
+							returns(Command::class.asClassName())
+							addStatement(
+								"return %T(%L)",
+								componentType.koreMethodOrClass,
+								handleComponentParameters(componentType.parameters, context)
+							)
 						}
 					} else {
-						property<String>("path") {
-							initializer("%P", "\$namespace:$subFolderName")
+						if (currentBuilder.properties.containsKey(sanitizedFileName))
+							sanitizedFileName = "${sanitizedFileName}${componentType.duplicateSuffix}"
+						currentBuilder.property(sanitizedFileName, componentType.returnType) {
+							initializer(
+								"%T(%L)",
+								componentType.koreMethodOrClass,
+								handleComponentParameters(componentType.parameters, context)
+							)
 						}
-					}
-					handleComponent(componentType, componentOrSubFolder, namespaceName, mainObject, if (hasParent) "$parentClassName.$sanitizedSubFolderName" else sanitizedSubFolderName)
-				}
-			} else {
-				// get the file name
-				val fileName = componentOrSubFolder.nameWithoutExtension
-				// Ensure the file extension is correct
-				if (componentOrSubFolder.extension != componentType.fileExtension) {
-					println("Skipping $fileName because it's a ${componentOrSubFolder.extension} file instead of ${componentType.fileExtension}")
-					continue
-				}
-				var sanitizedFileName = fileName.sanitizeCamel()
-				val context = mapOf("namespace" to namespaceName, "name" to fileName)
-				if (componentType.returnType != componentType.koreMethodOrClass) {
-					if (functions.containsKey(sanitizedFileName))
-						sanitizedFileName = "${sanitizedFileName}${componentType.duplicateSuffix}"
-					function(sanitizedFileName) {
-						if (componentType.requiredContext != null) {
-							contextReceivers(componentType.requiredContext!!)
-						}
-						returns(Command::class.asClassName())
-						addStatement(
-							"return %T(%L)",
-							componentType.koreMethodOrClass,
-							handleComponentParameters(componentType.parameters, context)
-						)
-					}
-				} else {
-					if (properties.containsKey(sanitizedFileName))
-						sanitizedFileName = "${sanitizedFileName}${componentType.duplicateSuffix}"
-					property(sanitizedFileName, componentType.returnType) {
-						initializer(
-							"%T(%L)",
-							componentType.koreMethodOrClass,
-							handleComponentParameters(componentType.parameters, context)
-						)
 					}
 				}
 			}

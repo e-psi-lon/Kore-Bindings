@@ -35,15 +35,16 @@ class TypeBuilder(
 	}
 
 
-	inline fun <reified T : Any> property(name: String, block: PropertyBuilder.() -> Unit) {
+	inline fun <reified T : Any> property(name: String, block: PropertyBuilder.() -> Unit): PropertyBuilder {
 		properties[name] = if (properties.containsKey(name)) {
 			properties[name]!!.apply(block)
 		} else {
 			PropertyBuilder(name, T::class.asClassName()).apply(block)
 		}
+		return properties[name]!!
 	}
 
-	fun property(name: String, type: ClassName, block: PropertyBuilder.() -> Unit) {
+	fun property(name: String, type: ClassName, block: PropertyBuilder.() -> Unit): PropertyBuilder {
 		if (properties.containsKey(name)) {
 			// while there's a suffix, add +1 to the suffix
 			var newName = name
@@ -53,12 +54,14 @@ class TypeBuilder(
 				i++
 			}
 			properties[newName] = PropertyBuilder(newName, type).apply(block)
+			return properties[newName]!!
 		} else {
 			properties[name] = PropertyBuilder(name, type).apply(block)
+			return properties[name]!!
 		}
 	}
 
-	fun function(name: String, block: FunSpec.Builder.() -> Unit) {
+	fun function(name: String, block: FunSpec.Builder.() -> Unit): FunSpec.Builder {
 		if (functions.containsKey(name)) {
 			// while there's a suffix, add +1 to the suffix
 			var newName = name
@@ -71,26 +74,29 @@ class TypeBuilder(
 		} else {
 			functions[name] = FunSpec.builder(name).apply(block)
 		}
+		return functions[name]!!
 	}
 
-	fun classBuilder(name: String, block: TypeBuilder.() -> Unit) {
+	fun classBuilder(name: String, block: TypeBuilder.() -> Unit): TypeBuilder {
 		typeSpecs[name] = if (typeSpecs.containsKey(name)) {
 			typeSpecs[name]!!.apply(block)
 		} else {
 			TypeBuilder(name, TypeSpec.Kind.INTERFACE).apply(block)
 		}
+		return typeSpecs[name]!!
 	}
 
-	fun interfaceBuilder(name: String, block: TypeBuilder.() -> Unit) {
+	fun interfaceBuilder(name: String, block: TypeBuilder.() -> Unit): TypeBuilder {
 		typeSpecs[name] = if (typeSpecs.containsKey(name)) {
 			typeSpecs[name]!!.apply(block)
 		} else {
 			TypeBuilder(name, TypeSpec.Kind.INTERFACE).apply(block)
 		}
+		return typeSpecs[name]!!
 	}
 
 
-	fun objectBuilder(name: String, block: TypeBuilder.() -> Unit) {
+	fun objectBuilder(name: String, block: TypeBuilder.() -> Unit): TypeBuilder {
 		val contains = typeSpecs.containsKey(name)
 		typeSpecs[name] = if (typeSpecs.containsKey(name)) {
 			println("An object with the name $name already exists. Extending it.")
@@ -106,6 +112,7 @@ class TypeBuilder(
 			println("And now it has the following functions: ${typeSpecs[name]!!.functions.keys}")
 			println("And now it has the following types: ${typeSpecs[name]!!.typeSpecs.keys}")
 		}
+		return typeSpecs[name]!!
 	}
 
 	companion object {
