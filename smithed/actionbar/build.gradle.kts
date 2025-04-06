@@ -1,10 +1,17 @@
+import org.gradle.declarative.dsl.schema.FqName.Empty.packageName
+
 plugins {
     alias(libs.plugins.kotlin)
     alias(libs.plugins.serialization)
+    alias(libs.plugins.generation)
 }
 
 group = "io.github.e_psi_lon.kore.bindings.smithed"
 version = "1.0"
+
+bindings {
+    packageName.set("io.github.e_psi_lon.kore.bindings.smithed.actionbar")
+}
 
 repositories {
     mavenCentral()
