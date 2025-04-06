@@ -1,6 +1,7 @@
 plugins {
-    kotlin("jvm")
+    alias(libs.plugins.kotlin)
     alias(libs.plugins.serialization)
+    alias(libs.plugins.generation)
 }
 
 group = "io.github.e_psi_lon.kore.bindings.smithed"

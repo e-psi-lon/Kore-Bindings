@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "2.1.20"
+    alias(libs.plugins.kotlin)
 }
 
 group = "io.github.e_psi_lon.kore.bindings"

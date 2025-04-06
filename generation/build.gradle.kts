@@ -1,6 +1,7 @@
 plugins {
     `kotlin-dsl`
     application
+    alias(libs.plugins.kotlin)
     alias(libs.plugins.shadow)
 }
 

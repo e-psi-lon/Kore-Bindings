@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm")
+    alias(libs.plugins.kotlin)
 }
 
 group = "io.github.e_psi_lon.kore.bindings.bookshelf"

@@ -1,6 +1,6 @@
 plugins {
-    kotlin("jvm")
-    kotlin("plugin.serialization") version "2.1.20"
+    alias(libs.plugins.kotlin)
+    alias(libs.plugins.serialization)
 }
 
 group = "io.github.e_psi_lon.kore.bindings"
