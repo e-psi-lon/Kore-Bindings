@@ -85,14 +85,6 @@ class GenerateDatapackBindings(
 		// Traitement des namespaces groupés
 		for ((prefix, namespaces) in namespaceGroups) {
 			val capitalizedPrefix = prefix.sanitizePascal()
-			val prefixFile = fileSpec(packageName, capitalizedPrefix) {
-				objectBuilder(capitalizedPrefix) {
-					property<String>("namespace") {
-						initializer("%S", prefix)
-					}
-				}
-			}
-			prefixFile.writeTo(outputDir)
 
 			// Création des fichiers pour chaque sous namespace
 			for (fullNamespace in namespaces) {
@@ -119,15 +111,6 @@ class GenerateDatapackBindings(
 								handleComponent(dpComponent, componentFolder, fullNamespace, this)
 							}
 						}
-					}
-
-					// Ajouter l'extension au fichier principal
-					property(namespaceSuffix.sanitizeCamel(), ClassName(packageName, fullCapitalized)) {
-						receiver(ClassName(packageName, capitalizedPrefix))
-						getter {
-							addStatement("return %T", ClassName(packageName, fullCapitalized))
-						}
-						build()
 					}
 				}
 				suffixFile.writeTo(outputDir)
