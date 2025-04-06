@@ -104,22 +104,42 @@ enum class DatapackComponentType: DatapackComponent {
 	BANNER_PATTERN_TAG {
 		override val folderName = "tags/banner_pattern"
 		override val koreMethodOrClass = BannerPatternTagArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("tagName", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null,
+		)
 	},
 	BLOCK_TAG {
 		override val folderName = "tags/block"
 		override val koreMethodOrClass = BlockTagArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("tagName", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null,
+		)
 	},
 	CAT_VARIANT_TAG {
 		override val folderName = "tags/cat_variant"
 		override val koreMethodOrClass = CatVariantTagArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("tagName", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null,
+		)
 	},
 	DAMAGE_TYPE_TAG {
 		override val folderName = "tags/damage_type"
 		override val koreMethodOrClass = DamageTypeArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("tagName", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null,
+		)
 	},
 	ENCHANTMENT_TAG {
 		override val folderName = "tags/enchantment"
 		override val koreMethodOrClass = EnchantmentTagArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("tagName", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null,
+		)
 	},
 	ENTITY_TYPE_TAG {
 		override val folderName = "tags/entity_type"
@@ -132,6 +152,10 @@ enum class DatapackComponentType: DatapackComponent {
 	FLUID_TAG {
 		override val folderName = "tags/fluid"
 		override val koreMethodOrClass = FluidTagArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("tagName", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null,
+		)
 	},
 	FUNCTION_TAG {
 		override val folderName = "tags/function"
@@ -148,39 +172,75 @@ enum class DatapackComponentType: DatapackComponent {
 	GAME_EVENT_TAG {
 		override val folderName = "tags/game_event"
 		override val koreMethodOrClass = GameEventTagArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("tagName", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null,
+		)
 	},
 	INSTRUMENT_TAG {
 		override val folderName = "tags/instrument"
 		override val koreMethodOrClass = InstrumentTagArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("tagName", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null,
+		)
 	},
 	ITEM_TAG {
 		override val folderName = "tags/item"
 		override val koreMethodOrClass = ItemTagArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("tagName", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null,
+		)
 	},
 	PAINTING_VARIANT_TAG {
 		override val folderName = "tags/painting_variant"
 		override val koreMethodOrClass = PaintingVariantTagArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("tagName", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null,
+		)
 	},
 	POINT_OF_INTEREST_TYPE_TAG {
 		override val folderName = "tags/point_of_interest_type"
 		override val koreMethodOrClass = PointOfInterestTagArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("tagName", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null,
+		)
 	},
 	// SUBTAGS FOR WORLDGEN
 	BIOME_TAG {
 		override val folderName = "tags/worldgen/biome"
 		override val koreMethodOrClass = BiomeTagArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("tagName", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null,
+		)
 	},
 	FLAT_LEVEL_GENERATOR_PRESET_TAG {
 		override val folderName = "tags/worldgen/flat_level_generator_preset"
 		override val koreMethodOrClass = FlatLevelGeneratorPresetTagArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("tagName", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null,
+		)
 	},
 	STRUCTURE_TAG {
 		override val folderName = "tags/worldgen/structure"
 		override val koreMethodOrClass = StructureTagArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("tagName", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null,
+		)
 	},
 	WORLD_PRESET_TAG {
 		override val folderName = "tags/worldgen/world_preset"
 		override val koreMethodOrClass = WorldPresetTagArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("tagName", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null,
+		)
 	},
 	/* TRIAL_SPAWNER {
 		override val folderName = "trial_spawner"

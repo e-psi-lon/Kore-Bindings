@@ -16,3 +16,5 @@ kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-c
 [plugins]
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
+kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+generation = { id = "io.github.e_psi_lon.kore.bindings.generation" }

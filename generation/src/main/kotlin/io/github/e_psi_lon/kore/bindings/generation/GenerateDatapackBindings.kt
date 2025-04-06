@@ -5,7 +5,6 @@ import io.github.ayfri.kore.commands.Command
 import io.github.ayfri.kore.utils.pascalCase
 import io.github.e_psi_lon.kore.bindings.generation.poet.*
 import java.io.File
-import java.util.*
 import java.util.zip.ZipFile
 
 /**
@@ -185,10 +184,10 @@ class GenerateDatapackBindings(
 					continue
 				}
 				var sanitizedFileName = fileName.sanitizeCamel()
-				if (functions.containsKey(sanitizedFileName))
-					sanitizedFileName = "${sanitizedFileName}${componentType.duplicateSuffix}"
 				val context = mapOf("namespace" to namespaceName, "name" to fileName)
 				if (componentType.returnType != componentType.koreMethodOrClass) {
+					if (functions.containsKey(sanitizedFileName))
+						sanitizedFileName = "${sanitizedFileName}${componentType.duplicateSuffix}"
 					function(sanitizedFileName) {
 						if (componentType.requiredContext != null) {
 							contextReceivers(componentType.requiredContext!!)
@@ -201,6 +200,8 @@ class GenerateDatapackBindings(
 						)
 					}
 				} else {
+					if (properties.containsKey(sanitizedFileName))
+						sanitizedFileName = "${sanitizedFileName}${componentType.duplicateSuffix}"
 					property(sanitizedFileName, componentType.returnType) {
 						initializer(
 							"%T(%L)",
