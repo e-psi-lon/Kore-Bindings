@@ -13,14 +13,12 @@ import io.github.e_psi_lon.kore.bindings.generation.poet.TypeBuilder
 import java.io.File
 
 
-private val scoreboardRegex = Regex("""\bscoreboard\s+objectives\s+(?:add|remove|setdisplay)\s+([a-zA-Z0-9_]+)\b""")
+private val scoreboardRegex = Regex("""\bscoreboard\s+objectives\s+(?:add|remove|setdisplay)\s+([a-zA-Z0-9_.]+)\b""")
 private val storageRegex = Regex("""\bdata\s+(?:get|merge|remove|modify)\s+storage\s+([a-z0-9_.-]+:[a-z0-9_./-]+)\b""")
 
 class FunctionParser(
 	private val namespace: File
 ) {
-
-
 	private val scoreboards = mutableSetOf<String>()
 	private val storages = mutableSetOf<Pair<String, String>>()
 	private val functions = mutableSetOf<File>()
@@ -39,24 +37,22 @@ class FunctionParser(
 				val parts = scoreboard.split(".")
 				if (parts[0] != namespace.name) {
 					if (parts.size == 1) {
-						// TODO: Fix generation of scoreboard properties outside the namespace
-						// file.scoreBoard(scoreboard)
+						file.scoreBoard(scoreboard)
 					}
 					else return@forEach
 				}
 				file.addImport(ClassName("io.github.ayfri.kore.arguments", "scores"), "score")
 				var currentBuilder = this
-				parts.drop(1).forEach { part ->
-					currentBuilder = currentBuilder.objectBuilder(part)
+				parts.drop(1).dropLast(1).forEach { part ->
+					currentBuilder = currentBuilder.objectBuilder(part.sanitizePascal())
 				}
 				currentBuilder.scoreBoard(parts.joinToString("."))
-
 			}
 			storages.forEach { (storageNamespace, name) ->
 				val parts = storageNamespace.split(".")
 				if (parts[0] != namespace.name) {
 					if (parts.size == 1) {
-						file.property<StorageArgument>(name) {
+						file.property<StorageArgument>(name.sanitizeCamel()) {
 							getter {
 								addStatement("return io.github.ayfri.kore.arguments.types.resources.storage(%S, %S)", name, storageNamespace)
 							}
@@ -65,13 +61,13 @@ class FunctionParser(
 					else return@forEach
 				}
 				var currentBuilder = this
-				for (part in parts.drop(1)) {
+				for (part in parts.drop(1).dropLast(1)) {
 					currentBuilder = currentBuilder.objectBuilder(part)
 				}
 				val finalName =
 					if (properties.containsKey(name)) name + "Storage"
 					else name
-				currentBuilder.property<StorageArgument>(finalName) {
+				currentBuilder.property<StorageArgument>(finalName.sanitizeCamel()) {
 					getter {
 						addStatement("return io.github.ayfri.kore.arguments.types.resources.storage(%S, %S)", name, storageNamespace)
 					}
@@ -84,8 +80,8 @@ class FunctionParser(
 	@OptIn(ExperimentalKotlinPoetApi::class)
 	private fun TypeBuilder.scoreBoard(scoreboard: String) {
 		val finalName =
-			if (properties.containsKey(scoreboard)) scoreboard + "Scoreboard"
-			else scoreboard
+			(if (properties.containsKey(scoreboard)) scoreboard.split(".").last() + "Scoreboard"
+			else scoreboard.split(".").last()).sanitizeCamel()
 		val score = Scores::class.asClassName()
 		val selectorScore = SelectorScore::class.asClassName()
 		val receiver = score.parameterizedBy(selectorScore)
@@ -109,7 +105,6 @@ class FunctionParser(
 		scoreboardFunction(IntRangeOrInt::class.java)
 	}
 
-	@OptIn(ExperimentalKotlinPoetApi::class)
 	private fun FileBuilder.scoreBoard(scoreboard: String) {
 		val finalName =
 			if (propertySpecs.containsKey(scoreboard)) scoreboard + "Scoreboard"

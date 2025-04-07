@@ -58,12 +58,27 @@ class FileBuilder(
 		property(name, className, block)
 	}
 
-	fun function(name: String, block: FunSpec.Builder.() -> Unit) {
-		funSpecs[name] = if (funSpecs.containsKey(name)) {
-			funSpecs[name]!!.apply(block)
+	fun function(name: String, block: FunSpec.Builder.() -> Unit): FunSpec.Builder {
+		val builder = FunSpec.builder(name).apply(block)
+		if (funSpecs.containsKey(name)) {
+			// while there's a suffix, add +1 to the suffix
+			var newName = name
+			var i = 1
+			while (funSpecs.containsKey(newName)) {
+				newName = "$name$i"
+				i++
+			}
+			if (funSpecs[name]!!.parameters == builder.parameters) {
+				funSpecs[newName] = FunSpec.builder(newName).apply(block)
+			} else {
+				// if the parameters are different, the signature is different, no need to add a suffix
+				// But use it for the map key (to avoid collision)
+				funSpecs[newName] = builder
+			}
 		} else {
-			FunSpec.builder(name).apply(block)
+			funSpecs[name] = builder
 		}
+		return funSpecs[name]!!
 	}
 
 
