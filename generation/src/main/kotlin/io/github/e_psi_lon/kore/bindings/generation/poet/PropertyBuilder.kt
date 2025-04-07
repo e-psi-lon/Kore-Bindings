@@ -3,8 +3,8 @@ package io.github.e_psi_lon.kore.bindings.generation.poet
 import com.squareup.kotlinpoet.*
 
 class PropertyBuilder(
-	val name: String,
-	val type: ClassName
+	name: String,
+	type: ClassName,
 ) {
 	private var builder = PropertySpec.builder(name, type)
 	private lateinit var getterFunc: FunSpec.Builder
@@ -13,6 +13,14 @@ class PropertyBuilder(
 		builder = builder.apply {
 			this.initializer(format, *args)
 		}
+	}
+
+	fun addModifiers(vararg modifiers: KModifier) {
+		builder = builder.addModifiers(*modifiers)
+	}
+
+	fun removeModifiers(vararg modifiers: KModifier) {
+		builder.modifiers.removeAll(modifiers.toSet())
 	}
 
 	fun getter(block: FunSpec.Builder.() -> Unit) {
@@ -31,7 +39,7 @@ class PropertyBuilder(
 		}
 	}
 
-	fun receiver(receiver: ClassName) {
+	fun receiver(receiver: TypeName) {
 		builder = builder.receiver(receiver)
 	}
 

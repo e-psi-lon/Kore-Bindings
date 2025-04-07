@@ -28,6 +28,7 @@ class GenerateDatapackBindings(
 	val zipFile: File? = null,
 	val outputDir: File,
 	val packageName: String,
+	val verbose: Boolean = false
 ) {
 	init {
 		if (folder == null && zipFile == null) {
@@ -107,10 +108,12 @@ class GenerateDatapackBindings(
 						for (dpComponent in DatapackComponentType.values()) {
 							val componentFolder = namespaceFolder.resolve(dpComponent.folderName)
 							if (componentFolder.exists() && componentFolder.isDirectory) {
-								println("Adding ${dpComponent.name.lowercase()} in namespace $fullNamespace")
+								if (verbose) println("Adding ${dpComponent.name.lowercase()} in namespace $fullNamespace")
 								handleComponent(dpComponent, componentFolder, fullNamespace)
 							}
 						}
+						val functionParser = FunctionParser(namespaceFolder)
+						functionParser.parse(this, this@fileSpec)
 					}
 				}
 				suffixFile.writeTo(outputDir)
@@ -128,11 +131,12 @@ class GenerateDatapackBindings(
 				for (dpComponent in DatapackComponentType.values()) {
 					val componentFolder = namespace.resolve(dpComponent.folderName)
 					if (componentFolder.exists() && componentFolder.isDirectory) {
-						println("Adding ${dpComponent.name.lowercase()} in namespace $namespaceName")
+						if (verbose) println("Adding ${dpComponent.name.lowercase()} in namespace $namespaceName")
 						handleComponent(dpComponent, componentFolder, namespaceName)
 					}
 				}
-				// Parse the mcfunctions files in
+				val functionParser = FunctionParser(namespace)
+				functionParser.parse(this, this@fileSpec)
 			}
 		}
 		file.writeTo(outputDir)
@@ -195,7 +199,7 @@ class GenerateDatapackBindings(
 					// Traitement des fichiers (inchangé)
 					val fileName = componentOrSubFolder.nameWithoutExtension
 					if (componentOrSubFolder.extension != componentType.fileExtension) {
-						println("Skipping $fileName because it's a ${componentOrSubFolder.extension} file instead of ${componentType.fileExtension}")
+						if (verbose) println("Skipping $fileName because it's a ${componentOrSubFolder.extension} file instead of ${componentType.fileExtension}")
 						continue
 					}
 

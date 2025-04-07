@@ -9,8 +9,12 @@ class FileBuilder(
 	private var builder = FileSpec.builder(packageName, fileName)
 	// Contains all builders to attach to the file
 	private val typeSpecs = mutableMapOf<String, TypeBuilder>()
-	private val propertySpecs = mutableMapOf<String, PropertyBuilder>()
+	val propertySpecs = mutableMapOf<String, PropertyBuilder>()
 	private val funSpecs = mutableMapOf<String, FunSpec.Builder>()
+
+	fun addImport(import: ClassName, vararg names: String) {
+		builder = builder.addImport(import, *names)
+	}
 
 	fun file(block: FileSpec.Builder.() -> Unit) {
 		builder = this.builder.apply(block)
@@ -46,6 +50,19 @@ class FileBuilder(
 			propertySpecs[name]!!.apply(block)
 		} else {
 			PropertyBuilder(name, type).apply(block)
+		}
+	}
+
+	inline fun <reified T : Any> property(name: String, noinline block: PropertyBuilder.() -> Unit) {
+		val className = T::class.asClassName()
+		property(name, className, block)
+	}
+
+	fun function(name: String, block: FunSpec.Builder.() -> Unit) {
+		funSpecs[name] = if (funSpecs.containsKey(name)) {
+			funSpecs[name]!!.apply(block)
+		} else {
+			FunSpec.builder(name).apply(block)
 		}
 	}
 
