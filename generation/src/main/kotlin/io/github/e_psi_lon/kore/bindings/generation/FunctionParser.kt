@@ -46,7 +46,7 @@ class FunctionParser(
 				}
 				file.addImport(ClassName("io.github.ayfri.kore.arguments", "scores"), "score")
 				var currentBuilder = this
-				parts.subList(1, parts.size).forEach { part ->
+				parts.drop(1).forEach { part ->
 					currentBuilder = currentBuilder.objectBuilder(part)
 				}
 				currentBuilder.scoreBoard(parts.joinToString("."))
@@ -65,7 +65,7 @@ class FunctionParser(
 					else return@forEach
 				}
 				var currentBuilder = this
-				for (part in parts.subList(1, parts.size)) {
+				for (part in parts.drop(1)) {
 					currentBuilder = currentBuilder.objectBuilder(part)
 				}
 				val finalName =

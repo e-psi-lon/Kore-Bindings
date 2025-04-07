@@ -65,10 +65,8 @@ class GenerateDatapackBindings(
 
 	private fun handleDatapack(folder: File) {
 		val dataFolder = folder.resolve("data")
-		// On vérifie le pack.mcmeta et le dossier data
 		if (!folder.resolve("pack.mcmeta").exists() || !dataFolder.exists() || !dataFolder.isDirectory)
 			throw IllegalArgumentException("Invalid datapack folder: ${folder.absolutePath}")
-		// On regroupe les namespaces par préfixe
 		val namespaceGroups = mutableMapOf<String, MutableList<String>>()
 
 		for (namespace in dataFolder.listFiles { file -> file.isDirectory }!!) {
@@ -83,21 +81,17 @@ class GenerateDatapackBindings(
 			}
 		}
 
-		// Traitement des namespaces groupés
 		for ((prefix, namespaces) in namespaceGroups) {
 			val capitalizedPrefix = prefix.sanitizePascal()
 
-			// Création des fichiers pour chaque sous namespace
 			for (fullNamespace in namespaces) {
 				val namespaceSuffix = fullNamespace.substringAfter('.')
 				val capitalizedSuffix = namespaceSuffix.sanitizePascal()
 				val fullCapitalized = "${capitalizedPrefix}${capitalizedSuffix}"
 
-				// Recherche du dossier de namespace
 				val namespaceFolder = dataFolder.resolve(fullNamespace)
 				if (!namespaceFolder.exists() || !namespaceFolder.isDirectory) continue
 
-				// Création du fichier pour le sous namespace
 				val suffixFile = fileSpec(packageName, fullCapitalized) {
 					// Créer l'objet principal du sous namespace
 					objectBuilder(fullCapitalized) {
@@ -150,12 +144,11 @@ class GenerateDatapackBindings(
 		namespaceName: String,
 		parentClassName: String = ""
 	) {
-		// Utiliser une pile pour stocker les dossiers à traiter avec leur contexte complet
 		data class FolderContext(
 			val folder: File,
 			val parentPath: String,
 			val parentClassName: String,
-			val builder: TypeBuilder  // Ajout du TypeBuilder au contexte
+			val builder: TypeBuilder
 		)
 
 		val stack = mutableListOf<FolderContext>()
@@ -175,7 +168,6 @@ class GenerateDatapackBindings(
 						sanitizedSubFolderName else
 						"$currentParentClassName.$sanitizedSubFolderName"
 
-					// Créer l'objet pour ce dossier dans le TypeBuilder courant
 					val subObjectBuilder = currentBuilder.objectBuilder(sanitizedSubFolderName) {
 						if (hasParent) {
 							property<String>("path") {
@@ -187,8 +179,6 @@ class GenerateDatapackBindings(
 							}
 						}
 					}
-
-					// Ajouter le sous-dossier à la pile avec son propre builder
 					stack.add(FolderContext(
 						componentOrSubFolder,
 						newParentPath,
@@ -196,7 +186,6 @@ class GenerateDatapackBindings(
 						subObjectBuilder
 					))
 				} else {
-					// Traitement des fichiers (inchangé)
 					val fileName = componentOrSubFolder.nameWithoutExtension
 					if (componentOrSubFolder.extension != componentType.fileExtension) {
 						if (verbose) println("Skipping $fileName because it's a ${componentOrSubFolder.extension} file instead of ${componentType.fileExtension}")
