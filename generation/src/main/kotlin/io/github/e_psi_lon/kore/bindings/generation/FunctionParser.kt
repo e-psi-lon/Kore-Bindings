@@ -1,13 +1,16 @@
 package io.github.e_psi_lon.kore.bindings.generation
 
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.ExperimentalKotlinPoetApi
+import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.asClassName
+import io.github.ayfri.kore.arguments.Argument
+import io.github.ayfri.kore.arguments.scores.ExecuteScore as ArgExecuteScore
 import io.github.ayfri.kore.arguments.numbers.ranges.IntRangeOrInt
 import io.github.ayfri.kore.arguments.scores.Scores
 import io.github.ayfri.kore.arguments.scores.SelectorScore
+import io.github.ayfri.kore.arguments.types.ScoreHolderArgument
 import io.github.ayfri.kore.arguments.types.resources.StorageArgument
+import io.github.ayfri.kore.commands.execute.ExecuteCondition
+import io.github.ayfri.kore.commands.execute.ExecuteStore
 import io.github.e_psi_lon.kore.bindings.generation.poet.FileBuilder
 import io.github.e_psi_lon.kore.bindings.generation.poet.TypeBuilder
 import java.io.File
@@ -124,7 +127,7 @@ class FunctionParser(
 		}
 	}
 
-	@OptIn(ExperimentalKotlinPoetApi::class)
+	@OptIn(ExperimentalKotlinPoetApi::class, DelicateKotlinPoetApi::class)
 	private fun TypeBuilder.scoreBoard(scoreboard: String) {
 		val finalName =
 			(if (properties.containsKey(scoreboard)) scoreboard.split(".").last() + "Scoreboard"
@@ -150,9 +153,19 @@ class FunctionParser(
 		scoreboardFunction(Int::class.java)
 		scoreboardFunction(IntRange::class.java)
 		scoreboardFunction(IntRangeOrInt::class.java)
+		fun scoreBoardExecute(contextReceiverClass: Class<*>, returnType: TypeName) {
+			function(finalName) {
+				contextReceivers(contextReceiverClass.asClassName())
+				addParameter("target", ScoreHolderArgument::class.asClassName())
+				returns(returnType)
+				addStatement("return score(target, %S)", scoreboard)
+			}
+		}
+		scoreBoardExecute(ExecuteStore::class.java, List::class.asClassName().parameterizedBy(Argument::class.asClassName()))
+		scoreBoardExecute(ExecuteCondition::class.java, ArgExecuteScore::class.asClassName())
 	}
 
-	@OptIn(ExperimentalKotlinPoetApi::class)
+	@OptIn(ExperimentalKotlinPoetApi::class, DelicateKotlinPoetApi::class)
     private fun FileBuilder.scoreBoard(scoreboard: String, parent: ClassName? = null) {
 		val finalName = (
 			if (propertySpecs.containsKey(scoreboard)) scoreboard + "Scoreboard"
@@ -193,6 +206,21 @@ class FunctionParser(
 		scoreboardFunction(Int::class.java)
 		scoreboardFunction(IntRange::class.java)
 		scoreboardFunction(IntRangeOrInt::class.java)
+		fun scoreBoardExecute(contextReceiverClass: Class<*>, returnType: TypeName) {
+			function(finalName) {
+				if (parent != null) {
+					receiver(parent)
+					contextReceivers(contextReceiverClass.asClassName())
+				} else {
+					receiver(contextReceiverClass.asClassName())
+				}
+				returns(returnType)
+				addParameter("target", ScoreHolderArgument::class.asClassName())
+				addStatement("return score(target, %S)", scoreboard)
+			}
+		}
+		scoreBoardExecute(ExecuteStore::class.java, List::class.asClassName().parameterizedBy(Argument::class.asClassName()))
+		scoreBoardExecute(ExecuteCondition::class.java, ArgExecuteScore::class.asClassName())
 	}
 
 
