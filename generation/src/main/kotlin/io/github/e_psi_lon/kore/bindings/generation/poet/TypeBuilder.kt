@@ -2,7 +2,7 @@ package io.github.e_psi_lon.kore.bindings.generation.poet
 
 import com.squareup.kotlinpoet.*
 
-class TypeBuilder(
+internal class TypeBuilder(
 	name: String,
 	type: TypeSpec.Kind
 ) {

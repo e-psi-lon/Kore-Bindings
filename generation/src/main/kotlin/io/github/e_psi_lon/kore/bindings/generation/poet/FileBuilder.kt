@@ -2,7 +2,7 @@ package io.github.e_psi_lon.kore.bindings.generation.poet
 
 import com.squareup.kotlinpoet.*
 
-class FileBuilder(
+internal class FileBuilder(
 	packageName: String,
 	fileName: String
 ) {
@@ -105,6 +105,6 @@ class FileBuilder(
 	}
 }
 
-fun fileSpec(packageName: String, fileName: String, block: FileBuilder.() -> Unit): FileSpec {
+internal fun fileSpec(packageName: String, fileName: String, block: FileBuilder.() -> Unit): FileSpec {
 	return FileBuilder(packageName, fileName).apply(block).build()
 }

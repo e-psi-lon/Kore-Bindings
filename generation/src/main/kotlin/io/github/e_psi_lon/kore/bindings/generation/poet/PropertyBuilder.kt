@@ -2,7 +2,7 @@ package io.github.e_psi_lon.kore.bindings.generation.poet
 
 import com.squareup.kotlinpoet.*
 
-class PropertyBuilder(
+internal class PropertyBuilder(
 	name: String,
 	type: ClassName,
 ) {
