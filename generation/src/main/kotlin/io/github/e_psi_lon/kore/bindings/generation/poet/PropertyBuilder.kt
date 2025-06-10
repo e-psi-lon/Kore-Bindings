@@ -15,6 +15,10 @@ internal class PropertyBuilder(
 		}
 	}
 
+	fun addDocs(vararg docs: String) {
+		builder = builder.addKdoc(docs.joinToString("\n"))
+	}
+
 	fun addModifiers(vararg modifiers: KModifier) {
 		builder = builder.addModifiers(*modifiers)
 	}

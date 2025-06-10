@@ -13,7 +13,11 @@ internal class FileBuilder(
 	private val funSpecs = mutableMapOf<String, FunSpec.Builder>()
 
 	fun addImport(import: ClassName, vararg names: String) {
-		builder = builder.addImport(import, *names)
+		builder = if (names.isEmpty()) {
+			builder.addImport(import.packageName, import.simpleName)
+		} else {
+			builder.addImport(import.packageName, *names)
+		}
 	}
 
 	fun file(block: FileSpec.Builder.() -> Unit) {

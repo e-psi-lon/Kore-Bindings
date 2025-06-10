@@ -28,7 +28,7 @@ class GenerateDatapackBindings(
 	val zipFile: File? = null,
 	val outputDir: File,
 	val packageName: String,
-	val verbose: Boolean = false
+	private val verbose: Boolean = false
 ) {
 	init {
 		if (folder == null && zipFile == null) {
@@ -93,10 +93,14 @@ class GenerateDatapackBindings(
 				if (!namespaceFolder.exists() || !namespaceFolder.isDirectory) continue
 
 				val suffixFile = fileSpec(packageName, fullCapitalized) {
-					// Créer l'objet principal du sous namespace
+					// Create main object for the namespace
 					objectBuilder(fullCapitalized) {
 						property<String>("namespace") {
 							initializer("%S", fullNamespace)
+						}
+						property<String>("path") {
+							addModifiers(KModifier.PRIVATE)
+							initializer("%S", "")
 						}
 						// Traiter tous les composants
 						for (dpComponent in DatapackComponentType.values()) {
@@ -106,7 +110,7 @@ class GenerateDatapackBindings(
 								handleComponent(dpComponent, componentFolder, fullNamespace)
 							}
 						}
-						val functionParser = FunctionParser(namespaceFolder)
+						val functionParser = FunctionParser(namespaceFolder, prefix)
 						functionParser.parse(this, this@fileSpec)
 					}
 				}
@@ -122,6 +126,10 @@ class GenerateDatapackBindings(
 				property<String>("namespace") {
 					initializer("%S", namespaceName)
 				}
+				property<String>("path") {
+					addModifiers(KModifier.PRIVATE)
+					initializer("%S", "")
+				}
 				for (dpComponent in DatapackComponentType.values()) {
 					val componentFolder = namespace.resolve(dpComponent.folderName)
 					if (componentFolder.exists() && componentFolder.isDirectory) {
@@ -129,7 +137,7 @@ class GenerateDatapackBindings(
 						handleComponent(dpComponent, componentFolder, namespaceName)
 					}
 				}
-				val functionParser = FunctionParser(namespace)
+				val functionParser = FunctionParser(namespace, null)
 				functionParser.parse(this, this@fileSpec)
 			}
 		}
@@ -162,7 +170,7 @@ class GenerateDatapackBindings(
 					val subFolderName = componentOrSubFolder.name.substringAfterLast('/')
 					val sanitizedSubFolderName = subFolderName.sanitizePascal()
 
-					val newParentPath = if (parentPath.isEmpty()) subFolderName else "$parentPath/$subFolderName"
+					val newParentPath = if (parentPath.isEmpty()) subFolderName else "$parentPath/$subFolderName/"
 					val hasParent = currentParentClassName.isNotEmpty()
 					val newParentClassName = if (!hasParent)
 						sanitizedSubFolderName else
@@ -171,11 +179,13 @@ class GenerateDatapackBindings(
 					val subObjectBuilder = currentBuilder.objectBuilder(sanitizedSubFolderName) {
 						if (hasParent) {
 							property<String>("path") {
-								initializer("%P", "\${$currentParentClassName.path}/$subFolderName")
+								addModifiers(KModifier.PRIVATE)
+								initializer("%P", "\${$currentParentClassName.path}/$subFolderName/")
 							}
 						} else {
 							property<String>("path") {
-								initializer("%P", "\$namespace:$subFolderName")
+								addModifiers(KModifier.PRIVATE)
+								initializer("%P", subFolderName)
 							}
 						}
 					}
@@ -230,7 +240,7 @@ class GenerateDatapackBindings(
 			val parameterName = parameter.name
 			if (value == null) {
 				"$parameterName = ${when (parameterName) {
-					"name", "tagName" -> "\"${context["name"]}\""
+					"name", "tagName" -> "\"\${path}${context["name"]}\""
 					"namespace" -> "namespace"
 					else -> if (context.containsKey(parameterName)) "\"${context[parameterName]}\"" else throw IllegalArgumentException("Unknown base parameter name: $parameterName")
 				}}"
