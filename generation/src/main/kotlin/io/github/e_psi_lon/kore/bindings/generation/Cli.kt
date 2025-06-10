@@ -19,6 +19,8 @@ fun main(args: Array<String>) {
 			return
 		}
 	var outputPath = getArgValue(arguments, "-o", "--output")
+	val providedParentPackage = getArgValue(arguments, "-pp", "--parent-package")
+	val parentPackage = providedParentPackage ?: packageName.substringBeforeLast(".", "")
 	val originalOutputPath = outputPath ?: "generated"
 	println("Output path: ${outputPath ?: "generated"}")
 	var bundled = false
@@ -61,7 +63,9 @@ fun main(args: Array<String>) {
 		folder = folderPath,
 		zipFile = zipPath,
 		outputDir = outputDir,
-		packageName = packageName
+		packageName = packageName,
+		parentPackage = parentPackage,
+		verbose = getArgValue(arguments, "-v", "--verbose")?.toBoolean() ?: false,
 	)
 	if (bundled) {
 		val zipFile = File(originalOutputPath)
@@ -124,11 +128,13 @@ private fun printHelp() {
           java -jar kore-bindings-generator.jar [options]
         
         Options:
-          -h, --help                Display this help message
-          -p, --package NAME        The package name for the generated bindings (required)
-          -o, --output PATH			Output directory or zip file name for generated bindings (default: "generated")
-          -f, --folder PATH         The path to the datapack folder
-          -z, --zip PATH            The path to the datapack zip file
+          -h, --help					Display this help message
+          -p, --package NAME			The package name for the generated bindings (required)
+          -o, --output PATH				Output directory or zip file name for generated bindings (default: "generated")
+          -f, --folder PATH				The path to the datapack folder
+          -z, --zip PATH				The path to the datapack zip file
+          -pp, --parent-package NAME	Parent package name (default: package name without the last part)
+		  -v, --verbose					Enable verbose output (default: false)
         
         Note: Either -f or -z must be provided, but not both.
     """.trimIndent())
