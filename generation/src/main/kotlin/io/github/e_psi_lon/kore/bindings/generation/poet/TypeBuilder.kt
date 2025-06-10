@@ -14,7 +14,7 @@ internal class TypeBuilder(
 	}
 	val properties = mutableMapOf<String, PropertyBuilder>()
 	val functions = mutableMapOf<String, FunSpec.Builder>()
-	private val typeSpecs = mutableMapOf<String, TypeBuilder>()
+	val typeSpecs = mutableMapOf<String, TypeBuilder>()
 
 	fun build(): TypeSpec {
 		return builder.apply {

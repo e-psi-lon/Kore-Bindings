@@ -226,8 +226,10 @@ class GenerateDatapackBindings(
 
 					val subObjectBuilder = currentBuilder.objectBuilder(sanitizedSubFolderName) {
 						// Check if object name might not be a valid Kotlin identifier
-						println("Adding sub-object for $newParentClassName in namespace $namespaceName which is valid : ${isValidKotlinIdentifier(sanitizedSubFolderName)}")
-						if (!isValidKotlinIdentifier(sanitizedSubFolderName)) {
+						if (verbose) println("Adding sub-object for $newParentClassName in namespace $namespaceName which is valid : ${isValidKotlinIdentifier(sanitizedSubFolderName)}")
+						if (!isValidKotlinIdentifier(sanitizedSubFolderName) &&
+							!currentBuilder.typeSpecs.containsKey(sanitizedSubFolderName)
+						) {
 							addAnnotation<Suppress> {
 								addMember("%S", "ClassName")
 							}
