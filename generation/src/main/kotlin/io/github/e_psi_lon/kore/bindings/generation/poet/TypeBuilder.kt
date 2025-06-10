@@ -34,6 +34,10 @@ internal class TypeBuilder(
 		builder = builder.superclass(name)
 	}
 
+	inline fun <reified T : Annotation> addAnnotation(noinline block: AnnotationSpec.Builder.() -> Unit = {}) {
+		builder.addAnnotation(AnnotationSpec.builder(T::class).apply(block).build())
+	}
+
 	@OptIn(ExperimentalKotlinPoetApi::class)
 	fun contextReceivers(vararg receiverTypes: TypeName) {
 		builder = builder.contextReceivers(*receiverTypes)
@@ -65,6 +69,10 @@ internal class TypeBuilder(
 			properties[name] = PropertyBuilder(name, type).apply(block)
 			properties[name]!!
 		}
+	}
+
+	fun FunSpec.Builder.addDoc(vararg docs: String): FunSpec.Builder {
+		return addKdoc(docs.joinToString("\n"))
 	}
 
 	fun function(name: String, block: FunSpec.Builder.() -> Unit): FunSpec.Builder {

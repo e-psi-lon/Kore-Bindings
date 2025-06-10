@@ -20,6 +20,10 @@ internal class FileBuilder(
 		}
 	}
 
+	inline fun <reified T : Annotation> addAnnotation(noinline block: AnnotationSpec.Builder.() -> Unit = {}) {
+		builder = builder.addAnnotation(AnnotationSpec.builder(T::class).apply(block).build())
+	}
+
 	fun file(block: FileSpec.Builder.() -> Unit) {
 		builder = this.builder.apply(block)
 	}

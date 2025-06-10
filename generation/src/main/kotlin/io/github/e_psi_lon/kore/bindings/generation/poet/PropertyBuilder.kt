@@ -15,6 +15,20 @@ internal class PropertyBuilder(
 		}
 	}
 
+	inline fun <reified T : Annotation> addAnnotation(
+		noinline block: AnnotationSpec.Builder.() -> Unit = {}
+	): PropertyBuilder {
+		return addAnnotation(T::class.asClassName(), block)
+	}
+
+	fun addAnnotation(
+		type: ClassName,
+		block: AnnotationSpec.Builder.() -> Unit = {}
+	): PropertyBuilder {
+		builder = builder.addAnnotation(AnnotationSpec.builder(type).apply(block).build())
+		return this
+	}
+
 	fun addDocs(vararg docs: String) {
 		builder = builder.addKdoc(docs.joinToString("\n"))
 	}
