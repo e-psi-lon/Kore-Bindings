@@ -18,6 +18,7 @@ private val storageRegex = Regex("""\bdata\s+(?:get|merge|remove|modify)\s+stora
 
 class FunctionParser(
 	private val namespace: File,
+	private val parentPackage: String,
 	// Used for prefixed namespaces such as prefix.something which define stuff under "prefix" and not "prefix.something"
 	private val prefix: String?
 ) {
@@ -29,7 +30,7 @@ class FunctionParser(
 		namespace.resolve("function").walkTopDown().filter { it.isFile && it.extension == "mcfunction" }.forEach { functions.add(it) }
 	}
 
-	internal fun parse(typeBuilder: TypeBuilder, file: FileBuilder) {
+	internal operator fun invoke(typeBuilder: TypeBuilder, file: FileBuilder) {
 		// Parse the functions
 		parseMcFunction()
 
@@ -37,13 +38,13 @@ class FunctionParser(
 		typeBuilder.apply {
 			scoreboards.forEach { scoreboard ->
 				val parts = scoreboard.split(".")
-				file.addImport(ClassName("io.github.ayfri.kore.arguments", "scores"), "score")
+				file.addImport(ClassName("io.github.ayfri.kore.arguments.scores", "score"))
 				if (parts[0] != namespace.name) {
 					if (parts.size == 1) file.scoreBoard(scoreboard)
 					else if (parts.size == 2 && parts[0] == prefix) {
 						file.scoreBoard(
 							parts[1],
-							ClassName("io.github.e_psi_lon.kore.bindings", prefix.sanitizePascal())
+							ClassName(parentPackage, prefix.sanitizePascal())
 						)
 					}
 					else return@forEach
@@ -57,7 +58,7 @@ class FunctionParser(
 			}
 			storages.forEach { (storageNamespace, name) ->
 				val parts = storageNamespace.split(".")
-				if (parts[0] != namespace.name) {
+				if (parts[0] != namespace.name && storageNamespace != namespace.name) {
 					if (parts.size == 1) {
 						file.property<StorageArgument>(name.sanitizeCamel()) {
 							addDocs(
@@ -71,7 +72,7 @@ class FunctionParser(
 						}
 					} else if (parts[0] == prefix) {
 						file.property<StorageArgument>("${parts.drop(1).joinToString { it.sanitizePascal() }}${name.sanitizePascal()}".sanitizeCamel()) {
-							receiver(ClassName("io.github.e_psi_lon.kore.bindings", prefix.sanitizePascal()))
+							receiver(ClassName(parentPackage, prefix.sanitizePascal()))
 							addDocs(
 								"Storage reference for `$name` in namespace `$storageNamespace`.",
 								"",
@@ -110,11 +111,6 @@ class FunctionParser(
 						if (properties.containsKey(name)) name + "Storage"
 						else name
 					currentBuilder.property<StorageArgument>(finalName.sanitizeCamel()) {
-						addDocs(
-							"Storage reference for `$name` in namespace `$storageNamespace`.",
-							"",
-							"Note: In Minecraft and in generated functions, this storage is referenced as `$storageNamespace:$name`."
-						)
 						getter {
 							addStatement(
 								"return io.github.ayfri.kore.arguments.types.resources.storage(%S, %S)",
@@ -158,9 +154,9 @@ class FunctionParser(
 
 	@OptIn(ExperimentalKotlinPoetApi::class)
     private fun FileBuilder.scoreBoard(scoreboard: String, parent: ClassName? = null) {
-		val finalName =
+		val finalName = (
 			if (propertySpecs.containsKey(scoreboard)) scoreboard + "Scoreboard"
-			else scoreboard
+			else scoreboard).sanitizeCamel()
 		val score = Scores::class.asClassName()
 		val selectorScore = SelectorScore::class.asClassName()
 		val receiver = score.parameterizedBy(selectorScore)
@@ -177,8 +173,10 @@ class FunctionParser(
 		property<String>(finalName) {
 			if (parent != null) {
 				receiver(parent)
+				getter { addStatement("return %S", scoreboard) }
+			} else {
+				initializer("%S", scoreboard)
 			}
-			initializer("%S", scoreboard)
 		}
 		fun scoreboardFunction(parameterType: Class<*>) {
 			function(finalName) {

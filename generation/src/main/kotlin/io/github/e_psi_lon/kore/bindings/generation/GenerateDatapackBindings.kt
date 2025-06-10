@@ -17,6 +17,9 @@ import java.util.zip.ZipFile
  * @param zipFile The zip file containing the datapack. If null, the folder parameter must be provided.
  * @param outputDir The directory where the generated bindings will be written.
  * @param packageName The package name for the generated bindings.
+ * @param parentPackage The parent package containing objects definitions for scoreboards and storages.
+ * Defaults to the same as packageName.
+ * @param verbose If true, prints additional information during processing.
  *
  * @throws IllegalArgumentException If neither folder nor zipFile is provided, or if both are provided.
  * Can also be thrown if the provided folder or zip file is invalid.
@@ -28,6 +31,7 @@ class GenerateDatapackBindings(
 	val zipFile: File? = null,
 	val outputDir: File,
 	val packageName: String,
+	private val parentPackage: String,
 	private val verbose: Boolean = false
 ) {
 	init {
@@ -93,15 +97,35 @@ class GenerateDatapackBindings(
 				if (!namespaceFolder.exists() || !namespaceFolder.isDirectory) continue
 
 				val suffixFile = fileSpec(packageName, fullCapitalized) {
+					addAnnotation<Suppress> {
+						addMember("%S", "unused")
+						addMember("%S", "RedundantVisibilityModifier")
+					}
 					// Create main object for the namespace
 					objectBuilder(fullCapitalized) {
+						// Check if object name might not be a valid Kotlin identifier
+						if (!isValidKotlinIdentifier(fullCapitalized)) {
+							addAnnotation<Suppress> {
+								addMember("%S", "ClassName")
+							}
+						}
+						
 						property<String>("namespace") {
+							addAnnotation<Suppress> {
+								addMember("%S", "ConstPropertyName")
+							}
+							addModifiers(KModifier.CONST)
 							initializer("%S", fullNamespace)
 						}
-						property<String>("path") {
-							addModifiers(KModifier.PRIVATE)
-							initializer("%S", "")
+						
+						// Only add PATH property if it doesn't exist yet
+						if (!properties.containsKey("PATH")) {
+							property<String>("PATH") {
+								addModifiers(KModifier.CONST, KModifier.PRIVATE)
+								initializer("%S", "")
+							}
 						}
+						
 						// Traiter tous les composants
 						for (dpComponent in DatapackComponentType.values()) {
 							val componentFolder = namespaceFolder.resolve(dpComponent.folderName)
@@ -110,8 +134,8 @@ class GenerateDatapackBindings(
 								handleComponent(dpComponent, componentFolder, fullNamespace)
 							}
 						}
-						val functionParser = FunctionParser(namespaceFolder, prefix)
-						functionParser.parse(this, this@fileSpec)
+						val functionParser = FunctionParser(namespaceFolder, parentPackage, prefix)
+						functionParser(this, this@fileSpec)
 					}
 				}
 				suffixFile.writeTo(outputDir)
@@ -123,13 +147,29 @@ class GenerateDatapackBindings(
 		val capitalizedName = namespaceName.sanitizePascal()
 		val file = fileSpec(packageName, capitalizedName) {
 			objectBuilder(capitalizedName) {
+				// Check if object name might not be a valid Kotlin identifier
+				if (!isValidKotlinIdentifier(capitalizedName)) {
+					addAnnotation<Suppress> {
+						addMember("%S", "ClassName")
+					}
+				}
+				
 				property<String>("namespace") {
+					addAnnotation<Suppress> {
+						addMember("%S", "ConstPropertyName")
+					}
+					addModifiers(KModifier.CONST)
 					initializer("%S", namespaceName)
 				}
-				property<String>("path") {
-					addModifiers(KModifier.PRIVATE)
-					initializer("%S", "")
+				
+				// Only add PATH property if it doesn't exist yet
+				if (!properties.containsKey("PATH")) {
+					property<String>("PATH") {
+						addModifiers(KModifier.CONST, KModifier.PRIVATE)
+						initializer("%S", "")
+					}
 				}
+				
 				for (dpComponent in DatapackComponentType.values()) {
 					val componentFolder = namespace.resolve(dpComponent.folderName)
 					if (componentFolder.exists() && componentFolder.isDirectory) {
@@ -137,14 +177,22 @@ class GenerateDatapackBindings(
 						handleComponent(dpComponent, componentFolder, namespaceName)
 					}
 				}
-				val functionParser = FunctionParser(namespace, null)
-				functionParser.parse(this, this@fileSpec)
+				val functionParser = FunctionParser(namespace, parentPackage, null)
+				functionParser(this, this@fileSpec)
 			}
 		}
 		file.writeTo(outputDir)
 	}
 
-
+	/**
+	 * Checks if the given name is a valid Kotlin identifier.
+	 * Returns false if it starts with a number or contains invalid characters.
+	 */
+	private fun isValidKotlinIdentifier(name: String): Boolean {
+		if (name.isEmpty()) return false
+		if (name[0].isDigit()) return false
+		return name.all { it.isLetterOrDigit() }
+	}
 
 	private fun TypeBuilder.handleComponent(
 		componentType: DatapackComponentType,
@@ -177,15 +225,25 @@ class GenerateDatapackBindings(
 						"$currentParentClassName.$sanitizedSubFolderName"
 
 					val subObjectBuilder = currentBuilder.objectBuilder(sanitizedSubFolderName) {
-						if (hasParent) {
-							property<String>("path") {
-								addModifiers(KModifier.PRIVATE)
-								initializer("%P", "\${$currentParentClassName.path}/$subFolderName/")
+						// Check if object name might not be a valid Kotlin identifier
+						println("Adding sub-object for $newParentClassName in namespace $namespaceName which is valid : ${isValidKotlinIdentifier(sanitizedSubFolderName)}")
+						if (!isValidKotlinIdentifier(sanitizedSubFolderName)) {
+							addAnnotation<Suppress> {
+								addMember("%S", "ClassName")
 							}
-						} else {
-							property<String>("path") {
-								addModifiers(KModifier.PRIVATE)
-								initializer("%P", subFolderName)
+						}
+
+						if (!properties.containsKey("PATH")) {
+							if (hasParent) {
+								property<String>("PATH") {
+									addModifiers(KModifier.CONST, KModifier.PRIVATE)
+									initializer("%P", "\${${currentParentClassName.split(".").takeLast(2).joinToString(".")}.PATH}/$subFolderName/")
+								}
+							} else {
+								property<String>("PATH") {
+									addModifiers(KModifier.CONST, KModifier.PRIVATE)
+									initializer("%P", subFolderName)
+								}
 							}
 						}
 					}
@@ -204,11 +262,35 @@ class GenerateDatapackBindings(
 
 					var sanitizedFileName = fileName.sanitizeCamel()
 					val context = mapOf("namespace" to namespaceName, "name" to fileName)
+					
+					// Check if the sanitized name is a valid Kotlin identifier
+					val needsPrefix = sanitizedFileName[0].isDigit()
+
+					// For numeric filenames, add "n" prefix
+					if (needsPrefix) {
+						sanitizedFileName = "n$sanitizedFileName"
+					}
+					val needsSuppressAnnotation = !isValidKotlinIdentifier(sanitizedFileName)
+					
+
 
 					if (componentType.returnType != componentType.koreMethodOrClass) {
 						if (currentBuilder.functions.containsKey(sanitizedFileName))
 							sanitizedFileName = "${sanitizedFileName}${componentType.duplicateSuffix}"
 						currentBuilder.function(sanitizedFileName) {
+							if (needsSuppressAnnotation) {
+								addAnnotation<Suppress> {
+									addMember("%S", "FunctionName")
+								}
+							}
+							
+							if (needsPrefix) {
+								addDoc(
+									"This function was renamed to be a valid Kotlin identifier",
+									"Minecraft will identify it as `$namespaceName:\${path to function}/$fileName`."
+								)
+							}
+							
 							if (componentType.requiredContext != null) {
 								contextReceivers(componentType.requiredContext!!)
 							}
@@ -223,6 +305,19 @@ class GenerateDatapackBindings(
 						if (currentBuilder.properties.containsKey(sanitizedFileName))
 							sanitizedFileName = "${sanitizedFileName}${componentType.duplicateSuffix}"
 						currentBuilder.property(sanitizedFileName, componentType.returnType) {
+							if (needsSuppressAnnotation) {
+								addAnnotation<Suppress> {
+									addMember("%S", "PropertyName")
+								}
+							}
+							
+							if (needsPrefix) {
+								addDocs(
+									"This function was renamed to be a valid Kotlin identifier.",
+									"Minecraft will identify it as `$namespaceName:\${path to function}/$fileName`.",
+								)
+							}
+							
 							initializer(
 								"%T(%L)",
 								componentType.koreMethodOrClass,
@@ -240,7 +335,7 @@ class GenerateDatapackBindings(
 			val parameterName = parameter.name
 			if (value == null) {
 				"$parameterName = ${when (parameterName) {
-					"name", "tagName" -> "\"\${path}${context["name"]}\""
+					"name", "tagName" -> "\"\${PATH}${context["name"]}\""
 					"namespace" -> "namespace"
 					else -> if (context.containsKey(parameterName)) "\"${context[parameterName]}\"" else throw IllegalArgumentException("Unknown base parameter name: $parameterName")
 				}}"
@@ -252,7 +347,6 @@ class GenerateDatapackBindings(
 }
 
 fun String.sanitizeCamel() = sanitizePascal().replaceFirstChar { if (!it.isLowerCase()) it.lowercase() else it.toString() }
-
 
 fun String.sanitizePascal() = pascalCase()
 	.replace('-', '_')

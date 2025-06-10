@@ -55,6 +55,7 @@ class BindingGradlePlugin : Plugin<Project> {
 							zipFile = if (!datapack.isDirectory && datapack.extension == "zip") datapack else null,
 							outputDir = outputDir.get().asFile,
 							packageName = sanitizedPackageName,
+							parentPackage = extension.parentPackage.get().sanitizePackageName(),
 						)
 					} else {
 						project.logger.warn("Unsupported file type: ${datapack.name}. Only directories and zip files are supported.")
@@ -88,6 +89,11 @@ class BindingGradlePlugin : Plugin<Project> {
 open class BindingExtension(private val project: Project) {
 	val datapackFolder: DirectoryProperty = project.objects.directoryProperty()
 	val packageName: Property<String> = project.objects.property(String::class.java)
+	val parentPackage = project.objects.property(String::class.java)
+		.convention(project.provider { packageName.get().substringBeforeLast('.') })
+		.apply {
+			finalizeValueOnRead()
+		}
 	val configureSourceSet: Property<Boolean> = project.objects.property(Boolean::class.java).convention(true)
 }
 
