@@ -5,7 +5,6 @@ import io.github.ayfri.kore.arguments.numbers.ranges.IntRangeOrInt
 import io.github.ayfri.kore.arguments.selector.scores
 import io.github.ayfri.kore.arguments.types.literals.literal
 import io.github.ayfri.kore.arguments.types.literals.self
-import io.github.ayfri.kore.arguments.types.resources.storage
 import io.github.ayfri.kore.commands.execute.execute
 import io.github.ayfri.kore.functions.function
 import io.github.ayfri.kore.functions.setTag
@@ -43,7 +42,7 @@ fun SmithedCrafter.smithedRecipes(
                 }
 
                 ifCondition {
-                    data(input(), "recipe${nbtSerializer.encodeToString(recipe)}")
+                    data(input, "recipe${nbtSerializer.encodeToString(recipe)}")
                 }
 
                 run {
@@ -51,7 +50,7 @@ fun SmithedCrafter.smithedRecipes(
                 }
             }
 
-            setTag("event/shaped_recipes", namespace)
+            setTag(SmithedCrafter.Event.recipes)
         }
     }
     function("shapeless_recipes", recipeNamespace, directory) {
@@ -72,12 +71,12 @@ fun SmithedCrafter.smithedRecipes(
                 ifCondition {
                     score(
                         literal("count"),
-                        Smithed.data(),
+                        Smithed.data,
                         IntRangeOrInt(int = recipe.ingredients.size)
                     )
                 }
                 ifCondition {
-                    data(input(), "recipe${nbtSerializer.encodeToString(recipe)}")
+                    data(input, "recipe${nbtSerializer.encodeToString(recipe)}")
                 }
                 run {
                     addLine(recipe.result!!)
@@ -88,4 +87,3 @@ fun SmithedCrafter.smithedRecipes(
     }
 }
 
-fun SmithedCrafter.input() = storage("input", namespace)

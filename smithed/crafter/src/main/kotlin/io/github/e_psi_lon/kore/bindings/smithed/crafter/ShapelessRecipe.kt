@@ -46,7 +46,7 @@ class ShapelessRecipe : Recipe {
                 val nbtEncoder = encoder as? NbtEncoder
                     ?: error("This serializer can be used only with NBT format. Expected Encoder to be NbtEncoder, got ${encoder::class}")
                 val nbtObject = buildNbtCompound {
-                    put("ingredients", StringifiedNbt { }.encodeToNbtTag(value.ingredients))
+                    put("ingredients", StringifiedNbt.encodeToNbtTag(value.ingredients))
                 }
                 nbtEncoder.encodeNbtTag(nbtObject)
             }
@@ -58,7 +58,7 @@ class ShapelessRecipe : Recipe {
 
                 val shapelessRecipe = ShapelessRecipe()
                 val ingredientsTag = nbtObject["ingredients"] ?: error("Expected ingredients tag")
-                val ingredients = StringifiedNbt { }.decodeFromNbtTag<List<Item>>(ingredientsTag)
+                val ingredients = StringifiedNbt.decodeFromNbtTag<List<Item>>(ingredientsTag)
 
                 shapelessRecipe.ingredients.addAll(ingredients)
                 return shapelessRecipe
