@@ -141,6 +141,10 @@ class FunctionParser(
 			addStatement("return score(%S)", scoreboard)
 		}
 		property<String>(finalName) {
+			addModifiers(KModifier.CONST)
+			addAnnotation<Suppress> {
+				addMember("%S", "ConstPropertyName")
+			}
 			initializer("%S", scoreboard)
 		}
 		fun scoreboardFunction(parameterType: Class<*>) {
@@ -188,6 +192,10 @@ class FunctionParser(
 				receiver(parent)
 				getter { addStatement("return %S", scoreboard) }
 			} else {
+				addModifiers(KModifier.CONST)
+				addAnnotation<Suppress> {
+					addMember("%S", "ConstPropertyName")
+				}
 				initializer("%S", scoreboard)
 			}
 		}
