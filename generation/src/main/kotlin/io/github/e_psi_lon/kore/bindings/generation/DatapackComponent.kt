@@ -48,11 +48,19 @@ enum class DatapackComponentType: DatapackComponent {
 	DAMAGE_TYPE {
 		override val folderName = "damage_type"
 		override val koreMethodOrClass = DamageTypeArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("damageType", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null
+		)
 
 	},
 	DIMENSION_TYPE {
 		override val folderName = "dimension_type"
 		override val koreMethodOrClass = DimensionTypeArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("dimension", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null
+		)
 	},
 	ENCHANTMENT {
 		override val folderName = "enchantement"
@@ -77,6 +85,10 @@ enum class DatapackComponentType: DatapackComponent {
 	INSTRUMENT {
 		override val folderName = "instrument"
 		override val koreMethodOrClass = InstrumentArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("instrument", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null
+		)
 	},
 	JUKEBOX_SONG {
 		override val folderName = "jukebox_song"
@@ -90,6 +102,10 @@ enum class DatapackComponentType: DatapackComponent {
 	PAINTING_VARIANT {
 		override val folderName = "painting_variant"
 		override val koreMethodOrClass = PaintingVariantArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("paintingVariant", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null,
+		)
 	},
 	RECIPE {
 		override val folderName = "recipe"
@@ -98,7 +114,11 @@ enum class DatapackComponentType: DatapackComponent {
 	STRUCTURE {
 		override val folderName = "structure"
 		override val fileExtension = "nbt"
-		override val koreMethodOrClass = io.github.ayfri.kore.arguments.types.StructureOrTagArgument::class.asClassName()
+		override val koreMethodOrClass = StructureArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("structure", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null
+		)
 	},
 	// TAGS
 	BANNER_PATTERN_TAG {
@@ -127,7 +147,7 @@ enum class DatapackComponentType: DatapackComponent {
 	},
 	DAMAGE_TYPE_TAG {
 		override val folderName = "tags/damage_type"
-		override val koreMethodOrClass = DamageTypeArgument::class.asClassName()
+		override val koreMethodOrClass = DamageTypeTagArgument::class.asClassName()
 		override val parameters = mapOf(
 			ParameterSpec.builder("tagName", String::class).build() to null,
 			ParameterSpec.builder("namespace", String::class).build() to null,
@@ -136,10 +156,6 @@ enum class DatapackComponentType: DatapackComponent {
 	ENCHANTMENT_TAG {
 		override val folderName = "tags/enchantment"
 		override val koreMethodOrClass = EnchantmentTagArgument::class.asClassName()
-		override val parameters = mapOf(
-			ParameterSpec.builder("tagName", String::class).build() to null,
-			ParameterSpec.builder("namespace", String::class).build() to null,
-		)
 	},
 	ENTITY_TYPE_TAG {
 		override val folderName = "tags/entity_type"
@@ -270,6 +286,10 @@ enum class DatapackComponentType: DatapackComponent {
 	BIOME {
 		override val folderName = "worldgen/biome"
 		override val koreMethodOrClass = BiomeArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("biome", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null
+		)
 	},
 	/*
 	CONFIGURED_CARVER {
@@ -278,14 +298,26 @@ enum class DatapackComponentType: DatapackComponent {
 	CONFIGURED_FEATURE {
 		override val folderName = "worldgen/configured_feature"
 		override val koreMethodOrClass = ConfiguredFeatureArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("feature", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null
+		)
 	},
 	DENSITY_FUNCTION {
 		override val folderName = "worldgen/density_function"
 		override val koreMethodOrClass = DensityFunctionArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("densityFunctionType", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null
+		)
 	},
 	FLAT_LEVEL_GENERATOR_PRESET {
 		override val folderName = "worldgen/flat_level_generator_preset"
 		override val koreMethodOrClass = FlatLevelGeneratorPresetArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("preset", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null
+		)
 	},
 	/* MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST {
 		override val folderName = "worldgen/multi_noise_biome_source_parameter_list"
@@ -301,14 +333,26 @@ enum class DatapackComponentType: DatapackComponent {
 	PLACED_FEATURE {
 		override val folderName = "worldgen/placed_feature"
 		override val koreMethodOrClass = PlacedFeatureArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("feature", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null
+		)
 	},
 	PROCESSOR_LIST {
 		override val folderName = "worldgen/processor_list"
 		override val koreMethodOrClass = ProcessorListArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("feature", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null
+		)
 	},
 	WORLDGEN_STRUCTURE {
 		override val folderName = "worldgen/structure"
 		override val koreMethodOrClass = StructureArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("structure", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null
+		)
 	},
 	STRUCTURE_SET {
 		override val folderName = "worldgen/structure_set"
@@ -321,5 +365,9 @@ enum class DatapackComponentType: DatapackComponent {
 	WORLD_PRESET {
 		override val folderName = "worldgen/world_preset"
 		override val koreMethodOrClass = WorldPresetArgument::class.asClassName()
+		override val parameters = mapOf(
+			ParameterSpec.builder("worldPreset", String::class).build() to null,
+			ParameterSpec.builder("namespace", String::class).build() to null
+		)
 	}
 }

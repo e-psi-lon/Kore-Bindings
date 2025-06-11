@@ -146,6 +146,10 @@ class GenerateDatapackBindings(
 	private fun processNamespace(namespace: File, namespaceName: String) {
 		val capitalizedName = namespaceName.sanitizePascal()
 		val file = fileSpec(packageName, capitalizedName) {
+			addAnnotation<Suppress> {
+				addMember("%S", "unused")
+				addMember("%S", "RedundantVisibilityModifier")
+			}
 			objectBuilder(capitalizedName) {
 				// Check if object name might not be a valid Kotlin identifier
 				if (!isValidKotlinIdentifier(capitalizedName)) {
@@ -289,7 +293,7 @@ class GenerateDatapackBindings(
 							if (needsPrefix) {
 								addDoc(
 									"This function was renamed to be a valid Kotlin identifier",
-									"Minecraft will identify it as `$namespaceName:\${path to function}/$fileName`."
+									"Minecraft will identify it as `$namespaceName:\${path to element}/$fileName`."
 								)
 							}
 							
@@ -316,7 +320,7 @@ class GenerateDatapackBindings(
 							if (needsPrefix) {
 								addDocs(
 									"This function was renamed to be a valid Kotlin identifier.",
-									"Minecraft will identify it as `$namespaceName:\${path to function}/$fileName`.",
+									"Minecraft will identify it as `$namespaceName:\${path to element}/$fileName`.",
 								)
 							}
 							
@@ -337,7 +341,7 @@ class GenerateDatapackBindings(
 			val parameterName = parameter.name
 			if (value == null) {
 				"$parameterName = ${when (parameterName) {
-					"name", "tagName" -> "\"\${PATH}${context["name"]}\""
+					in nameTypes -> "\"\${PATH}${context["name"]}\""
 					"namespace" -> "namespace"
 					else -> if (context.containsKey(parameterName)) "\"${context[parameterName]}\"" else throw IllegalArgumentException("Unknown base parameter name: $parameterName")
 				}}"
@@ -353,3 +357,9 @@ fun String.sanitizeCamel() = sanitizePascal().replaceFirstChar { if (!it.isLower
 fun String.sanitizePascal() = pascalCase()
 	.replace('-', '_')
 	.replace(".", "_")
+
+private val nameTypes = setOf(
+	"name", "damageType", "tagName", "paintingVariant", "biome", "structure",
+	"worldPreset", "densityFunctionType", "feature", "instrument", "dimension",
+	"preset"
+)
