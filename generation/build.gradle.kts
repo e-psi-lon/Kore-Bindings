@@ -1,5 +1,6 @@
 plugins {
     `kotlin-dsl`
+    `maven-publish`
     application
     alias(libs.plugins.kotlin)
     alias(libs.plugins.shadow)
@@ -7,7 +8,7 @@ plugins {
 
 
 group = "io.github.e_psi_lon.kore.bindings"
-version = "0.1.0-SNAPSHOT"
+version = "0.8.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -35,10 +36,14 @@ gradlePlugin {
     }
 }
 
+publishing {
+    
+}
+
 tasks.shadowJar {
     archiveBaseName.set("kore-bindings-generator")
-    archiveClassifier.set("")
-    archiveVersion.set("")
+    // archiveClassifier.set("")
+    // archiveVersion.set("")
     manifest {
         attributes["Main-Class"] = "io.github.e_psi_lon.kore.bindings.generation.CliKt"
     }

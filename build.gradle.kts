@@ -6,7 +6,7 @@ repositories {
     mavenCentral()
 }
 
-// Add a task that runs all "generateBindings" tasks. Notice that some subprojects doesn't have this task.
+// Add a task that runs all "generateBindings" tasks. Notice that some subprojects don't have this task.
 tasks.register("generateAllBindings") {
     group = "build"
     description = "Runs all generateBindings tasks."
