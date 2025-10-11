@@ -38,17 +38,6 @@ internal class TypeBuilder(
 		builder.addAnnotation(AnnotationSpec.builder(T::class).apply(block).build())
 	}
 
-	@OptIn(ExperimentalKotlinPoetApi::class)
-	fun contextReceivers(vararg receiverTypes: TypeName) {
-		builder = builder.contextReceivers(*receiverTypes)
-	}
-
-	@OptIn(ExperimentalKotlinPoetApi::class)
-	fun contextReceivers(receiverTypes: Iterable<TypeName>) {
-		builder = builder.contextReceivers(receiverTypes)
-	}
-
-
 	inline fun <reified T : Any> property(name: String, noinline block: PropertyBuilder.() -> Unit = {}): PropertyBuilder {
 		val className = T::class.asClassName()
 		return property(name, className, block)
@@ -71,9 +60,6 @@ internal class TypeBuilder(
 		}
 	}
 
-	fun FunSpec.Builder.addDoc(vararg docs: String): FunSpec.Builder {
-		return addKdoc(docs.joinToString("\n"))
-	}
 
 	fun function(name: String, block: FunSpec.Builder.() -> Unit): FunSpec.Builder {
 		val builder = FunSpec.builder(name).apply(block)
@@ -141,4 +127,8 @@ internal class TypeBuilder(
 		}
 
 	}
+}
+
+fun FunSpec.Builder.addDocs(vararg docs: String): FunSpec.Builder {
+	return addKdoc("%L", docs.joinToString("\n"))
 }
