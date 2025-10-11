@@ -10,7 +10,6 @@ internal class TypeBuilder(
 		TypeSpec.Kind.INTERFACE -> TypeSpec.interfaceBuilder(name)
 		TypeSpec.Kind.CLASS -> TypeSpec.classBuilder(name)
 		TypeSpec.Kind.OBJECT -> TypeSpec.objectBuilder(name)
-		else -> throw IllegalArgumentException("Unknown type: $type")
 	}
 	val properties = mutableMapOf<String, PropertyBuilder>()
 	val functions = mutableMapOf<String, FunSpec.Builder>()
