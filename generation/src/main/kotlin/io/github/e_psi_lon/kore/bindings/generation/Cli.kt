@@ -7,6 +7,8 @@ import java.util.zip.ZipOutputStream
 fun main(args: Array<String>) {
 	val startTime = System.currentTimeMillis()
 	val arguments = args.toList()
+    val verbose = getArgValue(arguments, "-v", "--verbose")?.toBoolean() ?: false
+    val logger = Logger(false, level = if (verbose) Level.DEBUG else Level.INFO)
 
 	if (arguments.contains("-h") || arguments.contains("--help")) {
 		printHelp()
@@ -14,7 +16,7 @@ fun main(args: Array<String>) {
 	}
 	val packageName = getArgValue(arguments, "-p", "--package")
 		?: run {
-			println("Error: Package name is required (-p, --package)")
+            logger.error("Package name is required (-p, --package)")
 			printHelp()
 			return
 		}
@@ -22,7 +24,7 @@ fun main(args: Array<String>) {
 	val providedParentPackage = getArgValue(arguments, "-pp", "--parent-package")
 	val parentPackage = providedParentPackage ?: packageName.substringBeforeLast(".", "")
 	val originalOutputPath = outputPath ?: "generated"
-	println("Output path: ${outputPath ?: "generated"}")
+    logger.info("Output path: $originalOutputPath")
 	var bundled = false
 	if (outputPath != null && outputPath.endsWith(".zip")) {
 		bundled = true
@@ -30,7 +32,7 @@ fun main(args: Array<String>) {
 		tempDir.delete()
 		tempDir.mkdirs()
 		outputPath = tempDir.absolutePath
-		println("Bundled mode enabled. Temporary directory created: $outputPath")
+        logger.debug("Bundled mode enabled. Temporary directory created: $outputPath")
 	}
 	val outputDir = outputPath
 		?.let { File(it) }
@@ -38,24 +40,24 @@ fun main(args: Array<String>) {
 	val folderPath = getArgValue(arguments, "-f", "--folder")?.let { File(it) }
 	val zipPath = getArgValue(arguments, "-z", "--zip")?.let { File(it) }
 	if (folderPath == null && zipPath == null) {
-		println("Error: Either a datapack folder (-f) or zip file (-z) must be provided")
+		logger.error(" Either a datapack folder (-f) or zip file (-z) must be provided")
 		printHelp()
 		return
 	}
 	if (folderPath != null && zipPath != null) {
-		println("Error: Only one of datapack folder (-f) or zip file (-z) should be provided")
+		logger.error("Only one of datapack folder (-f) or zip file (-z) should be provided")
 		printHelp()
 		return
 	}
 	folderPath?.let {
 		if (!it.exists() || !it.isDirectory) {
-			println("Error: Datapack folder does not exist or is not a directory: ${it.absolutePath}")
+			logger.error("Datapack folder does not exist or is not a directory: ${it.absolutePath}")
 			return
 		}
 	}
 	zipPath?.let {
 		if (!it.exists() || !it.isFile) {
-			println("Error: Datapack zip file does not exist or is not a file: ${it.absolutePath}")
+			logger.error("Datapack zip file does not exist or is not a file: ${it.absolutePath}")
 			return
 		}
 	}
@@ -65,12 +67,13 @@ fun main(args: Array<String>) {
 		outputDir = outputDir,
 		packageName = packageName,
 		parentPackage = parentPackage,
-		verbose = getArgValue(arguments, "-v", "--verbose")?.toBoolean() ?: false,
+		verbose = verbose,
+        logger = logger
 	)
 	if (bundled) {
 		val zipFile = File(originalOutputPath)
 		if (zipFile.exists()) {
-			println("Warning: Zip file already exists and will be overwritten: ${zipFile.absolutePath}")
+			logger.warn("Zip file already exists and will be overwritten: ${zipFile.absolutePath}")
 		}
 		zipFile.parentFile?.mkdirs()
 
@@ -90,9 +93,9 @@ fun main(args: Array<String>) {
 
 		// Remove the output directory after zipping
 		outputDir.deleteRecursively()
-		println("Bundled generated files into ${zipFile.absolutePath}")
+		logger.info("Bundled generated files into ${zipFile.absolutePath}")
 	}
-	println("Bindings generated successfully in ${File(originalOutputPath).absolutePath} in ${parseTime(System.currentTimeMillis() - startTime)}")
+	logger.info("Bindings generated successfully in ${File(originalOutputPath).absolutePath} in ${parseTime(System.currentTimeMillis() - startTime)}")
 }
 
 private fun getArgValue(args: List<String>, shortFlag: String, longFlag: String): String? {

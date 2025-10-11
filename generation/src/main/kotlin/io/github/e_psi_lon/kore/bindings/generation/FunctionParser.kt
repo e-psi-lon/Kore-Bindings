@@ -33,6 +33,7 @@ private val macroParameterRegex = Regex("""\$\(([a-zA-Z0-9_]+)\)""")
  * This includes scoreboards, storages, and now macros.
  */
 class FunctionParser(
+    val logger: Logger,
     private val namespace: File,
     private val parentPackage: String,
     // Used for prefixed namespaces such as prefix.something which define stuff under "prefix" and not "prefix.something"
@@ -99,7 +100,7 @@ class FunctionParser(
      */
     private fun processScoreboards(typeBuilder: TypeBuilder, file: FileBuilder) {
         scoreboards.forEach { scoreboard ->
-            println("Processing scoreboard: $scoreboard")
+            logger.debug("Processing scoreboard: $scoreboard")
             val parts = scoreboard.split(".")
             file.addImport(ClassName("io.github.ayfri.kore.arguments.scores", "score"))
             if (parts[0] != namespace.name) {
@@ -130,7 +131,7 @@ class FunctionParser(
         val className = ClassName("io.github.ayfri.kore.arguments.types.resources", "storage")
         file.addImport(className)
         storages.forEach { (storageNamespace, name) ->
-            println("Processing storage: $storageNamespace:$name")
+            logger.debug("Processing storage: $storageNamespace:$name")
             val parts = storageNamespace.split(".")
             if (parts[0] != namespace.name && storageNamespace != namespace.name) {
                 if (parts.size == 1) {
@@ -194,7 +195,7 @@ class FunctionParser(
      */
     private fun processMacros(typeBuilder: TypeBuilder) {
         macros.forEach { (macroPath, macro) ->
-            println("Processing macro: ${macro.functionPath} with parameters: ${macro.parameters.joinToString(", ")}")
+            logger.debug("Processing macro: ${macro.functionPath} with parameters: ${macro.parameters.joinToString(", ")}")
             // Extract path parts to create nested objects if needed
             val pathParts = macroPath.split("/").dropLast(1)
             var currentBuilder = typeBuilder

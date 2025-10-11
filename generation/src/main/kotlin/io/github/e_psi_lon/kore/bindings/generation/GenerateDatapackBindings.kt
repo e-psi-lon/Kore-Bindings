@@ -31,15 +31,18 @@ class GenerateDatapackBindings(
 	val zipFile: File? = null,
 	val outputDir: File,
 	val packageName: String,
+    val logger: Logger,
 	private val parentPackage: String,
 	private val verbose: Boolean = false
 ) {
 	init {
 		if (folder == null && zipFile == null) {
+            logger.error("Either folder or zipFile must be provided")
 			throw IllegalArgumentException("Either folder or zipFile must be provided")
 		}
 
 		if (folder != null && zipFile != null) {
+            logger.error("Only one of folder or zipFile must be provided")
 			throw IllegalArgumentException("Only one of folder or zipFile must be provided")
 		}
 
@@ -69,8 +72,10 @@ class GenerateDatapackBindings(
 
 	private fun handleDatapack(folder: File) {
 		val dataFolder = folder.resolve("data")
-		if (!folder.resolve("pack.mcmeta").exists() || !dataFolder.exists() || !dataFolder.isDirectory)
-			throw IllegalArgumentException("Invalid datapack folder: ${folder.absolutePath}")
+		if (!folder.resolve("pack.mcmeta").exists() || !dataFolder.exists() || !dataFolder.isDirectory) {
+            logger.error("Datapack folder is invalid: ${folder.absolutePath}")
+            throw IllegalArgumentException("Invalid datapack folder: ${folder.absolutePath}")
+        }
 		val namespaceGroups = mutableMapOf<String, MutableList<String>>()
 
 		for (namespace in dataFolder.listFiles { file -> file.isDirectory }!!) {
@@ -110,7 +115,7 @@ class GenerateDatapackBindings(
 								addMember("%S", "ClassName")
 							}
 						}
-						
+
 						property<String>("namespace") {
 							addAnnotation<Suppress> {
 								addMember("%S", "ConstPropertyName")
@@ -118,7 +123,7 @@ class GenerateDatapackBindings(
 							addModifiers(KModifier.CONST)
 							initializer("%S", fullNamespace)
 						}
-						
+
 						// Only add PATH property if it doesn't exist yet
 						if (!properties.containsKey("PATH")) {
 							property<String>("PATH") {
@@ -126,16 +131,16 @@ class GenerateDatapackBindings(
 								initializer("%S", "")
 							}
 						}
-						
+
 						// Process each datapack component type
 						for (dpComponent in DatapackComponentType.values()) {
 							val componentFolder = namespaceFolder.resolve(dpComponent.folderName)
 							if (componentFolder.exists() && componentFolder.isDirectory) {
-								if (verbose) println("Adding ${dpComponent.name.lowercase()} in namespace $fullNamespace")
+								logger.debug("Adding ${dpComponent.name.lowercase()} in namespace $fullNamespace")
 								handleComponent(dpComponent, componentFolder, fullNamespace)
 							}
 						}
-						val functionParser = FunctionParser(namespaceFolder, parentPackage, prefix)
+						val functionParser = FunctionParser(logger, namespaceFolder, parentPackage, prefix)
 						functionParser(this, this@fileSpec)
 					}
 				}
@@ -159,7 +164,7 @@ class GenerateDatapackBindings(
 						addMember("%S", "ClassName")
 					}
 				}
-				
+
 				property<String>("namespace") {
 					addAnnotation<Suppress> {
 						addMember("%S", "ConstPropertyName")
@@ -167,7 +172,7 @@ class GenerateDatapackBindings(
 					addModifiers(KModifier.CONST)
 					initializer("%S", namespaceName)
 				}
-				
+
 				// Only add PATH property if it doesn't exist yet
 				if (!properties.containsKey("PATH")) {
 					property<String>("PATH") {
@@ -175,7 +180,7 @@ class GenerateDatapackBindings(
 						initializer("%S", "")
 					}
 				}
-				
+
 				for (dpComponent in DatapackComponentType.values()) {
 					val componentFolder = namespace.resolve(dpComponent.folderName)
 					if (componentFolder.exists() && componentFolder.isDirectory) {
@@ -183,7 +188,7 @@ class GenerateDatapackBindings(
 						handleComponent(dpComponent, componentFolder, namespaceName)
 					}
 				}
-				val functionParser = FunctionParser(namespace, parentPackage, null)
+				val functionParser = FunctionParser(logger, namespace, parentPackage, null)
 				functionParser(this, this@fileSpec)
 			}
 		}
@@ -232,7 +237,7 @@ class GenerateDatapackBindings(
 
 					val subObjectBuilder = currentBuilder.objectBuilder(sanitizedSubFolderName) {
 						// Check if object name might not be a valid Kotlin identifier
-						if (verbose) println("Adding sub-object for $newParentClassName in namespace $namespaceName which is valid : ${isValidKotlinIdentifier(sanitizedSubFolderName)}")
+						logger.debug("Adding sub-object for $newParentClassName in namespace $namespaceName which is valid : ${isValidKotlinIdentifier(sanitizedSubFolderName)}")
 						if (!isValidKotlinIdentifier(sanitizedSubFolderName) &&
 							!currentBuilder.typeSpecs.containsKey(sanitizedSubFolderName)
 						) {
@@ -264,7 +269,7 @@ class GenerateDatapackBindings(
 				} else {
 					val fileName = componentOrSubFolder.nameWithoutExtension
 					if (componentOrSubFolder.extension != componentType.fileExtension) {
-						if (verbose) println("Skipping $fileName because it's a ${componentOrSubFolder.extension} file instead of ${componentType.fileExtension}")
+						logger.debug("Skipping $fileName because it's a ${componentOrSubFolder.extension} file instead of ${componentType.fileExtension}")
 						continue
 					}
 
@@ -279,8 +284,6 @@ class GenerateDatapackBindings(
 						sanitizedFileName = "n$sanitizedFileName"
 					}
 					val needsSuppressAnnotation = !isValidKotlinIdentifier(sanitizedFileName)
-					
-
 
 					if (componentType.returnType != componentType.koreMethodOrClass) {
 						if (currentBuilder.functions.containsKey(sanitizedFileName))

@@ -6,6 +6,7 @@ import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.kotlin.dsl.getByType
+import org.gradle.api.logging.Logger as GradleLogger
 
 /**
  * Gradle plugin to generate Kotlin bindings for Minecraft datapacks.
@@ -29,6 +30,7 @@ import org.gradle.kotlin.dsl.getByType
  */
 class BindingGradlePlugin : Plugin<Project> {
 	override fun apply(project: Project) {
+		val logger = Logger(true, project.logger, project.logger.logLevel)
 		val extension = project.extensions.create("bindings", BindingExtension::class.java, project)
 		val outputDir = project.layout.buildDirectory.dir("generated/kore-bindings/main/kotlin/")
 		val sourceSet = project.extensions.getByType<SourceSetContainer>().named("main")
@@ -39,12 +41,12 @@ class BindingGradlePlugin : Plugin<Project> {
 				val datapackFolder = extension.datapackFolder.orNull
 					?: project.layout.projectDirectory.dir("src/main/resources/datapacks")
 				if (!datapackFolder.asFile.exists()) {
-					project.logger.error("Datapack folder does not exist: ${datapackFolder.asFile.absolutePath}")
+					logger.error("Datapack folder does not exist: ${datapackFolder.asFile.absolutePath}")
 					return@doLast
 				}
 				outputDir.get().asFile.mkdirs()
 				for (datapack in datapackFolder.asFile.listFiles()!!) {
-					project.logger.lifecycle("Generating ${datapack.name}...")
+					logger.info("Generating ${datapack.name}...")
 					val packageName = extension.packageName.orNull ?: project.group.toString()
 					val sanitizedPackageName = packageName.sanitizePackageName()
 
@@ -56,9 +58,10 @@ class BindingGradlePlugin : Plugin<Project> {
 							outputDir = outputDir.get().asFile,
 							packageName = sanitizedPackageName,
 							parentPackage = extension.parentPackage.get().sanitizePackageName(),
+							logger = logger
 						)
 					} else {
-						project.logger.warn("Unsupported file type: ${datapack.name}. Only directories and zip files are supported.")
+						logger.warn("Unsupported file type: ${datapack.name}. Only directories and zip files are supported.")
 					}
 				}
 			}
@@ -77,6 +80,15 @@ class BindingGradlePlugin : Plugin<Project> {
 		}
 	}
 
+    private val GradleLogger.logLevel: Level
+        get() = when {
+            isTraceEnabled -> Level.TRACE
+            isDebugEnabled -> Level.DEBUG
+            isInfoEnabled -> Level.INFO
+            isWarnEnabled -> Level.WARN
+            isErrorEnabled -> Level.ERROR
+            else -> Level.INFO
+        }
 }
 
 /**
