@@ -3,7 +3,7 @@ kotlin = "2.1.20"
 kotlinx-serialization = "1.8.1"
 kotlinx-coroutines = "1.10.1"
 kore = "1.24.0-1.21.4"
-kotlin-poet = "2.1.0"
+kotlin-poet = "2.2.0"
 shadow = "8.3.6"
 
 [libraries]
