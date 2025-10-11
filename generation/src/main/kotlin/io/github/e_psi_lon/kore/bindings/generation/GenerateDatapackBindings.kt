@@ -100,6 +100,7 @@ class GenerateDatapackBindings(
 					addAnnotation<Suppress> {
 						addMember("%S", "unused")
 						addMember("%S", "RedundantVisibilityModifier")
+						addMember("%S", "UnusedReceiverParameter")
 					}
 					// Create main object for the namespace
 					objectBuilder(fullCapitalized) {
@@ -149,6 +150,7 @@ class GenerateDatapackBindings(
 			addAnnotation<Suppress> {
 				addMember("%S", "unused")
 				addMember("%S", "RedundantVisibilityModifier")
+				addMember("%S", "UnusedReceiverParameter")
 			}
 			objectBuilder(capitalizedName) {
 				// Check if object name might not be a valid Kotlin identifier
@@ -291,21 +293,29 @@ class GenerateDatapackBindings(
 							}
 							
 							if (needsPrefix) {
-								addDoc(
+								addDocs(
 									"This function was renamed to be a valid Kotlin identifier",
 									"Minecraft will identify it as `$namespaceName:\${path to element}/$fileName`."
 								)
 							}
 							
 							if (componentType.requiredContext != null) {
-								contextReceivers(componentType.requiredContext!!)
+								val contextParamName = componentType.requiredContext!!.simpleName.sanitizeCamel()
+								this.contextParameter(contextParamName, componentType.requiredContext!!)
+								returns(Command::class.asClassName())
+								addStatement(
+									"return $contextParamName.%T(%L)",
+									componentType.koreMethodOrClass,
+									handleComponentParameters(componentType.parameters, context)
+								)
+							} else {
+								returns(Command::class.asClassName())
+								addStatement(
+									"return %T(%L)",
+									componentType.koreMethodOrClass,
+									handleComponentParameters(componentType.parameters, context)
+								)
 							}
-							returns(Command::class.asClassName())
-							addStatement(
-								"return %T(%L)",
-								componentType.koreMethodOrClass,
-								handleComponentParameters(componentType.parameters, context)
-							)
 						}
 					} else {
 						if (currentBuilder.properties.containsKey(sanitizedFileName))
