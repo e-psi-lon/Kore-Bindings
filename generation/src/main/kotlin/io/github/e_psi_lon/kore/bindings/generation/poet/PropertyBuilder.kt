@@ -30,7 +30,7 @@ internal class PropertyBuilder(
 	}
 
 	fun addDocs(vararg docs: String) {
-		builder = builder.addKdoc(docs.joinToString("\n"))
+		builder = builder.addKdoc("%L", docs.joinToString("\n"))
 	}
 
 	fun addModifiers(vararg modifiers: KModifier) {
