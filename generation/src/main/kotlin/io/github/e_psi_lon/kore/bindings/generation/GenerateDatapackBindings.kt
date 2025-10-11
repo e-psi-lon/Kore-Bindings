@@ -127,7 +127,7 @@ class GenerateDatapackBindings(
 							}
 						}
 						
-						// Traiter tous les composants
+						// Process each datapack component type
 						for (dpComponent in DatapackComponentType.values()) {
 							val componentFolder = namespaceFolder.resolve(dpComponent.folderName)
 							if (componentFolder.exists() && componentFolder.isDirectory) {
