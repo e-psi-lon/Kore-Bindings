@@ -37,32 +37,32 @@ fun main(args: Array<String>) {
 	val outputDir = outputPath
 		?.let { File(it) }
 		?: File("generated")
-	val folderPath = getArgValue(arguments, "-f", "--folder")?.let { File(it) }
+	val directoryPath = getArgValue(arguments, "-d", "--dir")?.let { File(it) }
 	val zipPath = getArgValue(arguments, "-z", "--zip")?.let { File(it) }
-	if (folderPath == null && zipPath == null) {
-		logger.error(" Either a datapack folder (-f) or zip file (-z) must be provided")
+	if (directoryPath == null && zipPath == null) {
+		logger.error(" Either a datapack directory (-d) or zip file (-z) must be provided")
 		printHelp()
 		return
 	}
-	if (folderPath != null && zipPath != null) {
-		logger.error("Only one of datapack folder (-f) or zip file (-z) should be provided")
+	if (directoryPath != null && zipPath != null) {
+		logger.error("Only one of datapack directory (-d) or zip file (-z) should be provided")
 		printHelp()
 		return
 	}
-	folderPath?.let {
+	directoryPath?.let {
 		if (!it.exists() || !it.isDirectory) {
-			logger.error("Datapack folder does not exist or is not a directory: ${it.absolutePath}")
+			logger.error("Datapack directory does not exist or is not a directory: ${it.absolutePath}")
 			return
 		}
 	}
-	zipPath?.let {
+    directoryPath?.let {
 		if (!it.exists() || !it.isFile) {
 			logger.error("Datapack zip file does not exist or is not a file: ${it.absolutePath}")
 			return
 		}
 	}
 	GenerateDatapackBindings(
-		folder = folderPath,
+		directory = directoryPath,
 		zipFile = zipPath,
 		outputDir = outputDir,
 		packageName = packageName,
@@ -134,11 +134,11 @@ private fun printHelp() {
           -h, --help					Display this help message
           -p, --package NAME			The package name for the generated bindings (required)
           -o, --output PATH				Output directory or zip file name for generated bindings (default: "generated")
-          -f, --folder PATH				The path to the datapack folder
+          -d, --dir PATH				The path to the datapack directory
           -z, --zip PATH				The path to the datapack zip file
           -pp, --parent-package NAME	Parent package name (default: package name without the last part)
 		  -v, --verbose					Enable verbose output (default: false)
         
-        Note: Either -f or -z must be provided, but not both.
+        Note: Either -d or -z must be provided, but not both.
     """.trimIndent())
 }

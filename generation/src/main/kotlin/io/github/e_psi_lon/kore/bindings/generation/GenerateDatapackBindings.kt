@@ -10,24 +10,24 @@ import java.util.zip.ZipFile
 /**
  * Generates Kotlin Kore DSL bindings for a Minecraft datapack.
  *
- * This class takes a folder or zip file containing a Minecraft datapack and generates Kotlin bindings
+ * This class takes a directory or zip file containing a Minecraft datapack and generates Kotlin bindings
  * for all datapack's components. The generated bindings are written to the specified output directory.
  *
- * @param folder The folder containing the datapack. If null, the zipFile parameter must be provided.
- * @param zipFile The zip file containing the datapack. If null, the folder parameter must be provided.
+ * @param directory The directory containing the datapack. If null, the zipFile parameter must be provided.
+ * @param zipFile The zip file containing the datapack. If null, the directory parameter must be provided.
  * @param outputDir The directory where the generated bindings will be written.
  * @param packageName The package name for the generated bindings.
  * @param parentPackage The parent package containing objects definitions for scoreboards and storages.
  * Defaults to the same as packageName.
  * @param verbose If true, prints additional information during processing.
  *
- * @throws IllegalArgumentException If neither folder nor zipFile is provided, or if both are provided.
- * Can also be thrown if the provided folder or zip file is invalid.
+ * @throws IllegalArgumentException If neither directory nor zipFile is provided, or if both are provided.
+ * Can also be thrown if the provided directory or zip file is invalid.
  *
  */
 @OptIn(ExperimentalKotlinPoetApi::class)
 class GenerateDatapackBindings(
-	val folder: File? = null,
+	val directory: File? = null,
 	val zipFile: File? = null,
 	val outputDir: File,
 	val packageName: String,
@@ -36,26 +36,26 @@ class GenerateDatapackBindings(
 	private val verbose: Boolean = false
 ) {
 	init {
-		if (folder == null && zipFile == null) {
-            logger.error("Either folder or zipFile must be provided")
-			throw IllegalArgumentException("Either folder or zipFile must be provided")
+		if (directory == null && zipFile == null) {
+            logger.error("Either directory or zipFile must be provided")
+			throw IllegalArgumentException("Either directory or zipFile must be provided")
 		}
 
-		if (folder != null && zipFile != null) {
-            logger.error("Only one of folder or zipFile must be provided")
-			throw IllegalArgumentException("Only one of folder or zipFile must be provided")
+		if (directory != null && zipFile != null) {
+            logger.error("Only one of directory or zipFile must be provided")
+			throw IllegalArgumentException("Only one of directory or zipFile must be provided")
 		}
 
-		if (folder != null) {
-			handleDatapack(folder)
+		if (directory != null) {
+			handleDatapack(directory)
 		} else {
-			val tempFolder = File.createTempFile("datapack", "extract")
-			tempFolder.delete()
-			tempFolder.mkdirs()
+			val tempDirectory = File.createTempFile("datapack", "extract")
+			tempDirectory.delete()
+			tempDirectory.mkdirs()
 			// Extract zip file
 			ZipFile(zipFile!!).use { zip ->
 				zip.entries().asSequence().forEach { entry ->
-					val entryFile = File(tempFolder, entry.name)
+					val entryFile = File(tempDirectory, entry.name)
 					if (entry.isDirectory) {
 						entryFile.mkdirs()
 					} else {
@@ -66,19 +66,19 @@ class GenerateDatapackBindings(
 					}
 				}
 			}
-			handleDatapack(tempFolder)
+			handleDatapack(tempDirectory)
 		}
 	}
 
-	private fun handleDatapack(folder: File) {
-		val dataFolder = folder.resolve("data")
-		if (!folder.resolve("pack.mcmeta").exists() || !dataFolder.exists() || !dataFolder.isDirectory) {
-            logger.error("Datapack folder is invalid: ${folder.absolutePath}")
-            throw IllegalArgumentException("Invalid datapack folder: ${folder.absolutePath}")
+	private fun handleDatapack(directory: File) {
+		val dataDir = directory.resolve("data")
+		if (!directory.resolve("pack.mcmeta").exists() || !dataDir.exists() || !dataDir.isDirectory) {
+            logger.error("Datapack directory is invalid: ${directory.absolutePath}")
+            throw IllegalArgumentException("Invalid datapack directory: ${directory.absolutePath}")
         }
 		val namespaceGroups = mutableMapOf<String, MutableList<String>>()
 
-		for (namespace in dataFolder.listFiles { file -> file.isDirectory }!!) {
+		for (namespace in dataDir.listFiles { file -> file.isDirectory }!!) {
 			val namespaceName = namespace.name
 			if (namespaceName.contains('.')) {
 				val parts = namespaceName.split('.', limit = 2)
@@ -98,8 +98,8 @@ class GenerateDatapackBindings(
 				val capitalizedSuffix = namespaceSuffix.sanitizePascal()
 				val fullCapitalized = "${capitalizedPrefix}${capitalizedSuffix}"
 
-				val namespaceFolder = dataFolder.resolve(fullNamespace)
-				if (!namespaceFolder.exists() || !namespaceFolder.isDirectory) continue
+				val namespaceDir = dataDir.resolve(fullNamespace)
+				if (!namespaceDir.exists() || !namespaceDir.isDirectory) continue
 
 				val suffixFile = fileSpec(packageName, fullCapitalized) {
 					addAnnotation<Suppress> {
@@ -134,13 +134,13 @@ class GenerateDatapackBindings(
 
 						// Process each datapack component type
 						for (dpComponent in DatapackComponentType.values()) {
-							val componentFolder = namespaceFolder.resolve(dpComponent.folderName)
-							if (componentFolder.exists() && componentFolder.isDirectory) {
+							val componentDir = namespaceDir.resolve(dpComponent.directoryName)
+							if (componentDir.exists() && componentDir.isDirectory) {
 								logger.debug("Adding ${dpComponent.name.lowercase()} in namespace $fullNamespace")
-								handleComponent(dpComponent, componentFolder, fullNamespace)
+								handleComponent(dpComponent, componentDir, fullNamespace)
 							}
 						}
-						val functionParser = FunctionParser(logger, namespaceFolder, parentPackage, prefix)
+						val functionParser = FunctionParser(logger, namespaceDir, parentPackage, prefix)
 						functionParser(this, this@fileSpec)
 					}
 				}
@@ -182,10 +182,10 @@ class GenerateDatapackBindings(
 				}
 
 				for (dpComponent in DatapackComponentType.values()) {
-					val componentFolder = namespace.resolve(dpComponent.folderName)
-					if (componentFolder.exists() && componentFolder.isDirectory) {
+					val componentDir = namespace.resolve(dpComponent.directoryName)
+					if (componentDir.exists() && componentDir.isDirectory) {
 						if (verbose) println("Adding ${dpComponent.name.lowercase()} in namespace $namespaceName")
-						handleComponent(dpComponent, componentFolder, namespaceName)
+						handleComponent(dpComponent, componentDir, namespaceName)
 					}
 				}
 				val functionParser = FunctionParser(logger, namespace, parentPackage, null)
@@ -206,40 +206,40 @@ class GenerateDatapackBindings(
 	}
 
 	private fun TypeBuilder.handleComponent(
-		componentType: DatapackComponentType,
-		namespace: File,
-		namespaceName: String,
-		parentClassName: String = ""
+        componentType: DatapackComponentType,
+        namespace: File,
+        namespaceName: String,
+        parentClassName: String = ""
 	) {
-		data class FolderContext(
-			val folder: File,
+		data class DirectoryContext(
+			val directory: File,
 			val parentPath: String,
 			val parentClassName: String,
 			val builder: TypeBuilder
 		)
 
-		val stack = mutableListOf<FolderContext>()
-		stack.add(FolderContext(namespace, "", parentClassName, this))
+		val stack = mutableListOf<DirectoryContext>()
+		stack.add(DirectoryContext(namespace, "", parentClassName, this))
 
 		while (stack.isNotEmpty()) {
-			val (currentFolder, parentPath, currentParentClassName, currentBuilder) = stack.removeAt(stack.lastIndex)
+			val (currentDirectory, parentPath, currentParentClassName, currentBuilder) = stack.removeAt(stack.lastIndex)
 
-			for (componentOrSubFolder in currentFolder.listFiles() ?: emptyArray()) {
-				if (componentOrSubFolder.isDirectory) {
-					val subFolderName = componentOrSubFolder.name.substringAfterLast('/')
-					val sanitizedSubFolderName = subFolderName.sanitizePascal()
+			for (componentOrSubDirectory in currentDirectory.listFiles() ?: emptyArray()) {
+				if (componentOrSubDirectory.isDirectory) {
+					val subDirectoryName = componentOrSubDirectory.name.substringAfterLast('/')
+					val sanitizedSubDirectoryName = subDirectoryName.sanitizePascal()
 
-					val newParentPath = if (parentPath.isEmpty()) subFolderName else "$parentPath/$subFolderName/"
+					val newParentPath = if (parentPath.isEmpty()) subDirectoryName else "$parentPath/$subDirectoryName/"
 					val hasParent = currentParentClassName.isNotEmpty()
 					val newParentClassName = if (!hasParent)
-						sanitizedSubFolderName else
-						"$currentParentClassName.$sanitizedSubFolderName"
+						sanitizedSubDirectoryName else
+						"$currentParentClassName.$sanitizedSubDirectoryName"
 
-					val subObjectBuilder = currentBuilder.objectBuilder(sanitizedSubFolderName) {
+					val subObjectBuilder = currentBuilder.objectBuilder(sanitizedSubDirectoryName) {
 						// Check if object name might not be a valid Kotlin identifier
-						logger.debug("Adding sub-object for $newParentClassName in namespace $namespaceName which is valid : ${isValidKotlinIdentifier(sanitizedSubFolderName)}")
-						if (!isValidKotlinIdentifier(sanitizedSubFolderName) &&
-							!currentBuilder.typeSpecs.containsKey(sanitizedSubFolderName)
+						logger.debug("Adding sub-object for $newParentClassName in namespace $namespaceName which is valid : ${isValidKotlinIdentifier(sanitizedSubDirectoryName)}")
+						if (!isValidKotlinIdentifier(sanitizedSubDirectoryName) &&
+							!currentBuilder.typeSpecs.containsKey(sanitizedSubDirectoryName)
 						) {
 							addAnnotation<Suppress> {
 								addMember("%S", "ClassName")
@@ -250,26 +250,26 @@ class GenerateDatapackBindings(
 							if (hasParent) {
 								property<String>("PATH") {
 									addModifiers(KModifier.CONST, KModifier.PRIVATE)
-									initializer("%P", "\${${currentParentClassName.split(".").takeLast(2).joinToString(".")}.PATH}/$subFolderName/")
+									initializer("%P", "\${${currentParentClassName.split(".").takeLast(2).joinToString(".")}.PATH}/$subDirectoryName/")
 								}
 							} else {
 								property<String>("PATH") {
 									addModifiers(KModifier.CONST, KModifier.PRIVATE)
-									initializer("%P", subFolderName)
+									initializer("%P", subDirectoryName)
 								}
 							}
 						}
 					}
-					stack.add(FolderContext(
-						componentOrSubFolder,
+					stack.add(DirectoryContext(
+						componentOrSubDirectory,
 						newParentPath,
 						newParentClassName,
 						subObjectBuilder
 					))
 				} else {
-					val fileName = componentOrSubFolder.nameWithoutExtension
-					if (componentOrSubFolder.extension != componentType.fileExtension) {
-						logger.debug("Skipping $fileName because it's a ${componentOrSubFolder.extension} file instead of ${componentType.fileExtension}")
+					val fileName = componentOrSubDirectory.nameWithoutExtension
+					if (componentOrSubDirectory.extension != componentType.fileExtension) {
+						logger.debug("Skipping $fileName because it's a ${componentOrSubDirectory.extension} file instead of ${componentType.fileExtension}")
 						continue
 					}
 

@@ -23,7 +23,7 @@ import org.gradle.api.logging.Logger as GradleLogger
  * 	}
  *
  * 	bindings {
- * 			datapackFolder.set(file("path/to/datapack"))
+ * 			datapackDirectory.set(file("path/to/datapack"))
  * 			packageName.set("com.example.mypackage")
  *  }
  *  ```
@@ -38,14 +38,14 @@ class BindingGradlePlugin : Plugin<Project> {
 			group = "datapack"
 			description = "Generate Kotlin bindings for Minecraft datapacks."
 			doLast {
-				val datapackFolder = extension.datapackFolder.orNull
+				val datapackDir = extension.datapackDir.orNull
 					?: project.layout.projectDirectory.dir("src/main/resources/datapacks")
-				if (!datapackFolder.asFile.exists()) {
-					logger.error("Datapack folder does not exist: ${datapackFolder.asFile.absolutePath}")
+				if (!datapackDir.asFile.exists()) {
+					logger.error("Datapack directory does not exist: ${datapackDir.asFile.absolutePath}")
 					return@doLast
 				}
 				outputDir.get().asFile.mkdirs()
-				for (datapack in datapackFolder.asFile.listFiles()!!) {
+				for (datapack in datapackDir.asFile.listFiles()!!) {
 					logger.info("Generating ${datapack.name}...")
 					val packageName = extension.packageName.orNull ?: project.group.toString()
 					val sanitizedPackageName = packageName.sanitizePackageName()
@@ -53,7 +53,7 @@ class BindingGradlePlugin : Plugin<Project> {
 					if (datapack.isDirectory || datapack.extension == "zip") {
 
 						GenerateDatapackBindings(
-							folder = if (datapack.isDirectory) datapack else null,
+							directory = if (datapack.isDirectory) datapack else null,
 							zipFile = if (!datapack.isDirectory && datapack.extension == "zip") datapack else null,
 							outputDir = outputDir.get().asFile,
 							packageName = sanitizedPackageName,
@@ -95,11 +95,12 @@ class BindingGradlePlugin : Plugin<Project> {
  * Extension for the [BindingGradlePlugin] to configure the plugin.
  *
  * @property project The Gradle project.
- * @property datapackFolder The folder containing the datapack.
+ * @property datapackDir The directory containing the datapack.
+ * @property parentPackage The parent package for the generated bindings. Defaults to the package name without the last segment.
  * @property packageName The package name for the generated bindings.
  */
 open class BindingExtension(private val project: Project) {
-	val datapackFolder: DirectoryProperty = project.objects.directoryProperty()
+	val datapackDir: DirectoryProperty = project.objects.directoryProperty()
 	val packageName: Property<String> = project.objects.property(String::class.java)
 	val parentPackage = project.objects.property(String::class.java)
 		.convention(project.provider { packageName.get().substringBeforeLast('.') })
