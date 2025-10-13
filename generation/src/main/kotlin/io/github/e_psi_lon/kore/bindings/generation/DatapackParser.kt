@@ -8,7 +8,6 @@ import io.github.e_psi_lon.kore.bindings.generation.data.ParsedNamespace
 import io.github.e_psi_lon.kore.bindings.generation.data.Scoreboard
 import io.github.e_psi_lon.kore.bindings.generation.data.Storage
 import java.nio.file.Path
-import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.nameWithoutExtension
 
