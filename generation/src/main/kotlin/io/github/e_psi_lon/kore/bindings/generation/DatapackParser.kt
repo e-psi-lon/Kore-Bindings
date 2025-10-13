@@ -7,6 +7,7 @@ import io.github.e_psi_lon.kore.bindings.generation.data.Macro
 import io.github.e_psi_lon.kore.bindings.generation.data.ParsedNamespace
 import io.github.e_psi_lon.kore.bindings.generation.data.Scoreboard
 import io.github.e_psi_lon.kore.bindings.generation.data.Storage
+import kotlinx.coroutines.*
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.nameWithoutExtension
@@ -20,21 +21,27 @@ class DatapackParser(
 
     /**
      * Parses the datapack directory and generates bindings for all functions.
+     * Uses coroutines to parse namespaces in parallel for better performance.
      */
-    operator fun invoke(): Datapack {
+    operator fun invoke(): Datapack = runBlocking {
         logger.info("Parsing datapack at $datapackDir")
         val namespaces = datapackDir.resolve("data").toFile().listFiles { file -> file.isDirectory }!!
-        namespaces.forEach { namespace ->
-            val namespaceName = namespace.name
-            val prefix = if (namespaceName.contains('.')) namespaceName.substringBefore('.') else null
-            logger.debug("Processing namespace $namespaceName with prefix $prefix")
-            datapackBuilder.addNamespace(handleNamespace(namespaceName, prefix))
-        }
-        return datapackBuilder.build()
+
+        val parsedNamespaces = namespaces.map { namespace ->
+            async(Dispatchers.Default) {
+                val namespaceName = namespace.name
+                val prefix = if (namespaceName.contains('.')) namespaceName.substringBefore('.') else null
+                logger.debug("Processing namespace $namespaceName with prefix $prefix")
+                handleNamespace(namespaceName, prefix)
+            }
+        }.awaitAll()
+
+        parsedNamespaces.forEach { datapackBuilder.addNamespace(it) }
+        datapackBuilder.build()
     }
 
 
-    private fun handleNamespace(namespace: String, prefix: String?): ParsedNamespace {
+    private suspend fun handleNamespace(namespace: String, prefix: String?): ParsedNamespace {
         val namespaceDir = datapackDir.resolve(namespace)
         val components = mutableListOf<Component>()
         val storages: MutableSet<Storage> = mutableSetOf()
@@ -95,38 +102,50 @@ class DatapackParser(
             Component.FunctionTag(relPath, name)
         }
 
-
-    private fun handleFunction(path: Path, namespace: String): Triple<List<Component.Function>, Set<Storage>, Set<Scoreboard>> {
-        val storages = mutableSetOf<Storage>()
-        val scoreboards = mutableSetOf<Scoreboard>()
-        val functions = mutableListOf<Component.Function>()
-
-        path.toFile().walkTopDown()
+    private suspend fun handleFunction(path: Path, namespace: String): Triple<List<Component.Function>, Set<Storage>, Set<Scoreboard>> = coroutineScope {
+        val files = path.toFile().walkTopDown()
             .filter { it.isFile && it.extension == "mcfunction" }
-            .forEach { file ->
-                // Get relative path from the function directory
-                val relativePath = path.relativize(file.toPath())
+            .toList()
 
-                val parse = FunctionParser2(
-                    file.readText(),
+        // Step 1: Read all files in parallel (I/O-bound)
+        val fileContentJobs = mutableListOf<Deferred<Pair<Path, String>>>()
+        for (file in files) {
+            fileContentJobs.add(async(Dispatchers.IO) {
+                val relativePath = path.relativize(file.toPath())
+                relativePath to file.readText()
+            })
+        }
+        val fileContents = fileContentJobs.awaitAll()
+
+        // Step 2: Parse all file contents in parallel (CPU-bound: regex, string operations)
+        val parseJobs = mutableListOf<Deferred<Triple<Component.Function, Set<Storage>, Set<Scoreboard>>>>()
+        for ((relativePath, content) in fileContents) {
+            parseJobs.add(async(Dispatchers.Default) {
+                val parser = FunctionParser2(
+                    content,
                     namespace,
                     relativePath,
                     logger
                 )
+                val (scoreboardsInFunction, storagesInFunction, macro) = parser()
 
-                val (scoreboardsInFunction, storagesInFunction, macro) = parse()
-
-                functions.add(
+                Triple(
                     Component.Function(
                         relativePath,
                         relativePath.nameWithoutExtension,
                         macro
-                    )
+                    ),
+                    storagesInFunction,
+                    scoreboardsInFunction
                 )
-                storages.addAll(storagesInFunction)
-                scoreboards.addAll(scoreboardsInFunction)
-            }
+            })
+        }
+        val results = parseJobs.awaitAll()
 
-        return Triple(functions, storages, scoreboards)
+        val functions = results.map { it.first }
+        val storages = results.flatMap { it.second }.toSet()
+        val scoreboards = results.flatMap { it.third }.toSet()
+
+        Triple(functions, storages, scoreboards)
     }
 }
