@@ -1,0 +1,97 @@
+package io.github.e_psi_lon.kore.bindings.generation
+
+import io.github.e_psi_lon.kore.bindings.generation.data.Scoreboard
+import io.github.e_psi_lon.kore.bindings.generation.data.Macro
+import io.github.e_psi_lon.kore.bindings.generation.data.Storage
+import java.nio.file.Path
+import kotlin.io.path.nameWithoutExtension
+
+
+// Regular expressions for extracting information from mcfunction files
+private val scoreboardRegex = Regex("""\bscoreboard\s+objectives\s+(?:add|remove|setdisplay|modify)\s+([a-zA-Z0-9_.\-+]+)\b""")
+private val storageRegex = Regex("""\bdata\s+(?:get|merge|remove|modify)\s+storage\s+([a-z0-9_.-]+:[a-z0-9_./-]+)\b""")
+private val macroLineRegex = Regex("""^\$(.+)$""", RegexOption.MULTILINE)
+private val macroParameterRegex = Regex("""\$\(([a-zA-Z0-9_]+)\)""")
+
+
+class FunctionParser2(
+    private val code: String,
+    private val namespaceName: String,
+    private val relativePath: Path,
+    private val logger: Logger
+) {
+    private fun preprocessMcFunction(input: String): String {
+        return input.lineSequence()
+            .map { stripCommentOutsideString(it).trim() }
+            .filter { it.isNotEmpty() }
+            .fold(StringBuilder()) { acc, line ->
+                if (line.endsWith("\\")) {
+                    acc.append(line.dropLast(1)).append(" ")
+                } else {
+                    acc.appendLine(line)
+                }
+                acc
+            }.toString().trim().also { logger.debug("Preprocessed function $namespaceName:${relativePath.nameWithoutExtension}") }
+    }
+
+    /**
+     * Parses all collected mcfunction files to extract scoreboards, storages, and macros
+     */
+    operator fun invoke(): Triple<Set<Scoreboard>, Set<Storage>, Macro?> {
+        val fileContent = preprocessMcFunction(code)
+        val scoreboards = scoreboardRegex.findAll(fileContent).map { match ->
+            logger.debug("Found scoreboard ${match.groupValues[1]}")
+            val scoreboardName = match.groupValues[1]
+            val parts = scoreboardName.split(".")
+
+            // If scoreboard is unqualified (no dots), assume it belongs to current namespace
+            return@map if (parts.size == 1) {
+                Scoreboard(scoreboardName, namespaceName)
+            } else {
+                // If qualified (has dots), the namespace is everything except the last part
+                Scoreboard(
+                    scoreboardName,
+                    parts.dropLast(1).joinToString(".")
+                )
+            }
+        }.toSet()
+
+        val storages = storageRegex.findAll(fileContent).mapNotNull { match ->
+            logger.debug("Found storage ${match.groupValues[1]}")
+            match.groupValues[1].split(":").takeIf { it.size == 2 }
+                // sourceNamespace (3rd param) is where this was declared, not the storage's namespace
+                ?.let { (storageNamespace, name) -> Storage(storageNamespace, name, namespaceName) }
+        }.toSet()
+
+        val parameters = mutableListOf<String>()
+        macroLineRegex.findAll(fileContent).forEach { macroMatch ->
+            val macroCommand = macroMatch.groupValues[1].trim()
+            macroParameterRegex.findAll(macroCommand).forEach { paramMatch ->
+                logger.debug("Found macro parameter ${paramMatch.groupValues[1]}")
+                parameters.add(paramMatch.groupValues[1])
+            }
+        }
+
+        val macro = if (parameters.isNotEmpty()) {
+            Macro(
+                // Function path should be relative, normalized, without extension
+                functionPath = relativePath.toString().replace('\\', '/').removeSuffix(".mcfunction"),
+                functionName = relativePath.nameWithoutExtension,
+                parameters = parameters.distinct()
+            )
+        } else null
+
+        logger.debug("Parsed function $namespaceName:${relativePath.nameWithoutExtension}, found ${scoreboards.size} scoreboards, ${storages.size} storages, macro: ${macro != null}")
+        return Triple(scoreboards, storages, macro)
+    }
+}
+
+private fun stripCommentOutsideString(line: String): String {
+    var inString = false
+    for (i in line.indices) {
+        val c = line[i]
+        if (c in setOf('"', '\'')) inString = !inString
+        if (c == '#' && !inString) return line.take(i)
+    }
+    return line
+}
