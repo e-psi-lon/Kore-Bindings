@@ -8,7 +8,12 @@ fun main(args: Array<String>) {
 	val startTime = System.currentTimeMillis()
 	val arguments = args.toList()
     val verbose = getArgValue(arguments, "-v", "--verbose")?.toBoolean() ?: false
-    val logger = Logger(false, level = if (verbose) Level.DEBUG else Level.INFO)
+    val quiet = getArgValue(arguments, "-q", "--quiet")?.toBoolean() ?: false
+    val logger = Logger(false, level = when {
+        verbose -> Level.DEBUG
+        quiet -> Level.ERROR
+        else -> Level.INFO
+    })
 
 	if (arguments.contains("-h") || arguments.contains("--help")) {
 		printHelp()
@@ -137,6 +142,7 @@ private fun printHelp() {
           -d, --dir PATH				The path to the datapack directory
           -z, --zip PATH				The path to the datapack zip file
           -pp, --parent-package NAME	Parent package name (default: package name without the last part)
+          -q, --quiet					Minimize output (default: false)
 		  -v, --verbose					Enable verbose output (default: false)
         
         Note: Either -d or -z must be provided, but not both.
