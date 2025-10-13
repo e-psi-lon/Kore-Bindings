@@ -39,30 +39,39 @@ class FunctionParser2(
      */
     operator fun invoke(): Triple<Set<Scoreboard>, Set<Storage>, Macro?> {
         val fileContent = preprocessMcFunction(code)
-        val scoreboards = scoreboardRegex.findAll(fileContent).map { match ->
-            logger.debug("Found scoreboard ${match.groupValues[1]}")
-            val scoreboardName = match.groupValues[1]
-            val parts = scoreboardName.split(".")
+        val scoreboards = extractScoreboards(fileContent)
+        val storages = extractStorages(fileContent)
+        val macro = extractMacro(fileContent)
 
-            // If scoreboard is unqualified (no dots), assume it belongs to current namespace
-            return@map if (parts.size == 1) {
-                Scoreboard(scoreboardName, namespaceName)
-            } else {
-                // If qualified (has dots), the namespace is everything except the last part
-                Scoreboard(
-                    scoreboardName,
-                    parts.dropLast(1).joinToString(".")
-                )
-            }
-        }.toSet()
+        logger.debug("Parsed function $namespaceName:${relativePath.nameWithoutExtension}, found ${scoreboards.size} scoreboards, ${storages.size} storages, macro: ${macro != null}")
+        return Triple(scoreboards, storages, macro)
+    }
 
-        val storages = storageRegex.findAll(fileContent).mapNotNull { match ->
-            logger.debug("Found storage ${match.groupValues[1]}")
-            match.groupValues[1].split(":").takeIf { it.size == 2 }
-                // sourceNamespace (3rd param) is where this was declared, not the storage's namespace
-                ?.let { (storageNamespace, name) -> Storage(storageNamespace, name, namespaceName) }
-        }.toSet()
+    private fun extractScoreboards(fileContent: String): Set<Scoreboard> = scoreboardRegex.findAll(fileContent).map { match ->
+        logger.debug("Found scoreboard ${match.groupValues[1]}")
+        val scoreboardName = match.groupValues[1]
+        val parts = scoreboardName.split(".")
 
+        // If scoreboard is unqualified (no dots), assume it belongs to current namespace
+        return@map if (parts.size == 1) {
+            Scoreboard(scoreboardName, namespaceName)
+        } else {
+            // If qualified (has dots), the namespace is everything except the last part
+            Scoreboard(
+                scoreboardName,
+                parts.dropLast(1).joinToString(".")
+            )
+        }
+    }.toSet()
+
+    private fun extractStorages(fileContent: String): Set<Storage> = storageRegex.findAll(fileContent).mapNotNull { match ->
+        logger.debug("Found storage ${match.groupValues[1]}")
+        match.groupValues[1].split(":").takeIf { it.size == 2 }
+            // sourceNamespace (3rd param) is where this was declared, not the storage's namespace
+            ?.let { (storageNamespace, name) -> Storage(storageNamespace, name, namespaceName) }
+    }.toSet()
+
+    private fun extractMacro(fileContent: String): Macro? {
         val parameters = mutableListOf<String>()
         macroLineRegex.findAll(fileContent).forEach { macroMatch ->
             val macroCommand = macroMatch.groupValues[1].trim()
@@ -72,7 +81,7 @@ class FunctionParser2(
             }
         }
 
-        val macro = if (parameters.isNotEmpty()) {
+        return if (parameters.isNotEmpty()) {
             Macro(
                 // Function path should be relative, normalized, without extension
                 functionPath = relativePath.toString().replace('\\', '/').removeSuffix(".mcfunction"),
@@ -80,9 +89,6 @@ class FunctionParser2(
                 parameters = parameters.distinct()
             )
         } else null
-
-        logger.debug("Parsed function $namespaceName:${relativePath.nameWithoutExtension}, found ${scoreboards.size} scoreboards, ${storages.size} storages, macro: ${macro != null}")
-        return Triple(scoreboards, storages, macro)
     }
 }
 
