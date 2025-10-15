@@ -9,14 +9,22 @@ import io.github.e_psi_lon.kore.bindings.generation.data.Scoreboard
 import io.github.e_psi_lon.kore.bindings.generation.data.Storage
 import kotlinx.coroutines.*
 import java.nio.file.Path
+import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.readText
+import kotlin.io.path.walk
 
 class DatapackParser(
     private val datapackDir: Path,
     private val logger: Logger
 ) {
 
+    private val dataDir = datapackDir.resolve("data")
     private val datapackBuilder = DatapackBuilder()
 
     /**
@@ -25,11 +33,12 @@ class DatapackParser(
      */
     operator fun invoke(): Datapack = runBlocking {
         logger.info("Parsing datapack at $datapackDir")
-        val namespaces = datapackDir.resolve("data").toFile().listFiles { file -> file.isDirectory }!!
-
+        val namespaces = dataDir
+            .listDirectoryEntries()
+            .filter { file -> file.isDirectory() }
         val parsedNamespaces = namespaces.map { namespace ->
             async(Dispatchers.Default) {
-                val namespaceName = namespace.name
+                val namespaceName = namespace.nameWithoutExtension
                 val prefix = if (namespaceName.contains('.')) namespaceName.substringBefore('.') else null
                 logger.debug("Processing namespace $namespaceName with prefix $prefix")
                 handleNamespace(namespaceName, prefix)
@@ -71,24 +80,25 @@ class DatapackParser(
         return ParsedNamespace(
             namespace,
             prefix,
-            components.groupBy { it.componentType },
+            components,
             storages,
             scoreboards,
             macros
         )
     }
 
+    @OptIn(ExperimentalPathApi::class)
     private fun <T : Component> handleComponents(
         path: Path,
         fileExtension: String,
         componentBuilder: (relativePath: Path, name: String) -> T
     ): List<T> {
-        return path.toFile().walkTopDown()
-            .filter { it.isFile && it.extension == fileExtension }
+        return path.walk()
+            .filter { it.isRegularFile() && it.extension == fileExtension }
             .map {
-                val relativePath = path.relativize(it.toPath()).toString().replace("\\", "/")
-                val name = relativePath.removeSuffix(".$fileExtension")
-                componentBuilder(path.relativize(it.toPath()), name)
+                val relativePath = path.relativize(it)
+                val name = relativePath.nameWithoutExtension
+                componentBuilder(relativePath, name)
             }.toList()
     }
 
@@ -102,16 +112,15 @@ class DatapackParser(
             Component.FunctionTag(relPath, name)
         }
 
+    @OptIn(ExperimentalPathApi::class)
     private suspend fun handleFunction(path: Path, namespace: String): Triple<List<Component.Function>, Set<Storage>, Set<Scoreboard>> = coroutineScope {
-        val files = path.toFile().walkTopDown()
-            .filter { it.isFile && it.extension == "mcfunction" }
-            .toList()
+        val files = path.walk().filter { it.isRegularFile() && it.extension == "mcfunction" }.toList()
 
         // Step 1: Read all files in parallel (I/O-bound)
         val fileContentJobs = mutableListOf<Deferred<Pair<Path, String>>>()
         for (file in files) {
             fileContentJobs.add(async(Dispatchers.IO) {
-                val relativePath = path.relativize(file.toPath())
+                val relativePath = path.relativize(file)
                 relativePath to file.readText()
             })
         }

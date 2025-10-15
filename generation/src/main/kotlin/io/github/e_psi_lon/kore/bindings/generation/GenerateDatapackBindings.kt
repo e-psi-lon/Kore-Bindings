@@ -2,10 +2,13 @@ package io.github.e_psi_lon.kore.bindings.generation
 
 import com.squareup.kotlinpoet.*
 import io.github.ayfri.kore.commands.Command
-import io.github.ayfri.kore.utils.pascalCase
 import io.github.e_psi_lon.kore.bindings.generation.poet.*
 import java.io.File
+import java.nio.file.FileSystems
+import java.nio.file.Path
 import java.util.zip.ZipFile
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.createDirectories
 
 /**
  * Generates Kotlin Kore DSL bindings for a Minecraft datapack.
@@ -365,11 +368,31 @@ class GenerateDatapackBindings(
 	}
 }
 
-fun String.sanitizeCamel() = sanitizePascal().replaceFirstChar { if (!it.isLowerCase()) it.lowercase() else it.toString() }
+@OptIn(ExperimentalPathApi::class)
+private fun getZipFs(zipPath: Path) = FileSystems.newFileSystem(zipPath, emptyMap<String, Any>())
 
-fun String.sanitizePascal() = pascalCase()
-	.replace('-', '_')
-	.replace(".", "_")
+fun generateDatapackBinding(
+    datapackSource: Path,
+    isZip: Boolean,
+    outputDir: Path,
+    packageName: String,
+    namespace: String,
+    parentPackage: String,
+    prefix: String?,
+    logger: Logger,
+) {
+    outputDir.createDirectories()
+    val fileSystem = if (isZip) getZipFs(datapackSource) else null
+    fileSystem.use {
+        val datapackDir = fileSystem?.getPath("/") ?: datapackSource
+        val parser = DatapackParser(datapackDir, logger)
+        val datapack = parser()
+        logger.info(datapack.toString())
+        val generator = BindingGenerator(logger, datapack, outputDir, packageName, namespace, parentPackage, prefix)
+        generator()
+
+    }
+}
 
 private val nameTypes = setOf(
 	"name", "damageType", "tagName", "paintingVariant", "biome", "structure",

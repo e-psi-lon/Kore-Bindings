@@ -1,8 +1,11 @@
 package io.github.e_psi_lon.kore.bindings.generation
 
-import java.io.File
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
+import java.nio.file.FileSystems
+import kotlin.io.path.Path
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
 
 fun main(args: Array<String>) {
 	val startTime = System.currentTimeMillis()
@@ -55,52 +58,48 @@ fun main(args: Array<String>) {
 		return
 	}
 	directoryPath?.let {
-		if (!it.exists() || !it.isDirectory) {
-			logger.error("Datapack directory does not exist or is not a directory: ${it.absolutePath}")
+		if (!it.exists() || !it.isDirectory()) {
+			logger.error("Datapack directory does not exist or is not a directory: ${it.absolutePathString()}")
 			return
 		}
 	}
-    directoryPath?.let {
-		if (!it.exists() || !it.isFile) {
-			logger.error("Datapack zip file does not exist or is not a file: ${it.absolutePath}")
+	zipPath?.let {
+		if (!it.exists() || !it.isRegularFile()) {
+			logger.error("Datapack zip file does not exist or is not a file: ${it.absolutePathString()}")
 			return
 		}
 	}
-	GenerateDatapackBindings(
-		directory = directoryPath,
-		zipFile = zipPath,
-		outputDir = outputDir,
-		packageName = packageName,
-		parentPackage = parentPackage,
-		verbose = verbose,
-        logger = logger
-	)
-	if (bundled) {
-		val zipFile = File(originalOutputPath)
-		if (zipFile.exists()) {
-			logger.warn("Zip file already exists and will be overwritten: ${zipFile.absolutePath}")
-		}
-		zipFile.parentFile?.mkdirs()
+    val useRefactor = arguments.contains("-r") || arguments.contains("--refactor")
+    val fileSystem = if (bundled)
+        FileSystems.newFileSystem(outputDir, emptyMap<String, Any>())
+    else
+        null
+    fileSystem.use { fs ->
+        val finalPath = fs?.getPath("/") ?: outputDir
+        if (useRefactor) {
+            generateDatapackBinding(
+                datapackSource = zipPath ?: directoryPath!!,
+                isZip = zipPath != null,
+                outputDir = finalPath,
+                namespace = "",
+                packageName = packageName,
+                parentPackage = parentPackage,
+                prefix = null,
+                logger = logger
+            )
+        } else
+        GenerateDatapackBindings(
+            directory = directoryPath?.toFile(),
+            zipFile = zipPath?.toFile(),
+            outputDir = finalPath.toFile(),
+            packageName = packageName,
+            parentPackage = parentPackage,
+            verbose = verbose,
+            logger = logger
+        )
+    }
 
-		ZipOutputStream(zipFile.outputStream().buffered()).use { zipOutput ->
-			outputDir.walkTopDown().forEach { file ->
-				if (file.isFile) {
-					// Calculer correctement le chemin relatif pour éviter d'inclure le dossier temporaire
-					val relativePath = file.relativeTo(outputDir).path
-					zipOutput.putNextEntry(ZipEntry(relativePath))
-					file.inputStream().buffered().use { input ->
-						input.copyTo(zipOutput)
-					}
-					zipOutput.closeEntry()
-				}
-			}
-		}
-
-		// Remove the output directory after zipping
-		outputDir.deleteRecursively()
-		logger.info("Bundled generated files into ${zipFile.absolutePath}")
-	}
-	logger.info("Bindings generated successfully in ${File(originalOutputPath).absolutePath} in ${parseTime(System.currentTimeMillis() - startTime)}")
+	logger.info("Bindings generated successfully in ${Path(originalOutputPath).absolutePathString()} in ${parseTime(System.currentTimeMillis() - startTime)}")
 }
 
 private fun getArgValue(args: List<String>, shortFlag: String, longFlag: String): String? {
