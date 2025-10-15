@@ -28,25 +28,17 @@ fun main(args: Array<String>) {
 			printHelp()
 			return
 		}
-	var outputPath = getArgValue(arguments, "-o", "--output")
 	val providedParentPackage = getArgValue(arguments, "-pp", "--parent-package")
 	val parentPackage = providedParentPackage ?: packageName.substringBeforeLast(".", "")
-	val originalOutputPath = outputPath ?: "generated"
+    val outputPath = getArgValue(arguments, "-o", "--output")
+    val originalOutputPath = outputPath ?: "generated"
     logger.info("Output path: $originalOutputPath")
-	var bundled = false
-	if (outputPath != null && outputPath.endsWith(".zip")) {
-		bundled = true
-		val tempDir = File.createTempFile("datapack", "beforeZip")
-		tempDir.delete()
-		tempDir.mkdirs()
-		outputPath = tempDir.absolutePath
-        logger.debug("Bundled mode enabled. Temporary directory created: $outputPath")
-	}
-	val outputDir = outputPath
-		?.let { File(it) }
-		?: File("generated")
-	val directoryPath = getArgValue(arguments, "-d", "--dir")?.let { File(it) }
-	val zipPath = getArgValue(arguments, "-z", "--zip")?.let { File(it) }
+    val bundled = outputPath != null && outputPath.endsWith(".zip")
+    val outputDir = outputPath
+        ?.let { Path(it) }
+        ?: Path("generated")
+	val directoryPath = getArgValue(arguments, "-d", "--dir")?.let { Path(it) }
+	val zipPath = getArgValue(arguments, "-z", "--zip")?.let { Path(it) }
 	if (directoryPath == null && zipPath == null) {
 		logger.error(" Either a datapack directory (-d) or zip file (-z) must be provided")
 		printHelp()
