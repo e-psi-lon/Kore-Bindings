@@ -243,7 +243,9 @@ enum class DatapackComponentType: ComponentType {
 	},
 	/* MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST {
 		override val directoryName = "worldgen/multi_noise_biome_source_parameter_list"
-	},*/
+	    override val koreMethodOrClass = MultiNoiseBiomeSourceParameterListArgument::class.asClassName()
+	},
+	*/
 	NOISE {
 		override val directoryName = "worldgen/noise"
 		override val koreMethodOrClass = NoiseArgument::class.asClassName()

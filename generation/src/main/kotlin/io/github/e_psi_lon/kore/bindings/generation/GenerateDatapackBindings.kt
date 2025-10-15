@@ -387,7 +387,6 @@ fun generateDatapackBinding(
         val datapackDir = fileSystem?.getPath("/") ?: datapackSource
         val parser = DatapackParser(datapackDir, logger)
         val datapack = parser()
-        logger.info(datapack.toString())
         val generator = BindingGenerator(logger, datapack, outputDir, packageName, namespace, parentPackage, prefix)
         generator()
 
