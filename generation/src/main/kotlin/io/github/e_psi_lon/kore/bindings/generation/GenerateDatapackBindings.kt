@@ -278,7 +278,7 @@ class GenerateDatapackBindings(
 
 					var sanitizedFileName = fileName.sanitizeCamel()
 					val context = mapOf("namespace" to namespaceName, "name" to fileName)
-					
+
 					// Check if the sanitized name is a valid Kotlin identifier
 					val needsPrefix = sanitizedFileName[0].isDigit()
 
@@ -297,14 +297,14 @@ class GenerateDatapackBindings(
 									addMember("%S", "FunctionName")
 								}
 							}
-							
+
 							if (needsPrefix) {
 								addDocs(
 									"This function was renamed to be a valid Kotlin identifier",
 									"Minecraft will identify it as `$namespaceName:\${path to element}/$fileName`."
 								)
 							}
-							
+
 							if (componentType.requiredContext != null) {
 								val contextParamName = componentType.requiredContext!!.simpleName.sanitizeCamel()
 								this.contextParameter(contextParamName, componentType.requiredContext!!)
@@ -332,14 +332,14 @@ class GenerateDatapackBindings(
 									addMember("%S", "PropertyName")
 								}
 							}
-							
+
 							if (needsPrefix) {
 								addDocs(
 									"This function was renamed to be a valid Kotlin identifier.",
 									"Minecraft will identify it as `$namespaceName:\${path to element}/$fileName`.",
 								)
 							}
-							
+
 							initializer(
 								"%T(%L)",
 								componentType.koreMethodOrClass,

@@ -62,22 +62,17 @@ class DatapackParser(
                 if (directory.exists()) {
                     logger.debug("Processing type $type in namespace $namespace")
                     when (type) {
-                        DatapackComponentType.FUNCTION -> {
-                            val (
-                                functions,
-                                namespaceStorages,
-                                namespaceScoreboards
-                            ) = handleFunction(directory, namespace)
-                            Triple(functions, namespaceStorages, namespaceScoreboards)
-                        }
-                        DatapackComponentType.FUNCTION_TAG -> {
-                            val tags = handleFunctionTagComponents(directory)
-                            Triple(tags, emptySet(), emptySet())
-                        }
-                        else -> {
-                            val regular = handleRegularComponents(directory, type)
-                            Triple(regular, emptySet(), emptySet())
-                        }
+                        DatapackComponentType.FUNCTION -> handleFunction(directory, namespace)
+                        DatapackComponentType.FUNCTION_TAG -> Triple(
+                            handleFunctionTagComponents(directory),
+                            emptySet(),
+                            emptySet()
+                        )
+                        else -> Triple(
+                            handleRegularComponents(directory, type),
+                            emptySet(),
+                            emptySet()
+                        )
                     }
                 } else {
                     Triple(emptyList(), emptySet(), emptySet())
@@ -85,12 +80,12 @@ class DatapackParser(
             }
         }
         val results = jobs.awaitAll()
-        results.forEach { (comp, stor, score) ->
-            components.addAll(comp)
-            storages.addAll(stor)
-            scoreboards.addAll(score)
-            if (comp.isNotEmpty() && comp.first() is Component.Function) {
-                macros.addAll(comp.mapNotNull { (it as? Component.Function)?.macro }.distinct())
+        results.forEach { (resultComponents , resultStorages, resultScoreboards) ->
+            components.addAll(resultComponents)
+            storages.addAll(resultStorages)
+            scoreboards.addAll(resultScoreboards)
+            if (resultComponents.isNotEmpty() && resultComponents.first() is Component.Function) {
+                macros.addAll(resultComponents.mapNotNull { (it as? Component.Function)?.macro }.distinct())
             }
         }
         ParsedNamespace(
