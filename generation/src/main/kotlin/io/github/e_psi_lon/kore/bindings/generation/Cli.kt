@@ -7,8 +7,8 @@ import java.util.zip.ZipOutputStream
 fun main(args: Array<String>) {
 	val startTime = System.currentTimeMillis()
 	val arguments = args.toList()
-    val verbose = getArgValue(arguments, "-v", "--verbose")?.toBoolean() ?: false
-    val quiet = getArgValue(arguments, "-q", "--quiet")?.toBoolean() ?: false
+    val verbose = arguments.contains("-v") || arguments.contains("--verbose")
+    val quiet = arguments.contains("-q") || arguments.contains("--quiet")
     val logger = Logger(false, level = when {
         verbose -> Level.DEBUG
         quiet -> Level.ERROR
