@@ -111,11 +111,11 @@ private fun parseTime(time: Long): String {
 	val hours = minutes / 60
 	val days = hours / 24
 	return buildString {
-		if (days > 0) append("${days}days ")
-		if (hours > 0) append("${hours}h ")
-		if (minutes > 0) append("${minutes}min ")
-		if (seconds > 0) append("${seconds}s ")
-		append("${time % 1000}ms")
+		if (days > 0) append("$days days ")
+		if (hours > 0) append("$hours h ")
+		if (minutes > 0) append("$minutes min ")
+		if (seconds > 0) append("$seconds s ")
+		append("${time % 1000} ms")
 	}
 }
 
