@@ -36,50 +36,45 @@ class DatapackParser(
         val namespaces = dataDir
             .listDirectoryEntries()
             .filter { file -> file.isDirectory() }
-        val parsedNamespaces = namespaces.map { namespace ->
-            async(Dispatchers.Default) {
-                val namespaceName = namespace.nameWithoutExtension
-                val prefix = if (namespaceName.contains('.')) namespaceName.substringBefore('.') else null
-                logger.debug("Processing namespace $namespaceName with prefix $prefix")
-                handleNamespace(namespaceName, prefix)
-            }
-        }.awaitAll()
+        val parsedNamespaces = namespaces.mapAsync(Dispatchers.Default) { namespace ->
+            val namespaceName = namespace.nameWithoutExtension
+            val prefix = if (namespaceName.contains('.')) namespaceName.substringBefore('.') else null
+            logger.debug("Processing namespace $namespaceName with prefix $prefix")
+            handleNamespace(namespaceName, prefix)
+        }
 
         parsedNamespaces.forEach { datapackBuilder.addNamespace(it) }
         datapackBuilder.build()
     }
 
 
-    private suspend fun handleNamespace(namespace: String, prefix: String?): ParsedNamespace = coroutineScope {
+    private suspend fun handleNamespace(namespace: String, prefix: String?): ParsedNamespace {
         val namespaceDir = dataDir.resolve(namespace)
         val components = mutableListOf<Component>()
         val storages: MutableSet<Storage> = mutableSetOf()
         val scoreboards: MutableSet<Scoreboard> = mutableSetOf()
         val macros = mutableListOf<Macro>()
-        val jobs = DatapackComponentType.values().map { type ->
-            async(Dispatchers.Default) {
-                val directory = namespaceDir.resolve(type.directoryName)
-                if (directory.exists()) {
-                    logger.debug("Processing type $type in namespace $namespace")
-                    when (type) {
-                        DatapackComponentType.FUNCTION -> handleFunction(directory, namespace)
-                        DatapackComponentType.FUNCTION_TAG -> Triple(
-                            handleFunctionTagComponents(directory),
-                            emptySet(),
-                            emptySet()
-                        )
-                        else -> Triple(
-                            handleRegularComponents(directory, type),
-                            emptySet(),
-                            emptySet()
-                        )
-                    }
-                } else {
-                    Triple(emptyList(), emptySet(), emptySet())
+        val results = DatapackComponentType.values().mapAsync(Dispatchers.Default) { type ->
+            val directory = namespaceDir.resolve(type.directoryName)
+            if (directory.exists()) {
+                logger.debug("Processing type $type in namespace $namespace")
+                when (type) {
+                    DatapackComponentType.FUNCTION -> handleFunction(directory, namespace)
+                    DatapackComponentType.FUNCTION_TAG -> Triple(
+                        handleFunctionTagComponents(directory),
+                        emptySet(),
+                        emptySet()
+                    )
+                    else -> Triple(
+                        handleRegularComponents(directory, type),
+                        emptySet(),
+                        emptySet()
+                    )
                 }
+            } else {
+                Triple(emptyList(), emptySet(), emptySet())
             }
         }
-        val results = jobs.awaitAll()
         results.forEach { (resultComponents , resultStorages, resultScoreboards) ->
             components.addAll(resultComponents)
             storages.addAll(resultStorages)
@@ -88,7 +83,7 @@ class DatapackParser(
                 macros.addAll(resultComponents.mapNotNull { (it as? Component.Function)?.macro }.distinct())
             }
         }
-        ParsedNamespace(
+        return ParsedNamespace(
             namespace,
             prefix,
             components,
@@ -124,48 +119,30 @@ class DatapackParser(
         }
 
     @OptIn(ExperimentalPathApi::class)
-    private suspend fun handleFunction(path: Path, namespace: String): Triple<List<Component.Function>, Set<Storage>, Set<Scoreboard>> = coroutineScope {
+    private suspend fun handleFunction(path: Path, namespace: String): Triple<List<Component.Function>, Set<Storage>, Set<Scoreboard>> {
         val files = path.walk().filter { it.isRegularFile() && it.extension == "mcfunction" }.toList()
 
         // Step 1: Read all files in parallel (I/O-bound)
-        val fileContentJobs = mutableListOf<Deferred<Pair<Path, String>>>()
-        for (file in files) {
-            fileContentJobs.add(async(Dispatchers.IO) {
-                val relativePath = path.relativize(file)
-                relativePath to file.readText()
-            })
+        val fileContents = files.mapAsync(Dispatchers.IO) { file ->
+            val relativePath = path.relativize(file)
+            relativePath to file.readText()
         }
-        val fileContents = fileContentJobs.awaitAll()
 
         // Step 2: Parse all file contents in parallel (CPU-bound: regex, string operations)
-        val parseJobs = mutableListOf<Deferred<Triple<Component.Function, Set<Storage>, Set<Scoreboard>>>>()
-        for ((relativePath, content) in fileContents) {
-            parseJobs.add(async(Dispatchers.Default) {
-                val parser = FunctionParser2(
-                    content,
-                    namespace,
-                    relativePath,
-                    logger
-                )
-                val (scoreboardsInFunction, storagesInFunction, macro) = parser()
-
-                Triple(
-                    Component.Function(
-                        relativePath,
-                        relativePath.nameWithoutExtension,
-                        macro
-                    ),
-                    storagesInFunction,
-                    scoreboardsInFunction
-                )
-            })
+        val results = fileContents.mapAsync(Dispatchers.Default) { (relativePath, content) ->
+            val parser = FunctionParser2(content, namespace, relativePath, logger)
+            val (scoreboardsInFunction, storagesInFunction, macro) = parser()
+            Triple(
+                Component.Function(relativePath, relativePath.nameWithoutExtension, macro),
+                storagesInFunction,
+                scoreboardsInFunction
+            )
         }
-        val results = parseJobs.awaitAll()
 
         val functions = results.map { it.first }
         val storages = results.flatMap { it.second }.toSet()
         val scoreboards = results.flatMap { it.third }.toSet()
 
-        Triple(functions, storages, scoreboards)
+        return Triple(functions, storages, scoreboards)
     }
 }
