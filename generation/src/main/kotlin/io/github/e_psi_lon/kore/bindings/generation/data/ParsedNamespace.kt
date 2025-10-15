@@ -1,6 +1,5 @@
 package io.github.e_psi_lon.kore.bindings.generation.data
 
-import io.github.e_psi_lon.kore.bindings.generation.DatapackComponentType
 import io.github.e_psi_lon.kore.bindings.generation.sanitizePascal
 
 

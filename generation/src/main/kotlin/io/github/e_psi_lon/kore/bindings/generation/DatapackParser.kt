@@ -50,34 +50,50 @@ class DatapackParser(
     }
 
 
-    private suspend fun handleNamespace(namespace: String, prefix: String?): ParsedNamespace {
-        val namespaceDir = datapackDir.resolve(namespace)
+    private suspend fun handleNamespace(namespace: String, prefix: String?): ParsedNamespace = coroutineScope {
+        val namespaceDir = dataDir.resolve(namespace)
         val components = mutableListOf<Component>()
         val storages: MutableSet<Storage> = mutableSetOf()
         val scoreboards: MutableSet<Scoreboard> = mutableSetOf()
         val macros = mutableListOf<Macro>()
-        DatapackComponentType.values().forEach { type ->
-            val directory = namespaceDir.resolve(type.directoryName)
-            if (directory.exists()) {
-                logger.debug("Processing type $type in namespace $namespace")
-                when (type) {
-                    DatapackComponentType.FUNCTION -> {
-                        val (
-                            functions,
-                            namespaceStorages,
-                            namespaceScoreboards
-                        ) = handleFunction(directory, namespace)
-                        components.addAll(functions)
-                        storages.addAll(namespaceStorages)
-                        scoreboards.addAll(namespaceScoreboards)
-                        macros.addAll(functions.mapNotNull { it.macro }.distinct())
+        val jobs = DatapackComponentType.values().map { type ->
+            async(Dispatchers.Default) {
+                val directory = namespaceDir.resolve(type.directoryName)
+                if (directory.exists()) {
+                    logger.debug("Processing type $type in namespace $namespace")
+                    when (type) {
+                        DatapackComponentType.FUNCTION -> {
+                            val (
+                                functions,
+                                namespaceStorages,
+                                namespaceScoreboards
+                            ) = handleFunction(directory, namespace)
+                            Triple(functions, namespaceStorages, namespaceScoreboards)
+                        }
+                        DatapackComponentType.FUNCTION_TAG -> {
+                            val tags = handleFunctionTagComponents(directory)
+                            Triple(tags, emptySet(), emptySet())
+                        }
+                        else -> {
+                            val regular = handleRegularComponents(directory, type)
+                            Triple(regular, emptySet(), emptySet())
+                        }
                     }
-                    DatapackComponentType.FUNCTION_TAG -> handleFunctionTagComponents(directory).let { components.addAll(it) }
-                    else -> handleRegularComponents(directory, type).let { components.addAll(it) }
+                } else {
+                    Triple(emptyList(), emptySet(), emptySet())
                 }
             }
         }
-        return ParsedNamespace(
+        val results = jobs.awaitAll()
+        results.forEach { (comp, stor, score) ->
+            components.addAll(comp)
+            storages.addAll(stor)
+            scoreboards.addAll(score)
+            if (comp.isNotEmpty() && comp.first() is Component.Function) {
+                macros.addAll(comp.mapNotNull { (it as? Component.Function)?.macro }.distinct())
+            }
+        }
+        ParsedNamespace(
             namespace,
             prefix,
             components,
