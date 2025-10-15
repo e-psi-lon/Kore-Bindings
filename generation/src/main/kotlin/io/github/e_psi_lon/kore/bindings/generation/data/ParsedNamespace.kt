@@ -10,7 +10,7 @@ import io.github.e_psi_lon.kore.bindings.generation.sanitizePascal
 data class ParsedNamespace(
     val name: String,  // "minecraft" or "bs.math"
     val prefix: String?,  // "bs" for "bs.math", null for "minecraft"
-    val components: Map<DatapackComponentType, List<Component>>,
+    val components: List<Component>,
     val localStorages: Set<Storage>,  // Storages unique to this namespace
     val localScoreboards: Set<Scoreboard>,  // Scoreboards unique to this namespace
     val macros: List<Macro>

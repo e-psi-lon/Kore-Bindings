@@ -13,12 +13,13 @@ class DatapackBuilder {
         return Datapack(namespaces, groups)
     }
 
-    private fun identifyNamespaceGroups(): Map<String, NamespaceGroup> {
+    private fun identifyNamespaceGroups(): List<NamespaceGroup> {
         val grouped = namespaces
             .filter { it.name.contains('.') }
             .groupBy { it.name.substringBefore('.') }
 
-        return grouped.mapValues { (prefix, namespacesInGroup) ->
+        return grouped.values.map { namespacesInGroup ->
+            val prefix = namespacesInGroup.first().name.substringBefore('.')
             val sharedResources = findSharedResources(namespacesInGroup)
             NamespaceGroup(
                 prefix = prefix,
