@@ -7,8 +7,8 @@ internal class PropertyBuilder(
 	type: ClassName,
 ) {
 	private var builder = PropertySpec.builder(name, type)
-	private lateinit var getterFunc: FunSpec.Builder
-	private lateinit var setterFunc: FunSpec.Builder
+	private var getterFunc: FunSpec.Builder? = null
+	private var setterFunc: FunSpec.Builder? = null
 	fun initializer(format: String, vararg args: Any) {
 		builder = builder.apply {
 			this.initializer(format, *args)
@@ -42,19 +42,11 @@ internal class PropertyBuilder(
 	}
 
 	fun getter(block: FunSpec.Builder.() -> Unit) {
-		getterFunc = if (this::getterFunc.isInitialized) {
-			getterFunc.apply(block)
-		} else {
-			FunSpec.getterBuilder().apply(block)
-		}
+		getterFunc = getterFunc?.apply(block) ?: FunSpec.getterBuilder().apply(block)
 	}
 
 	fun setter(block: FunSpec.Builder.() -> Unit) {
-		setterFunc = if (this::setterFunc.isInitialized) {
-			setterFunc.apply(block)
-		} else {
-			FunSpec.setterBuilder().apply(block)
-		}
+		setterFunc = setterFunc?.apply(block) ?: FunSpec.setterBuilder().apply(block)
 	}
 
 	fun receiver(receiver: TypeName) {
@@ -63,12 +55,8 @@ internal class PropertyBuilder(
 
 	fun build(): PropertySpec {
 		return builder.apply {
-			if (this@PropertyBuilder::getterFunc.isInitialized) {
-				getter(getterFunc.build())
-			}
-			if (this@PropertyBuilder::setterFunc.isInitialized) {
-				setter(setterFunc.build())
-			}
+			getterFunc?.let { getter(it.build()) }
+            setterFunc?.let { setter(it.build()) }
 		}.build()
 	}
 }

@@ -29,36 +29,28 @@ internal class FileBuilder(
 	}
 
 	fun classBuilder(name: String, block: TypeBuilder.() -> Unit) {
-		typeSpecs[name] = if (typeSpecs.containsKey(name)) {
-			typeSpecs[name]!!.apply(block)
-		} else {
-			TypeBuilder.classBuilder(name, block)
-		}
+		typeSpecs[name] = typeSpecs.getOrPut(name) {
+			TypeBuilder.classBuilder(name)
+		}.apply(block)
 	}
 
 
 	fun interfaceBuilder(name: String, block: TypeBuilder.() -> Unit) {
-		typeSpecs[name] = if (typeSpecs.containsKey(name)) {
-			typeSpecs[name]!!.apply(block)
-		} else {
-			TypeBuilder.interfaceBuilder(name, block)
-		}
+		typeSpecs[name] = typeSpecs.getOrPut(name) {
+			TypeBuilder.interfaceBuilder(name)
+		}.apply(block)
 	}
 
 	fun objectBuilder(name: String, block: TypeBuilder.() -> Unit) {
-		typeSpecs[name] = if (typeSpecs.containsKey(name)) {
-			typeSpecs[name]!!.apply(block)
-		} else {
-			TypeBuilder.objectBuilder(name, block)
-		}
+		typeSpecs[name] = typeSpecs.getOrPut(name) {
+			TypeBuilder.objectBuilder(name)
+		}.apply(block)
 	}
 
 	fun property(name: String, type: ClassName, block: PropertyBuilder.() -> Unit) {
-		propertySpecs[name] = if (propertySpecs.containsKey(name)) {
-			propertySpecs[name]!!.apply(block)
-		} else {
-			PropertyBuilder(name, type).apply(block)
-		}
+		propertySpecs[name] = propertySpecs.getOrPut(name) {
+            PropertyBuilder(name, type)
+        }.apply(block)
 	}
 
 	inline fun <reified T : Any> property(name: String, noinline block: PropertyBuilder.() -> Unit) {

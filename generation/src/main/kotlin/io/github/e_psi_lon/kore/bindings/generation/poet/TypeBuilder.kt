@@ -84,31 +84,24 @@ internal class TypeBuilder(
 	}
 
 	fun classBuilder(name: String, block: TypeBuilder.() -> Unit = {}): TypeBuilder {
-		typeSpecs[name] = if (typeSpecs.containsKey(name)) {
-			typeSpecs[name]!!.apply(block)
-		} else {
-			TypeBuilder(name, TypeSpec.Kind.INTERFACE).apply(block)
-		}
+		typeSpecs[name] = typeSpecs.getOrPut(name) {
+            TypeBuilder(name, TypeSpec.Kind.CLASS)
+        }.apply(block)
 		return typeSpecs[name]!!
 	}
 
 	fun interfaceBuilder(name: String, block: TypeBuilder.() -> Unit = {}): TypeBuilder {
-		typeSpecs[name] = if (typeSpecs.containsKey(name)) {
-			typeSpecs[name]!!.apply(block)
-		} else {
-			TypeBuilder(name, TypeSpec.Kind.INTERFACE).apply(block)
-		}
+		typeSpecs[name] = typeSpecs.getOrPut(name) {
+            TypeBuilder(name, TypeSpec.Kind.INTERFACE)
+        }.apply(block)
 		return typeSpecs[name]!!
 	}
 
 
 	fun objectBuilder(name: String, block: TypeBuilder.() -> Unit = {}): TypeBuilder {
-		typeSpecs.containsKey(name)
-		typeSpecs[name] = if (typeSpecs.containsKey(name)) {
-			typeSpecs[name]!!.apply(block)
-		} else {
-			TypeBuilder(name, TypeSpec.Kind.OBJECT).apply(block)
-		}
+		typeSpecs[name] = typeSpecs.getOrPut(name) {
+            TypeBuilder(name, TypeSpec.Kind.OBJECT)
+        }.apply(block)
 		return typeSpecs[name]!!
 	}
 
