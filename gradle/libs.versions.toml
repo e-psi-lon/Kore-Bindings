@@ -5,6 +5,7 @@ kotlinx-coroutines = "1.10.2"
 kore = "1.24.0-1.21.4"
 kotlin-poet = "2.2.0"
 shadow = "9.2.2"
+junit = "6.0.0"
 
 [libraries]
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
@@ -12,6 +13,8 @@ kore = { module = "io.github.ayfri.kore:kore", version.ref = "kore" }
 kore-oop = { module = "io.github.ayfri.kore:oop ", version.ref = "kore" }
 kotlin-poet = { module = "com.squareup:kotlinpoet", version.ref = "kotlin-poet" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
 
 [plugins]
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
