@@ -37,7 +37,7 @@ class DatapackParser(
             .listDirectoryEntries()
             .filter { file -> file.isDirectory() }
         val parsedNamespaces = namespaces.mapAsync(Dispatchers.Default) { namespace ->
-            val namespaceName = namespace.nameWithoutExtension
+            val namespaceName = namespace.fileName.toString()
             val prefix = if (namespaceName.contains('.')) namespaceName.substringBefore('.') else null
             logger.debug("Processing namespace $namespaceName with prefix $prefix")
             handleNamespace(namespaceName, prefix)
@@ -54,7 +54,7 @@ class DatapackParser(
         val storages: MutableSet<Storage> = mutableSetOf()
         val scoreboards: MutableSet<Scoreboard> = mutableSetOf()
         val macros = mutableListOf<Macro>()
-        val results = DatapackComponentType.values().mapAsync(Dispatchers.Default) { type ->
+        val results = DatapackComponentType.entries.toTypedArray().mapAsync(Dispatchers.Default) { type ->
             val directory = namespaceDir.resolve(type.directoryName)
             if (directory.exists()) {
                 logger.debug("Processing type $type in namespace $namespace")
