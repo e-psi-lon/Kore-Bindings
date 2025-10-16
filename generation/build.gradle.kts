@@ -29,7 +29,7 @@ kotlin {
 
 gradlePlugin {
     plugins {
-        create("koreBindingsGenerator") {
+        register("koreBindingsGenerator") {
             id = "io.github.e_psi_lon.kore.bindings.generation"
             implementationClass = "io.github.e_psi_lon.kore.bindings.generation.BindingGradlePlugin"
         }
