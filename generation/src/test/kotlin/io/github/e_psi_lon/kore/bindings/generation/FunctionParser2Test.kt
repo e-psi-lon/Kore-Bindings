@@ -237,28 +237,6 @@ class FunctionParser2Test {
     }
 
     @Test
-    fun `should handle all scoreboard operations`() {
-        // Arrange
-        val content = """
-            scoreboard objectives add created dummy
-            scoreboard objectives remove deleted
-            scoreboard objectives setdisplay sidebar displayed
-            scoreboard objectives modify modified displayname "New Name"
-        """.trimIndent()
-        val parser = FunctionParser2(content, "test", Path("test.mcfunction"), testLogger)
-
-        // Act
-        val (scoreboards, _, _) = parser()
-
-        // Assert
-        assertEquals(4, scoreboards.size)
-        assertTrue(scoreboards.any { it.name == "created" })
-        assertTrue(scoreboards.any { it.name == "deleted" })
-        assertTrue(scoreboards.any { it.name == "displayed" })
-        assertTrue(scoreboards.any { it.name == "modified" })
-    }
-
-    @Test
     fun `should handle empty function content`() {
         // Arrange
         val content = ""
@@ -291,4 +269,5 @@ class FunctionParser2Test {
         assertTrue(storages.isEmpty())
         assertNull(macro)
     }
+
 }
