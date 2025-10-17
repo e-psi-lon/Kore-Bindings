@@ -9,10 +9,10 @@ import kotlin.io.path.nameWithoutExtension
 
 // Regular expressions for extracting information from mcfunction files
 // Note: setdisplay syntax is "setdisplay <slot> <objective>", so we need special handling
-private val scoreboardRegex = Regex("""\bscoreboard\s+objectives\s+(?:(?:add|remove|modify)\s+([a-zA-Z0-9_.\-+]+)|setdisplay\s+\S+\s+([a-zA-Z0-9_.\-+]+))\b""")
-private val storageRegex = Regex("""\bdata\s+(?:get|merge|remove|modify)\s+storage\s+([a-z0-9_.-]+:[a-z0-9_./-]+)\b""")
-private val macroLineRegex = Regex("""^\$(.+)$""", RegexOption.MULTILINE)
-private val macroParameterRegex = Regex("""\$\(([a-zA-Z0-9_]+)\)""")
+internal val scoreboardRegex = Regex("""\bscoreboard\s+objectives\s+(?:(?:add|remove|modify)\s+([a-zA-Z0-9_.\-+]+)|setdisplay\s+\S+\s+([a-zA-Z0-9_.\-+]+))\b""")
+internal val storageRegex = Regex("""\bdata\s+(?:get|merge|remove|modify)\s+storage\s+([a-z0-9_.-]+:[a-z0-9_./-]+)\b""")
+internal val macroLineRegex = Regex("""^\$(.+)$""", RegexOption.MULTILINE)
+internal val macroParameterRegex = Regex("""\$\(([a-zA-Z0-9_]+)\)""")
 
 
 class FunctionParser2(
@@ -48,14 +48,21 @@ class FunctionParser2(
         return Triple(scoreboards, storages, macro)
     }
 
-    private fun extractScoreboards(fileContent: String): Set<Scoreboard> = scoreboardRegex.findAll(fileContent).map { match ->
+    private fun extractScoreboards(fileContent: String): Set<Scoreboard> = scoreboardRegex.findAll(fileContent).mapNotNull { match ->
         // Group 1: add/remove/modify operations, Group 2: setdisplay operation
         val scoreboardName = match.groupValues[1].ifEmpty { match.groupValues[2] }
+
+        // Skip if no objective name was captured (e.g., setdisplay without objective)
+        if (scoreboardName.isEmpty()) {
+            logger.debug("Skipping scoreboard match without objective name")
+            return@mapNotNull null
+        }
+
         logger.debug("Found scoreboard $scoreboardName")
         val parts = scoreboardName.split(".")
 
         // If scoreboard is unqualified (no dots), assume it belongs to current namespace
-        return@map if (parts.size == 1) {
+        return@mapNotNull if (parts.size == 1) {
             Scoreboard(scoreboardName, namespaceName)
         } else {
             // If qualified (has dots), the namespace is everything except the last part

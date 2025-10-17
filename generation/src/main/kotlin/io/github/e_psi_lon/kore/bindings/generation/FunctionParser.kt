@@ -21,13 +21,6 @@ import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.name
 import kotlin.io.path.relativeTo
-
-// Regular expressions for extracting information from mcfunction files
-private val scoreboardRegex = Regex("""\bscoreboard\s+objectives\s+(?:add|remove|setdisplay|modify)\s+([a-zA-Z0-9_.\-+]+)\b""")
-private val storageRegex = Regex("""\bdata\s+(?:get|merge|remove|modify)\s+storage\s+([a-z0-9_.-]+:[a-z0-9_./-]+)\b""")
-private val macroLineRegex = Regex("""^\$(.+)$""", RegexOption.MULTILINE)
-private val macroParameterRegex = Regex("""\$\(([a-zA-Z0-9_]+)\)""")
-
 /**
  * A class that parses Minecraft function files to extract various elements for binding generation.
  * This includes scoreboards, storages, and now macros.
@@ -452,8 +445,7 @@ class FunctionParser(
 
             // Extract storages
             storages.addAll(
-                storageRegex.findAll(processed).mapNotNull { match ->
-                    match.groupValues[1].split(":").takeIf { it.size == 2 }
+                storageRegex.findAll(processed).mapNotNull { match ->                    match.groupValues[1].split(":").takeIf { it.size == 2 }
                         ?.let { (namespace, name) -> Pair(namespace, name) }
                 }
             )
