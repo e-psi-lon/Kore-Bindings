@@ -5,6 +5,9 @@ build/
 !**/src/test/**/build/
 local.properties
 
+# Ignored Minecraft client's datapack
+**/client/**
+
 ### IntelliJ IDEA ###
 .idea/
 

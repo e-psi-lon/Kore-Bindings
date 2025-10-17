@@ -3,9 +3,12 @@ package io.github.e_psi_lon.kore.bindings.generation
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.asClassName
-import io.github.ayfri.kore.arguments.types.resources.*
-import io.github.ayfri.kore.arguments.types.resources.tagged.*
-import io.github.ayfri.kore.arguments.types.resources.worldgen.*
+import io.github.ayfri.kore.arguments.types.resources.tagged.FunctionTagArgument
+import io.github.ayfri.kore.arguments.types.resources.tagged.ItemTagArgument
+import io.github.ayfri.kore.generated.arguments.types.*
+import io.github.ayfri.kore.generated.arguments.tagged.*
+import io.github.ayfri.kore.generated.arguments.worldgen.types.*
+import io.github.ayfri.kore.generated.arguments.worldgen.tagged.*
 import io.github.ayfri.kore.commands.Command
 import io.github.ayfri.kore.functions.Function
 import io.github.ayfri.kore.utils.pascalCase
@@ -43,14 +46,30 @@ enum class DatapackComponentType: ComponentType {
 		override val directoryName = "banner_pattern"
 		override val koreMethodOrClass = BannerPatternArgument::class.asClassName()
 	},
+	CAT_VARIANT {
+		override val directoryName = "cat_variant"
+		override val koreMethodOrClass = CatVariantArgument::class.asClassName()
+	},
 	CHAT_TYPE {
 		override val directoryName = "chat"
 		override val koreMethodOrClass = ChatTypeArgument::class.asClassName()
+	},
+	CHICKEN_VARIANT {
+		override val directoryName = "chicken_variant"
+		override val koreMethodOrClass = ChickenVariantArgument::class.asClassName()
+	},
+	COW_VARIANT {
+		override val directoryName = "cow_variant"
+		override val koreMethodOrClass = CowVariantArgument::class.asClassName()
 	},
 	DAMAGE_TYPE {
 		override val directoryName = "damage_type"
 		override val koreMethodOrClass = DamageTypeArgument::class.asClassName()
 		override val parameters = usualParam("damageType")
+	},
+	DIALOG {
+		override val directoryName = "dialog"
+		override val koreMethodOrClass = DialogArgument::class.asClassName()
 	},
 	DIMENSION_TYPE {
 		override val directoryName = "dimension_type"
@@ -61,10 +80,15 @@ enum class DatapackComponentType: ComponentType {
 		override val directoryName = "enchantment"
 		override val koreMethodOrClass = EnchantmentArgument::class.asClassName()
 	},
-	/*ENCHANTMENT_PROVIDER {
-		override val directoryrName = "enchantment_provider"
+	ENCHANTMENT_PROVIDER {
+		override val directoryName = "enchantment_provider"
 		override val fileExtension = "json"
-	},*/
+		override val koreMethodOrClass = EnchantmentProviderArgument::class.asClassName()
+	},
+	FROG_VARIANT {
+		override val directoryName = "frog_variant"
+		override val koreMethodOrClass = FrogVariantArgument::class.asClassName()
+	},
 	FUNCTION {
 		override val directoryName = "function"
 		override val fileExtension = "mcfunction"
@@ -112,7 +136,7 @@ enum class DatapackComponentType: ComponentType {
 	},
 	BLOCK_TAG {
 		override val directoryName = "tags/block"
-		override val koreMethodOrClass = BlockTagArgument::class.asClassName()
+		override val koreMethodOrClass = BlockTypeTagArgument::class.asClassName()
 		override val parameters = usualParam("tagName")
 	},
 	CAT_VARIANT_TAG {
@@ -125,6 +149,11 @@ enum class DatapackComponentType: ComponentType {
 		override val koreMethodOrClass = DamageTypeTagArgument::class.asClassName()
 		override val parameters = usualParam("tagName")
 	},
+    DIALOG_TAG {
+        override val directoryName = "tags/dialog"
+        override val koreMethodOrClass = DialogTagArgument::class.asClassName()
+
+    },
 	ENCHANTMENT_TAG {
 		override val directoryName = "tags/enchantment"
 		override val koreMethodOrClass = EnchantmentTagArgument::class.asClassName()
@@ -149,7 +178,7 @@ enum class DatapackComponentType: ComponentType {
 			ParameterSpec.builder("group", Boolean::class).build() to true
 		)
 	},
-	FUNCTION_TAG_ARGUMENT {
+    FUNCTION_TAG_ARGUMENT {
 		override val directoryName = "tags/function"
 		override val koreMethodOrClass = FunctionTagArgument::class.asClassName()
 		override val parameters = usualParam("tagName")
@@ -165,7 +194,7 @@ enum class DatapackComponentType: ComponentType {
 		override val koreMethodOrClass = InstrumentTagArgument::class.asClassName()
 		override val parameters = usualParam("tagName")
 	},
-	ITEM_TAG {
+    ITEM_TAG {
 		override val directoryName = "tags/item"
 		override val koreMethodOrClass = ItemTagArgument::class.asClassName()
 		override val parameters = usualParam("tagName")
@@ -177,7 +206,7 @@ enum class DatapackComponentType: ComponentType {
 	},
 	POINT_OF_INTEREST_TYPE_TAG {
 		override val directoryName = "tags/point_of_interest_type"
-		override val koreMethodOrClass = PointOfInterestTagArgument::class.asClassName()
+		override val koreMethodOrClass = PointOfInterestTypeTagArgument::class.asClassName()
 		override val parameters = usualParam("tagName")
 	},
 	// SUBTAGS FOR WORLDGEN
@@ -201,9 +230,11 @@ enum class DatapackComponentType: ComponentType {
 		override val koreMethodOrClass = WorldPresetTagArgument::class.asClassName()
 		override val parameters = usualParam("tagName")
 	},
-	/* TRIAL_SPAWNER {
+	TRIAL_SPAWNER {
 		override val directoryName = "trial_spawner"
-	},*/
+        override val koreMethodOrClass = TrialSpawnerArgument::class.asClassName()
+
+	},
 	TRIM_MATERIAL {
 		override val directoryName = "trim_material"
 		override val koreMethodOrClass = TrimMaterialArgument::class.asClassName()
@@ -211,6 +242,10 @@ enum class DatapackComponentType: ComponentType {
 	TRIM_PATTERN {
 		override val directoryName = "trim_pattern"
 		override val koreMethodOrClass = TrimPatternArgument::class.asClassName()
+	},
+	WOLF_SOUND_VARIANT {
+		override val directoryName = "wolf_sound_variant"
+		override val koreMethodOrClass = WolfSoundVariantArgument::class.asClassName()
 	},
 	WOLF_VARIANT {
 		override val directoryName = "wolf_variant"
@@ -222,10 +257,10 @@ enum class DatapackComponentType: ComponentType {
 		override val koreMethodOrClass = BiomeArgument::class.asClassName()
 		override val parameters = usualParam("biome")
 	},
-	/*
 	CONFIGURED_CARVER {
 		override val directoryName = "worldgen/configured_carver"
-	},*/
+		override val koreMethodOrClass = ConfiguredCarverArgument::class.asClassName()
+	},
 	CONFIGURED_FEATURE {
 		override val directoryName = "worldgen/configured_feature"
 		override val koreMethodOrClass = ConfiguredFeatureArgument::class.asClassName()
@@ -241,11 +276,10 @@ enum class DatapackComponentType: ComponentType {
 		override val koreMethodOrClass = FlatLevelGeneratorPresetArgument::class.asClassName()
 		override val parameters = usualParam("preset")
 	},
-	/* MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST {
+	MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST {
 		override val directoryName = "worldgen/multi_noise_biome_source_parameter_list"
 	    override val koreMethodOrClass = MultiNoiseBiomeSourceParameterListArgument::class.asClassName()
 	},
-	*/
 	NOISE {
 		override val directoryName = "worldgen/noise"
 		override val koreMethodOrClass = NoiseArgument::class.asClassName()
