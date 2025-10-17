@@ -193,7 +193,7 @@ class FunctionRegexTest {
 
     @Test
     fun `macro line regex should match lines starting with dollar sign`() {
-        val input = "\$say Hello World"
+        val input = $$"$say Hello World"
         val matches = macroLineRegex.findAll(input).toList()
 
         assertEquals(1, matches.size)
@@ -202,11 +202,11 @@ class FunctionRegexTest {
 
     @Test
     fun `macro line regex should match lines with variables`() {
-        val input = "\$say Hello \$(name)!"
+        val input = $$"$say Hello $(name)!"
         val matches = macroLineRegex.findAll(input).toList()
 
         assertEquals(1, matches.size)
-        assertEquals("say Hello \$(name)!", matches[0].groupValues[1])
+        assertEquals("say Hello $(name)!", matches[0].groupValues[1])
     }
 
     @Test
@@ -219,18 +219,18 @@ class FunctionRegexTest {
 
     @Test
     fun `macro line regex should handle multiline content with MULTILINE option`() {
-        val input = """
+        val input = $$"""
             say Normal command
-            ${'$'}say Macro command
+            $say Macro command
             data get storage test:data
-            ${'$'}teleport @s ~ ~${'$'}(y) ~
+            $teleport @s ~ ~$(y) ~
         """.trimIndent()
 
         val matches = macroLineRegex.findAll(input).toList()
 
         assertEquals(2, matches.size, "Should find 2 macro lines")
         assertEquals("say Macro command", matches[0].groupValues[1])
-        assertEquals("teleport @s ~ ~\$(y) ~", matches[1].groupValues[1])
+        assertEquals("teleport @s ~ ~$(y) ~", matches[1].groupValues[1])
     }
 
     // ========================================
@@ -239,7 +239,7 @@ class FunctionRegexTest {
 
     @Test
     fun `macro parameter regex should extract variable names`() {
-        val input = "\$(name)"
+        val input = "$(name)"
         val matches = macroParameterRegex.findAll(input).toList()
 
         assertEquals(1, matches.size)
@@ -248,7 +248,7 @@ class FunctionRegexTest {
 
     @Test
     fun `macro parameter regex should extract multiple variables`() {
-        val input = "teleport @s \$(x) \$(y) \$(z)"
+        val input = "teleport @s $(x) $(y) $(z)"
         val matches = macroParameterRegex.findAll(input).toList()
 
         assertEquals(3, matches.size)
@@ -259,7 +259,7 @@ class FunctionRegexTest {
 
     @Test
     fun `macro parameter regex should handle variables with numbers and underscores`() {
-        val input = "\$(key_1) \$(value2) \$(test_var_123)"
+        val input = "$(key_1) $(value2) $(test_var_123)"
         val matches = macroParameterRegex.findAll(input).toList()
 
         assertEquals(3, matches.size)
@@ -270,7 +270,7 @@ class FunctionRegexTest {
 
     @Test
     fun `macro parameter regex should not match invalid variable names`() {
-        val input = "\$(invalid-name) \$(invalid.name)"
+        val input = "$(invalid-name) $(invalid.name)"
         val matches = macroParameterRegex.findAll(input).toList()
 
         // According to wiki, only [a-zA-Z0-9_] are valid

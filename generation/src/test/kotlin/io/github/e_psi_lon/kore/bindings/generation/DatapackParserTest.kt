@@ -70,9 +70,9 @@ class DatapackParserTest {
         val namespace = "macro_test"
 
         createDatapackStructure(datapackDir, namespace) {
-            function("macro_func", """
-                ${'$'}say Hello $(name)!
-                ${'$'}scoreboard players set @s my_score $(value)
+            function("macro_func", $$"""
+                $say Hello $(name)!
+                $scoreboard players set @s my_score $(value)
             """.trimIndent())
         }
 

@@ -56,10 +56,10 @@ class FunctionParser2Test {
     @Test
     fun `should extract macro parameters`() {
         // Arrange
-        val content = """
-            ${'$'}say Hello $(name)!
-            ${'$'}scoreboard players set @s score $(value)
-            ${'$'}execute positioned $(x) $(y) $(z) run function test:other
+        val content = $$"""
+            $say Hello $(name)!
+            $scoreboard players set @s score $(value)
+            $execute positioned $(x) $(y) $(z) run function test:other
         """.trimIndent()
         val parser = FunctionParser2(content, "test", Path("macro_func.mcfunction"), testLogger)
 
@@ -185,9 +185,9 @@ class FunctionParser2Test {
     @Test
     fun `should deduplicate macro parameters`() {
         // Arrange
-        val content = """
-            ${'$'}say $(name) $(name) $(name)
-            ${'$'}execute as $(name) run say $(value)
+        val content = $$"""
+            $say $(name) $(name) $(name)
+            $execute as $(name) run say $(value)
         """.trimIndent()
         val parser = FunctionParser2(content, "test", Path("test.mcfunction"), testLogger)
 
@@ -213,7 +213,8 @@ class FunctionParser2Test {
 
         // Assert - even without macro, test the path handling
         // Path should be normalized in Component.Function usage
-        assertEquals("function", relativePath.fileName.toString().removeSuffix(".mcfunction"))
+        assertNotNull(macro)
+        assertEquals("function", macro.functionName)
     }
 
     @Test
