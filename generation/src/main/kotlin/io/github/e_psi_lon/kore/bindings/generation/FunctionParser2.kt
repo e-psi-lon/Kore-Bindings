@@ -9,11 +9,10 @@ import kotlin.io.path.nameWithoutExtension
 
 // Regular expressions for extracting information from mcfunction files
 // Note: setdisplay syntax is "setdisplay <slot> <objective>", so we need special handling
-internal val scoreboardRegex = Regex("""\bscoreboard\s+objectives\s+(?:(?:add|remove|modify)\s+([a-zA-Z0-9_.\-+]+)|setdisplay\s+\S+\s+([a-zA-Z0-9_.\-+]+))\b""")
+internal val scoreboardRegex = Regex("""^scoreboard\s+objectives\s+(?:(?:add|remove|modify)\s+([a-zA-Z0-9_.\-+]+)|setdisplay\s+[a-zA-Z0-9_.\-+]+(?:[^\S\r\n]+([a-zA-Z0-9_.\-+]+))?)(?:[^\S\r\n]|$)""", RegexOption.MULTILINE)
 internal val storageRegex = Regex("""\bdata\s+(?:get|merge|remove|modify)\s+storage\s+([a-z0-9_.-]+:[a-z0-9_./-]+)\b""")
 internal val macroLineRegex = Regex("""^\$(.+)$""", RegexOption.MULTILINE)
 internal val macroParameterRegex = Regex("""\$\(([a-zA-Z0-9_]+)\)""")
-
 
 class FunctionParser2(
     private val code: String,
