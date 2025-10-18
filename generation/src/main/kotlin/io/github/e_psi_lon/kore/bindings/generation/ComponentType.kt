@@ -14,9 +14,17 @@ import io.github.ayfri.kore.commands.Command
 import io.github.ayfri.kore.functions.Function
 import io.github.ayfri.kore.utils.pascalCase
 
+
+
+sealed class ParameterValueSource {
+    object Name : ParameterValueSource()
+    object Namespace : ParameterValueSource()
+    data class Default(val value: Any) : ParameterValueSource()
+}
+
 private fun usualParam(name: String = "name") = mapOf(
-    ParameterSpec.builder(name, String::class).build() to null,
-    ParameterSpec.builder("namespace", String::class).build() to null
+    ParameterSpec.builder(name, String::class).build() to ParameterValueSource.Name,
+    ParameterSpec.builder("namespace", String::class).build() to ParameterValueSource.Namespace
 
 )
 
@@ -48,7 +56,7 @@ interface ComponentType {
             throw IllegalStateException("returnType must be overridden if koreMethodOrClass is a MemberName")
         }
 	val requiredContext: ClassName? get() = null
-	val parameters: Map<ParameterSpec, Any?>
+	val parameters: Map<ParameterSpec, ParameterValueSource>
 		// The default value is namespace and name to null because it's the most common case.
 		get() = usualParam()
 	val duplicateSuffix: String
@@ -114,7 +122,7 @@ enum class DatapackComponentType: ComponentType {
 		override val requiredContext = Function::class.asClassName()
 		override val returnType = Command::class.asClassName()
 		override val parameters = usualParam().plus(
-			ParameterSpec.builder("group", Boolean::class).build() to false
+			ParameterSpec.builder("group", Boolean::class).build() to ParameterValueSource.Default(false)
 		)
 	},
 	INSTRUMENT {
@@ -178,7 +186,7 @@ enum class DatapackComponentType: ComponentType {
 	},
 	ENTITY_TYPE_TAG {
 		override val directoryName = "tags/entity_type"
-		override val koreMethodOrClass = EntityTypeTagArgument::class.asClassName()
+		override val koreMethodOrClass = EntityTypeTagArgument::class.asClassName().toClassOrMemberName()
 		override val parameters = usualParam("tagName")
 	},
 	FLUID_TAG {
@@ -193,7 +201,7 @@ enum class DatapackComponentType: ComponentType {
 		override val requiredContext = Function::class.asClassName()
 		override val returnType = Command::class.asClassName()
 		override val parameters = usualParam().plus(
-			ParameterSpec.builder("group", Boolean::class).build() to true
+			ParameterSpec.builder("group", Boolean::class).build() to ParameterValueSource.Default(true)
 		)
 	},
     FUNCTION_TAG_ARGUMENT {
