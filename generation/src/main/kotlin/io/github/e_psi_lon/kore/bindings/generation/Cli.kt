@@ -73,7 +73,6 @@ fun main(args: Array<String>) {
                 datapackSource = zipPath ?: directoryPath!!,
                 isZip = zipPath != null,
                 outputDir = finalPath,
-                namespace = "",
                 packageName = packageName,
                 parentPackage = parentPackage,
                 prefix = null,

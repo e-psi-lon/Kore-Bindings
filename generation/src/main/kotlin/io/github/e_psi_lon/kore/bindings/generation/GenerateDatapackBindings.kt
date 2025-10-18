@@ -136,7 +136,7 @@ class GenerateDatapackBindings(
 						}
 
 						// Process each datapack component type
-						for (dpComponent in DatapackComponentType.values()) {
+						for (dpComponent in DatapackComponentType.entries) {
 							val componentDir = namespaceDir.resolve(dpComponent.directoryName)
 							if (componentDir.exists() && componentDir.isDirectory) {
 								logger.debug("Adding ${dpComponent.name.lowercase()} in namespace $fullNamespace")
@@ -184,7 +184,7 @@ class GenerateDatapackBindings(
 					}
 				}
 
-				for (dpComponent in DatapackComponentType.values()) {
+				for (dpComponent in DatapackComponentType.entries) {
 					val componentDir = namespace.resolve(dpComponent.directoryName)
 					if (componentDir.exists() && componentDir.isDirectory) {
 						if (verbose) println("Adding ${dpComponent.name.lowercase()} in namespace $namespaceName")
@@ -380,7 +380,6 @@ fun generateDatapackBinding(
     isZip: Boolean,
     outputDir: Path,
     packageName: String,
-    namespace: String,
     parentPackage: String,
     prefix: String?,
     logger: Logger,
@@ -391,7 +390,7 @@ fun generateDatapackBinding(
         val datapackDir = fileSystem?.getPath("/") ?: datapackSource
         val parser = DatapackParser(datapackDir, logger)
         val datapack = parser()
-        val generator = BindingGenerator(logger, datapack, outputDir, packageName, namespace, parentPackage, prefix)
+        val generator = BindingGenerator(logger, datapack, outputDir, packageName, parentPackage, prefix)
         generator()
 
     }

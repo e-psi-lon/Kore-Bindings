@@ -105,6 +105,17 @@ internal class TypeBuilder(
 		return typeSpecs[name]!!
 	}
 
+    fun getOrCreateSubObjectBuilder(path: List<String>, block: TypeBuilder.() -> Unit): TypeBuilder {
+        var current = this
+        for (name in path) {
+            val subBuilder = current.typeSpecs.getOrPut(name) {
+                TypeBuilder(name, TypeSpec.Kind.OBJECT)
+            }
+            current = subBuilder
+        }
+        return current.apply(block)
+    }
+
 	companion object {
 		fun classBuilder(name: String, block: TypeBuilder.() -> Unit = {}): TypeBuilder {
 			return TypeBuilder(name, TypeSpec.Kind.CLASS).apply(block)
