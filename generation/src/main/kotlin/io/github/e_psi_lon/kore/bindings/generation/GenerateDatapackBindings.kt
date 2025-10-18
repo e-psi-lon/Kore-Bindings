@@ -253,7 +253,11 @@ class GenerateDatapackBindings(
 							if (hasParent) {
 								property<String>("PATH") {
 									addModifiers(KModifier.CONST, KModifier.PRIVATE)
-									initializer("%P", "\${${currentParentClassName.split(".").takeLast(2).joinToString(".")}.PATH}/$subDirectoryName/")
+									initializer("%P",
+                                        $$"${$${
+                                            currentParentClassName.split(".").takeLast(2).joinToString(".")
+                                        }.PATH}/$$subDirectoryName/"
+                                    )
 								}
 							} else {
 								property<String>("PATH") {
@@ -336,7 +340,7 @@ class GenerateDatapackBindings(
 							if (needsPrefix) {
 								addDocs(
 									"This function was renamed to be a valid Kotlin identifier.",
-									"Minecraft will identify it as `$namespaceName:\${path to element}/$fileName`.",
+                                    $$"Minecraft will identify it as `$$namespaceName:${path to element}/$$fileName`.",
 								)
 							}
 
@@ -357,7 +361,7 @@ class GenerateDatapackBindings(
 			val parameterName = parameter.name
 			if (value == null) {
 				"$parameterName = ${when (parameterName) {
-					in nameTypes -> "\"\${PATH}${context["name"]}\""
+					in nameTypes -> $$"\"${PATH}$${context["name"]}\""
 					"namespace" -> "namespace"
 					else -> if (context.containsKey(parameterName)) "\"${context[parameterName]}\"" else throw IllegalArgumentException("Unknown base parameter name: $parameterName")
 				}}"
