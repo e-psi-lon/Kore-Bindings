@@ -1,27 +1,28 @@
 package io.github.e_psi_lon.kore.bindings.generation
 
+import io.github.ayfri.kore.utils.camelCase
 import io.github.ayfri.kore.utils.pascalCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 
-
 /**
  * Sanitize a string for use as a Kotlin identifier and convert it to camelCase.
  *
  * @return The sanitized string in camelCase
  */
-fun String.sanitizeCamel() = sanitizePascal().replaceFirstChar { if (!it.isLowerCase()) it.lowercase() else it.toString() }
+fun String.sanitizeCamel() = camelCase().replaceDotsAndHyphens()
 
 /**
  * Sanitize a string for use as a Kotlin identifier and convert it to PascalCase.
  *
  * @return The sanitized string in PascalCase
  */
-fun String.sanitizePascal() = pascalCase()
-    .replace('-', '_')
-    .replace(".", "_")
+fun String.sanitizePascal() = pascalCase().replaceDotsAndHyphens()
+
+
+private fun String.replaceDotsAndHyphens() = replace('.', '_').replace('-', '_')
 
 /**
  * Maps each element of the collection to a result using the given suspend block,
@@ -35,9 +36,9 @@ suspend fun <T, R> Iterable<T>.mapAsync(
     dispatcher: CoroutineDispatcher,
     block: suspend (T) -> R
 ): List<R> = coroutineScope {
-    map { element ->
+    map {
         async(dispatcher) {
-            block(element)
+            block(it)
         }
     }.awaitAll()
 }
@@ -54,9 +55,9 @@ suspend fun <T, R> Array<T>.mapAsync(
     dispatcher: CoroutineDispatcher,
     block: suspend (T) -> R
 ): List<R> = coroutineScope {
-    map { element ->
+    map {
         async(dispatcher) {
-            block(element)
+            block(it)
         }
     }.awaitAll()
 }
