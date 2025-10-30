@@ -1,142 +1,132 @@
 package io.github.e_psi_lon.kore.bindings.generation
 
+import com.github.ajalt.clikt.completion.CompletionCandidates
+import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.main
+import com.github.ajalt.clikt.parameters.groups.default
+import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.options.flag
+import com.github.ajalt.clikt.parameters.options.required
+import com.github.ajalt.clikt.parameters.options.convert
+import com.github.ajalt.clikt.parameters.groups.mutuallyExclusiveOptions
+import com.github.ajalt.clikt.parameters.groups.required
+import com.github.ajalt.clikt.parameters.groups.single
+import com.github.ajalt.clikt.parameters.options.default
 import java.nio.file.FileSystems
+import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
-import kotlin.system.exitProcess
 
-fun main(args: Array<String>) {
-	val startTime = System.currentTimeMillis()
-	val arguments = args.toList()
-    val verbose = arguments.any { it == "-v" || it == "--verbose" }
-    val quiet = arguments.any { it == "-q" || it == "--quiet" }
-    if (verbose && quiet) {
-        System.err.println(Logger.format("Cannot use both verbose and quiet flags simultaneously.", Level.ERROR))
-        exitProcess(1)
-    }
-    val logger = Logger.println(when {
-        verbose -> Level.DEBUG
-        quiet -> Level.ERROR
-        else -> Level.INFO
-    })
-	if (arguments.any { it == "-h" || it == "--help" }) {
-		printHelp()
-        return
-	}
-	val packageName = getArgValue(arguments, "-p", "--package") ?: run {
-        logger.error("Package name is required (-p, --package)")
-        printHelp()
-        exitProcess(1)
-    }
-	val providedParentPackage = getArgValue(arguments, "-pp", "--parent-package")
-	val parentPackage = providedParentPackage ?: packageName.substringBeforeLast(".", "")
-    val outputPath = getArgValue(arguments, "-o", "--output")
-    val originalOutputPath = outputPath ?: "generated"
-    logger.info("Output path: $originalOutputPath")
-    val bundled = outputPath != null && outputPath.endsWith(".zip")
-    val outputDir = outputPath
-        ?.let { Path(it) }
-        ?: Path("generated")
-	val directoryPath = getArgValue(arguments, "-d", "--dir")?.let { Path(it) }
-	val zipPath = getArgValue(arguments, "-z", "--zip")?.let { Path(it) }
-	if (directoryPath == null && zipPath == null) {
-		logger.error("Either a datapack directory (-d) or zip file (-z) must be provided")
-		printHelp()
-		exitProcess(1)
-	}
-	if (directoryPath != null && zipPath != null) {
-		logger.error("Only one of datapack directory (-d) or zip file (-z) should be provided")
-		printHelp()
-        exitProcess(1)
-	}
-	directoryPath?.let {
-		if (!it.exists() || !it.isDirectory()) {
-			logger.error("Datapack directory does not exist or is not a directory: ${it.absolutePathString()}")
-			exitProcess(1)
-		}
-	}
-	zipPath?.let {
-		if (!it.exists() || !it.isRegularFile()) {
-			logger.error("Datapack zip file does not exist or is not a file: ${it.absolutePathString()}")
-			exitProcess(1)
-		}
-	}
-    // Temporary. To remove once the refactor is complete
-    val useRefactor = arguments.contains("-r") || arguments.contains("--refactor")
-    val fileSystem = if (bundled)
-        FileSystems.newFileSystem(outputDir, emptyMap<String, Any>())
-    else
-        null
-    fileSystem.use { fs ->
-        val finalPath = fs?.getPath("/") ?: outputDir
-        if (useRefactor) {
-            generateDatapackBinding(
-                datapackSource = zipPath ?: directoryPath!!,
-                isZip = zipPath != null,
-                outputDir = finalPath,
-                packageName = packageName,
-                parentPackage = parentPackage,
-                prefix = null,
-                logger = logger
-            )
-        } else
-        GenerateDatapackBindings(
-            directory = directoryPath?.toFile(),
-            zipFile = zipPath?.toFile(),
-            outputDir = finalPath.toFile(),
-            packageName = packageName,
-            parentPackage = parentPackage,
-            verbose = verbose,
-            logger = logger
-        )
-    }
-
-	logger.info("Bindings generated successfully in ${Path(originalOutputPath).absolutePathString()} in ${parseTime(System.currentTimeMillis() - startTime)}")
+sealed class DatapackSource {
+    data class Directory(val path: Path) : DatapackSource()
+    data class Zip(val path: Path) : DatapackSource()
 }
 
-private fun getArgValue(args: List<String>, shortFlag: String, longFlag: String): String? {
-	val shortIndex = args.indexOf(shortFlag)
-	val longIndex = args.indexOf(longFlag)
+class GenerateBindings : CliktCommand(name = "java -jar kore-bindings-generator.jar") {
+    private val packageName by option("-p", "--package", help = "The package name for the generated bindings (required)")
+        .required()
 
-	return when {
-		shortIndex >= 0 && shortIndex < args.size - 1 -> args[shortIndex + 1]
-		longIndex >= 0 && longIndex < args.size - 1 -> args[longIndex + 1]
-		else -> null
-	}
+    private val parentPackage by option("-pp", "--parent-package", help = "Parent package name (default: package name without the last part)")
+    
+    private val outputPath by option("-o", "--output", help = "Output directory or zip file name for generated bindings (default: \"generated\")",
+        completionCandidates = CompletionCandidates.Path
+    ).default("generated")
+
+    private val datapackSource by mutuallyExclusiveOptions(
+        option("-d", "--dir", help = "The path to the datapack directory", completionCandidates = CompletionCandidates.Path)
+            .convert {
+                val path = Path(it)
+                if (!path.exists() || !path.isDirectory()) {
+                    fail("Datapack directory does not exist or is not a directory: ${path.absolutePathString()}")
+                }
+                DatapackSource.Directory(path)
+            },
+        option("-z", "--zip", help = "The path to the datapack zip file", completionCandidates = CompletionCandidates.Path)
+            .convert {
+                val path = Path(it)
+                if (!path.exists() || !path.isRegularFile()) {
+                    fail("Datapack zip file does not exist or is not a file: ${path.absolutePathString()}")
+                }
+                DatapackSource.Zip(path)
+            }
+    ).single().required()
+
+    private val level by mutuallyExclusiveOptions(
+        option("-v", "--verbose", help = "Enable verbose output").flag().convert { Level.DEBUG },
+        option("-q", "--quiet", help = "Minimize output").flag().convert { Level.ERROR }
+    ).default(Level.INFO)
+
+    // Temporary. To remove once the refactor is done
+    private val useRefactor by option("-r", "--refactor", help = "Use refactored generation system (temporary)").flag()
+
+    override fun run() {
+        // Create logger
+        val logger = Logger.echo(this, level)
+
+        val startTime = System.currentTimeMillis()
+        val finalParentPackage = parentPackage ?: packageName.substringBeforeLast(".", "")
+        val originalOutputPath = outputPath
+        val outputPathValue = outputPath
+        val bundled = outputPathValue.endsWith(".zip")
+        val outputDir = Path(outputPathValue)
+
+        logger.info("Output path: $originalOutputPath")
+
+        val fileSystem = if (bundled)
+            FileSystems.newFileSystem(outputDir, emptyMap<String, Any>())
+        else
+            null
+
+        fileSystem.use { fs ->
+            val finalPath = fs?.getPath("/") ?: outputDir
+
+            if (useRefactor) {
+                val source = when (val dpSource = datapackSource) {
+                    is DatapackSource.Directory -> dpSource.path
+                    is DatapackSource.Zip -> dpSource.path
+                }
+                generateDatapackBinding(
+                    datapackSource = source,
+                    isZip = datapackSource is DatapackSource.Zip,
+                    outputDir = finalPath,
+                    packageName = packageName,
+                    parentPackage = finalParentPackage,
+                    prefix = null,
+                    logger = logger
+                )
+            } else {
+                val dir = (datapackSource as? DatapackSource.Directory)?.path?.toFile()
+                val zip = (datapackSource as? DatapackSource.Zip)?.path?.toFile()
+                GenerateDatapackBindings(
+                    directory = dir,
+                    zipFile = zip,
+                    outputDir = finalPath.toFile(),
+                    packageName = packageName,
+                    parentPackage = finalParentPackage,
+                    verbose = level <= Level.DEBUG,
+                    logger = logger
+                )
+            }
+        }
+
+        logger.info("Bindings generated successfully in ${Path(originalOutputPath).absolutePathString()} in ${parseTime(System.currentTimeMillis() - startTime)}")
+    }
 }
+
+fun main(args: Array<String>) = GenerateBindings().main(args)
 
 private fun parseTime(time: Long): String {
     val hours = (time / (60 * 60 * 1000)) % 24
     val minutes = (time / (60 * 1000)) % 60
     val seconds = (time / 1000) % 60
-	return buildString {
-		if (hours > 0) append("$hours h ")
-		if (minutes > 0) append("$minutes min ")
-		if (seconds > 0) append("$seconds s ")
-		append("${time % 1000} ms")
-	}
+    return buildString {
+        if (hours > 0) append("$hours h ")
+        if (minutes > 0) append("$minutes min ")
+        if (seconds > 0) append("$seconds s ")
+        append("${time % 1000} ms")
+    }
 }
 
-private fun printHelp() {
-	println("""
-        Datapack Bindings Generator
-        
-        Usage:
-          java -jar kore-bindings-generator.jar [options]
-        
-        Options:
-          -h, --help					Display this help message
-          -p, --package NAME			The package name for the generated bindings (required)
-          -o, --output PATH				Output directory or zip file name for generated bindings (default: "generated")
-          -d, --dir PATH				The path to the datapack directory
-          -z, --zip PATH				The path to the datapack zip file
-          -pp, --parent-package NAME	Parent package name (default: package name without the last part)
-          -q, --quiet					Minimize output (default: false)
-          -v, --verbose					Enable verbose output (default: false)
-        
-        Note: Either -d or -z must be provided, but not both.
-    """.trimIndent())
-}

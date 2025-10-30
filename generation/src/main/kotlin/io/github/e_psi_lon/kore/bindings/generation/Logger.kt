@@ -32,6 +32,11 @@ private class PrintlnLogger: ILogger {
     }
 }
 
+private class EchoLogger(private val context: CliktCommand): ILogger {
+    override fun log(message: String, level: Level) {
+        context.echo(Logger.format(message, level), err = level == Level.ERROR)
+    }
+}
 
 /**
  * Abstraction layer for multiple logging implementations.

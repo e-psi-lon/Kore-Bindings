@@ -18,7 +18,8 @@ dependencies {
     implementation(libs.kotlin.poet)
     implementation(libs.kore)
     implementation(libs.kotlinx.coroutines.core)
-    
+    implementation(libs.clikt)
+
     testImplementation(kotlin("test"))
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.kotlinx.coroutines.test)
