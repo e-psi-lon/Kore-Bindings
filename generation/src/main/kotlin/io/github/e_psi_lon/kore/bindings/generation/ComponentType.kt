@@ -16,10 +16,41 @@ import io.github.ayfri.kore.utils.pascalCase
 
 
 
-sealed class ParameterValueSource {
-    object Name : ParameterValueSource()
-    object Namespace : ParameterValueSource()
-    data class Default(val value: Any) : ParameterValueSource()
+/**
+ * Represents a source of parameter values for component generation.
+ *
+ * This sealed interface defines the possible sources from which parameter values
+ * can be derived when generating binding code for datapack components. It's used
+ * by the code generation system to determine what value to pass for each parameter
+ * in the generated getter methods.
+ */
+sealed interface ParameterValueSource {
+    /**
+     * Indicates that the parameter value should come from the component's name.
+     *
+     * When used, the generated code will pass the component's fileName as the
+     * parameter value (e.g., "my_advancement" for an advancement component).
+     */
+    data object Name : ParameterValueSource
+
+    /**
+     * Indicates that the parameter value should come from the component's namespace.
+     *
+     * When used, the generated code will pass the namespace name as the parameter
+     * value (e.g., "minecraft" or "smithed.crafter").
+     */
+    data object Namespace : ParameterValueSource
+
+    /**
+     * Indicates that the parameter should use an explicit default value.
+     *
+     * When used, the generated code will pass the provided value directly as a
+     * literal in the generated binding code.
+     *
+     * @param T The type of the default value.
+     * @property value The literal value to use for this parameter in generated code.
+     */
+    data class Default<T : Any>(val value: T) : ParameterValueSource
 }
 
 private fun usualParam(name: String = "name") = mapOf(
@@ -29,16 +60,13 @@ private fun usualParam(name: String = "name") = mapOf(
 )
 
 
-class ClassOrMemberName private constructor(
-    val className: ClassName? = null,
-    val memberName: MemberName? = null
-) {
-    constructor(className: ClassName) : this(className, null)
-    constructor(memberName: MemberName) : this(null, memberName)
+sealed class ClassOrMemberName {
+    data class Class(val name: ClassName) : ClassOrMemberName()
+    data class Member(val name: MemberName) : ClassOrMemberName()
 }
 
-fun ClassName.toClassOrMemberName() = ClassOrMemberName(this)
-fun MemberName.toClassOrMemberName() = ClassOrMemberName(memberName = this)
+fun ClassName.toClassOrMemberName() = ClassOrMemberName.Class(this)
+fun MemberName.toClassOrMemberName() = ClassOrMemberName.Member(this)
 
 
 interface ComponentType {
@@ -49,11 +77,12 @@ interface ComponentType {
 		get() = "json"
 	val koreMethodOrClass: ClassOrMemberName
 	val returnType: ClassName
-		// The default value is the same as koreMethodOrClass because it's the most common case. If
-		get() = if (koreMethodOrClass.className != null) {
-            koreMethodOrClass.className!!
-        } else {
-            throw IllegalStateException("returnType must be overridden if koreMethodOrClass is a MemberName")
+		get() = when (koreMethodOrClass) {
+			// Smart cast to 'ClassOrMemberName.Class' is impossible, because 'koreMethodOrClass' is a property that has
+			// an open or custom getter even within the branch. Manual cast was suggested by the compiler itself
+			is ClassOrMemberName.Class -> (koreMethodOrClass as ClassOrMemberName.Class).name
+			// MemberName is the type wrapped by ClassOrMemberName.Member
+			is ClassOrMemberName.Member -> throw IllegalStateException("returnType must be overridden because koreMethodOrClass is meant to represent a MemberName")
         }
 	val requiredContext: ClassName? get() = null
 	val parameters: Map<ParameterSpec, ParameterValueSource>

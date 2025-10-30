@@ -3,6 +3,7 @@ package io.github.e_psi_lon.kore.bindings.generation
 import com.squareup.kotlinpoet.KModifier
 import io.github.e_psi_lon.kore.bindings.generation.data.Component
 import io.github.e_psi_lon.kore.bindings.generation.data.Datapack
+import io.github.e_psi_lon.kore.bindings.generation.data.ParsedNamespace
 import io.github.e_psi_lon.kore.bindings.generation.poet.fileSpec
 import java.nio.file.Path
 import kotlin.io.path.bufferedWriter
@@ -53,13 +54,7 @@ class BindingGenerator(
                                     if (directoryHierarchy.isEmpty()) {
                                         initializer("%S", "")
                                     } else {
-                                        val parentRef = directoryHierarchy.dropLast(1).let {
-                                            when (it.size) {
-                                                0 -> namespace.name.sanitizePascal()
-                                                1 -> listOf(namespace.name.sanitizePascal(), it.first()).joinToString(".")
-                                                else -> it.takeLast(2).joinToString(".")
-                                            }
-                                        }
+                                        val parentRef = calculateParentRef(directoryHierarchy, namespace)
                                         initializer("%P", $$"${$${parentRef}.PATH}$${component.directoryHierarchy.last()}/")
                                     }
                                 }
@@ -76,36 +71,22 @@ class BindingGenerator(
                                             val type = component.componentType
                                             val parameters = type.parameters
                                             val nameToDefault = parameters.mapKeys { it.key.name }.toList()
-                                            val isType = type.koreMethodOrClass.className != null && type.koreMethodOrClass.className == type.returnType
-                                            val template = buildString {
-                                                if (isType) append("%T(") else append("%M(")
-                                                nameToDefault.forEachIndexed { index, (_, value) ->
-                                                    if (value !is ParameterValueSource.Default) append("%L = %S")
-                                                    else append("%L = %L")
-                                                    if (index != nameToDefault.lastIndex) {
-                                                        append(", ")
-                                                    }
-                                                }
-                                                append(")")
-                                            }
-                                            logger.debug("Generating getter for ${component.fileName} with template `$template`")
+                                            val isType = type.koreMethodOrClass is ClassOrMemberName.Class && type.koreMethodOrClass.name == type.returnType
+
+                                            val callString = (if (isType) "%T(" else "%M(") +
+                                                nameToDefault.joinToString(", ") { (_, value) -> getFormatPattern(value) } +
+                                                ")"
+                                            logger.debug("Generating getter for ${component.fileName} with template `$callString`")
 
                                             val args = buildList {
-                                                if (isType) add(type.returnType) else add(type.koreMethodOrClass.memberName!!)
-                                                for ((parameter, value) in nameToDefault) {
-                                                    add(parameter)
-                                                    when (value) {
-                                                        is ParameterValueSource.Namespace -> add(namespace.name)
-                                                        is ParameterValueSource.Name -> add(component.fileName)
-                                                        is ParameterValueSource.Default -> add(value.value)
-                                                    }
+                                                if (isType) add(type.returnType) else add((type.koreMethodOrClass as ClassOrMemberName.Member).name)
+                                                for ((paramName, paramValue) in nameToDefault) {
+                                                    add(paramName)
+                                                    add(getParameterValue(paramValue, namespace, component))
                                                 }
                                             }
                                             logger.debug("Generated args: $args")
-                                            addStatement(
-                                                "return $template",
-                                                *args.toTypedArray()
-                                            )
+                                            addStatement("return $callString", *args.toTypedArray())
                                         }
                                     }
                                 }
@@ -133,4 +114,36 @@ class BindingGenerator(
 
         }
     }
+
+    private fun getParameterValue(source: ParameterValueSource, namespace: ParsedNamespace, component: Component): Any {
+        return when (source) {
+            is ParameterValueSource.Namespace -> namespace.name
+            is ParameterValueSource.Name -> component.fileName
+            is ParameterValueSource.Default<*> -> source.value
+        }
+    }
+
+    /**
+     * Determines the KotlinPoet format pattern for a parameter based on its value source.
+     *
+     * @param value The parameter's value source
+     * @return Format pattern like "%L = %S" or "%L = %L" where:
+     *         - %L = literal parameter name
+     *         - %S = string literal value (for non-default values, adds quotes)
+     *         - %L = literal value (for default values, rendered as-is)
+     */
+    private fun getFormatPattern(value: ParameterValueSource): String =
+        if (value !is ParameterValueSource.Default<*>) "%L = %S"
+        else "%L = %L"
+
+    private fun calculateParentRef(directoryHierarchy: List<String>, namespace: ParsedNamespace) = directoryHierarchy.dropLast(1).let {
+        when (it.size) {
+            0 -> namespace.name.sanitizePascal()
+            1 -> listOf(namespace.name.sanitizePascal(), it.first()).joinToString(".")
+            else -> it.takeLast(2).joinToString(".")
+        }
+    }
+
+
+    fun generateFunctionBindings(function: Component.Function, namespace: ParsedNamespace) {}
 }
