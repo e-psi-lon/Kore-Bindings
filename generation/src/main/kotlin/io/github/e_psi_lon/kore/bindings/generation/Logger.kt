@@ -1,6 +1,7 @@
 package io.github.e_psi_lon.kore.bindings.generation
 
 
+import com.github.ajalt.clikt.core.CliktCommand
 import org.gradle.api.logging.Logger as GradleLogger
 
 
@@ -8,28 +9,38 @@ enum class Level: Comparable<Level> {
     TRACE, DEBUG, INFO, WARN, ERROR
 }
 
-/**
- * Minimal abstraction allowing to switch between Gradle's logger and stdout/stderr
- */
-class Logger(private val useGradleLogger: Boolean, private val gradleLogger: GradleLogger? = null, val level: Level = Level.INFO) {
-    init {
-        require(!useGradleLogger || gradleLogger != null) { "Gradle logger must be provided if useGradleLogger is true" }
+private interface ILogger {
+    fun log(message: String, level: Level)
+}
+
+private class GradleLoggerWrapper(private val logger: GradleLogger): ILogger {
+    override fun log(message: String, level: Level) {
+        when (level) {
+            Level.TRACE -> logger.trace(message)
+            Level.DEBUG -> logger.debug(message)
+            Level.INFO -> logger.info(message)
+            Level.WARN -> logger.warn(message)
+            Level.ERROR -> logger.error(message)
+        }
     }
+}
+
+private class PrintlnLogger: ILogger {
+    override fun log(message: String, level: Level) {
+        val output = if (level == Level.ERROR) System.err else System.out
+        output.println(Logger.format(message, level))
+    }
+}
+
+
+/**
+ * Abstraction layer for multiple logging implementations.
+ */
+class Logger private constructor(private val logger: ILogger, private val level: Level) {
 
     fun log(message: String, level: Level) {
         if (!shouldLog(level)) return
-        if (useGradleLogger && gradleLogger != null) {
-            when (level) {
-                Level.TRACE -> gradleLogger.trace(message)
-                Level.DEBUG -> gradleLogger.debug(message)
-                Level.INFO -> gradleLogger.lifecycle(message)
-                Level.WARN -> gradleLogger.warn(message)
-                Level.ERROR -> gradleLogger.error(message)
-            }
-        } else {
-            val output = if (level == Level.ERROR) System.err else System.out
-            output.println("[${level.name}] $message")
-        }
+        logger.log(message, level)
     }
     fun shouldLog(level: Level): Boolean = level >= this.level
 
@@ -43,5 +54,17 @@ class Logger(private val useGradleLogger: Boolean, private val gradleLogger: Gra
         if (shouldLog(Level.ERROR))
             log(message + "\n" + exception.stackTraceToString(), Level.ERROR)
         return exception
+    }
+
+
+    companion object {
+        fun format(message: String, level: Level): String {
+            return "[${level.name}] $message"
+
+        }
+
+        fun gradle(logger: GradleLogger, level: Level = Level.INFO): Logger = Logger(GradleLoggerWrapper(logger), level)
+        fun echo(context: CliktCommand, level: Level = Level.INFO): Logger = Logger(EchoLogger(context), level)
+        fun println(level: Level = Level.INFO): Logger = Logger(PrintlnLogger(), level)
     }
 }

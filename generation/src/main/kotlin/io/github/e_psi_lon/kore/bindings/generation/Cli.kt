@@ -17,7 +17,7 @@ fun main(args: Array<String>) {
         System.err.println(Logger.format("Cannot use both verbose and quiet flags simultaneously.", Level.ERROR))
         exitProcess(1)
     }
-    val logger = Logger(false, level = when {
+    val logger = Logger.println(when {
         verbose -> Level.DEBUG
         quiet -> Level.ERROR
         else -> Level.INFO

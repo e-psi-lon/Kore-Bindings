@@ -30,7 +30,7 @@ import org.gradle.api.logging.Logger as GradleLogger
  */
 class BindingGradlePlugin : Plugin<Project> {
 	override fun apply(project: Project) {
-		val logger = Logger(true, project.logger, project.logger.logLevel)
+		val logger = Logger.gradle(project.logger, project.logger.logLevel)
 		val extension = project.extensions.create("bindings", BindingExtension::class.java, project)
 		val outputDir = project.layout.buildDirectory.dir("generated/kore-bindings/main/kotlin/")
 		val sourceSet = project.extensions.getByType<SourceSetContainer>().named("main")
