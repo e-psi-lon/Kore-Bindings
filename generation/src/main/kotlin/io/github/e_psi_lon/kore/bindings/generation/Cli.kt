@@ -19,6 +19,7 @@ import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
+import kotlin.time.measureTime
 
 sealed class DatapackSource {
     data class Directory(val path: Path) : DatapackSource()
@@ -66,53 +67,56 @@ class GenerateBindings : CliktCommand(name = "java -jar kore-bindings-generator.
         // Create logger
         val logger = Logger.echo(this, level)
 
-        val startTime = System.currentTimeMillis()
-        val finalParentPackage = parentPackage ?: packageName.substringBeforeLast(".", "")
-        val originalOutputPath = outputPath
-        val outputPathValue = outputPath
-        val bundled = outputPathValue.endsWith(".zip")
-        val outputDir = Path(outputPathValue)
+        val originalOutputPath: String
+        val startTime = measureTime {
+            val finalParentPackage = parentPackage ?: packageName.substringBeforeLast(".", "")
+            originalOutputPath = outputPath
+            val outputPathValue = outputPath
+            val bundled = outputPathValue.endsWith(".zip")
+            val outputDir = Path(outputPathValue)
 
-        logger.info("Output path: $originalOutputPath")
+            logger.info("Output path: $originalOutputPath")
 
-        val fileSystem = if (bundled)
-            FileSystems.newFileSystem(outputDir, emptyMap<String, Any>())
-        else
-            null
+            val fileSystem = if (bundled)
+                FileSystems.newFileSystem(outputDir, emptyMap<String, Any>())
+            else
+                null
 
-        fileSystem.use { fs ->
-            val finalPath = fs?.getPath("/") ?: outputDir
+            fileSystem.use { fs ->
+                val finalPath = fs?.getPath("/") ?: outputDir
 
-            if (useRefactor) {
-                val source = when (val dpSource = datapackSource) {
-                    is DatapackSource.Directory -> dpSource.path
-                    is DatapackSource.Zip -> dpSource.path
+                if (useRefactor) {
+                    val source = when (val dpSource = datapackSource) {
+                        is DatapackSource.Directory -> dpSource.path
+                        is DatapackSource.Zip -> dpSource.path
+                    }
+                    generateDatapackBinding(
+                        datapackSource = source,
+                        isZip = datapackSource is DatapackSource.Zip,
+                        outputDir = finalPath,
+                        packageName = packageName,
+                        parentPackage = finalParentPackage,
+                        prefix = null,
+                        logger = logger
+                    )
+                } else {
+                    val dir = (datapackSource as? DatapackSource.Directory)?.path?.toFile()
+                    val zip = (datapackSource as? DatapackSource.Zip)?.path?.toFile()
+                    GenerateDatapackBindings(
+                        directory = dir,
+                        zipFile = zip,
+                        outputDir = finalPath.toFile(),
+                        packageName = packageName,
+                        parentPackage = finalParentPackage,
+                        verbose = level <= Level.DEBUG,
+                        logger = logger
+                    )
                 }
-                generateDatapackBinding(
-                    datapackSource = source,
-                    isZip = datapackSource is DatapackSource.Zip,
-                    outputDir = finalPath,
-                    packageName = packageName,
-                    parentPackage = finalParentPackage,
-                    prefix = null,
-                    logger = logger
-                )
-            } else {
-                val dir = (datapackSource as? DatapackSource.Directory)?.path?.toFile()
-                val zip = (datapackSource as? DatapackSource.Zip)?.path?.toFile()
-                GenerateDatapackBindings(
-                    directory = dir,
-                    zipFile = zip,
-                    outputDir = finalPath.toFile(),
-                    packageName = packageName,
-                    parentPackage = finalParentPackage,
-                    verbose = level <= Level.DEBUG,
-                    logger = logger
-                )
             }
         }
 
-        logger.info("Bindings generated successfully in ${Path(originalOutputPath).absolutePathString()} in ${parseTime(System.currentTimeMillis() - startTime)}")
+
+        echo("Bindings generated successfully in ${Path(originalOutputPath).absolutePathString()} in ${parseTime(startTime.inWholeMilliseconds)}")
     }
 }
 
