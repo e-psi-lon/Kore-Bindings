@@ -6,28 +6,31 @@ import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
+import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
 	val startTime = System.currentTimeMillis()
 	val arguments = args.toList()
-    val verbose = arguments.contains("-v") || arguments.contains("--verbose")
-    val quiet = arguments.contains("-q") || arguments.contains("--quiet")
+    val verbose = arguments.any { it == "-v" || it == "--verbose" }
+    val quiet = arguments.any { it == "-q" || it == "--quiet" }
+    if (verbose && quiet) {
+        System.err.println(Logger.format("Cannot use both verbose and quiet flags simultaneously.", Level.ERROR))
+        exitProcess(1)
+    }
     val logger = Logger(false, level = when {
         verbose -> Level.DEBUG
         quiet -> Level.ERROR
         else -> Level.INFO
     })
-
-	if (arguments.contains("-h") || arguments.contains("--help")) {
+	if (arguments.any { it == "-h" || it == "--help" }) {
 		printHelp()
-		return
+        return
 	}
-	val packageName = getArgValue(arguments, "-p", "--package")
-		?: run {
-            logger.error("Package name is required (-p, --package)")
-			printHelp()
-			return
-		}
+	val packageName = getArgValue(arguments, "-p", "--package") ?: run {
+        logger.error("Package name is required (-p, --package)")
+        printHelp()
+        exitProcess(1)
+    }
 	val providedParentPackage = getArgValue(arguments, "-pp", "--parent-package")
 	val parentPackage = providedParentPackage ?: packageName.substringBeforeLast(".", "")
     val outputPath = getArgValue(arguments, "-o", "--output")
@@ -40,27 +43,28 @@ fun main(args: Array<String>) {
 	val directoryPath = getArgValue(arguments, "-d", "--dir")?.let { Path(it) }
 	val zipPath = getArgValue(arguments, "-z", "--zip")?.let { Path(it) }
 	if (directoryPath == null && zipPath == null) {
-		logger.error(" Either a datapack directory (-d) or zip file (-z) must be provided")
+		logger.error("Either a datapack directory (-d) or zip file (-z) must be provided")
 		printHelp()
-		return
+		exitProcess(1)
 	}
 	if (directoryPath != null && zipPath != null) {
 		logger.error("Only one of datapack directory (-d) or zip file (-z) should be provided")
 		printHelp()
-		return
+        exitProcess(1)
 	}
 	directoryPath?.let {
 		if (!it.exists() || !it.isDirectory()) {
 			logger.error("Datapack directory does not exist or is not a directory: ${it.absolutePathString()}")
-			return
+			exitProcess(1)
 		}
 	}
 	zipPath?.let {
 		if (!it.exists() || !it.isRegularFile()) {
 			logger.error("Datapack zip file does not exist or is not a file: ${it.absolutePathString()}")
-			return
+			exitProcess(1)
 		}
 	}
+    // Temporary. To remove once the refactor is complete
     val useRefactor = arguments.contains("-r") || arguments.contains("--refactor")
     val fileSystem = if (bundled)
         FileSystems.newFileSystem(outputDir, emptyMap<String, Any>())
@@ -105,12 +109,10 @@ private fun getArgValue(args: List<String>, shortFlag: String, longFlag: String)
 }
 
 private fun parseTime(time: Long): String {
-	val seconds = time / 1000
-	val minutes = seconds / 60
-	val hours = minutes / 60
-	val days = hours / 24
+    val hours = (time / (60 * 60 * 1000)) % 24
+    val minutes = (time / (60 * 1000)) % 60
+    val seconds = (time / 1000) % 60
 	return buildString {
-		if (days > 0) append("$days days ")
 		if (hours > 0) append("$hours h ")
 		if (minutes > 0) append("$minutes min ")
 		if (seconds > 0) append("$seconds s ")
@@ -133,7 +135,7 @@ private fun printHelp() {
           -z, --zip PATH				The path to the datapack zip file
           -pp, --parent-package NAME	Parent package name (default: package name without the last part)
           -q, --quiet					Minimize output (default: false)
-		  -v, --verbose					Enable verbose output (default: false)
+          -v, --verbose					Enable verbose output (default: false)
         
         Note: Either -d or -z must be provided, but not both.
     """.trimIndent())
