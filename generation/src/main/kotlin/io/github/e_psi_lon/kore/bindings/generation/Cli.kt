@@ -12,13 +12,16 @@ import com.github.ajalt.clikt.parameters.groups.mutuallyExclusiveOptions
 import com.github.ajalt.clikt.parameters.groups.required
 import com.github.ajalt.clikt.parameters.groups.single
 import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.defaultLazy
 import java.nio.file.FileSystems
 import java.nio.file.Path
+import kotlin.compareTo
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
+import kotlin.time.Duration
 import kotlin.time.measureTime
 
 sealed class DatapackSource {
@@ -31,6 +34,7 @@ class GenerateBindings : CliktCommand(name = "java -jar kore-bindings-generator.
         .required()
 
     private val parentPackage by option("-pp", "--parent-package", help = "Parent package name (default: package name without the last part)")
+        .defaultLazy { packageName.substringBeforeLast(".", "") }
     
     private val outputPath by option("-o", "--output", help = "Output directory or zip file name for generated bindings (default: \"generated\")",
         completionCandidates = CompletionCandidates.Path
@@ -69,7 +73,6 @@ class GenerateBindings : CliktCommand(name = "java -jar kore-bindings-generator.
 
         val originalOutputPath: String
         val startTime = measureTime {
-            val finalParentPackage = parentPackage ?: packageName.substringBeforeLast(".", "")
             originalOutputPath = outputPath
             val outputPathValue = outputPath
             val bundled = outputPathValue.endsWith(".zip")
@@ -95,7 +98,7 @@ class GenerateBindings : CliktCommand(name = "java -jar kore-bindings-generator.
                         isZip = datapackSource is DatapackSource.Zip,
                         outputDir = finalPath,
                         packageName = packageName,
-                        parentPackage = finalParentPackage,
+                        parentPackage = parentPackage,
                         prefix = null,
                         logger = logger
                     )
@@ -107,7 +110,7 @@ class GenerateBindings : CliktCommand(name = "java -jar kore-bindings-generator.
                         zipFile = zip,
                         outputDir = finalPath.toFile(),
                         packageName = packageName,
-                        parentPackage = finalParentPackage,
+                        parentPackage = parentPackage,
                         verbose = level <= Level.DEBUG,
                         logger = logger
                     )
@@ -116,21 +119,18 @@ class GenerateBindings : CliktCommand(name = "java -jar kore-bindings-generator.
         }
 
 
-        echo("Bindings generated successfully in ${Path(originalOutputPath).absolutePathString()} in ${parseTime(startTime.inWholeMilliseconds)}")
+        echo("Bindings generated successfully in ${Path(originalOutputPath).absolutePathString()} in ${formatDuration(startTime)}")
+    }
+
+
+    private fun formatDuration(duration: Duration) = duration.toComponents { hours, minutes, seconds, nanoseconds ->
+        listOfNotNull(
+            hours.takeIf { it > 0 }?.let { "$it h" },
+            minutes.takeIf { it > 0 }?.let { "$it min" },
+            seconds.takeIf { it > 0 }?.let { "$it s" },
+            nanoseconds.takeIf { it > 0 }?.let { "${it / 1_000_000} ms" }
+        ).joinToString(" ").ifEmpty { "0 ms" }
     }
 }
 
 fun main(args: Array<String>) = GenerateBindings().main(args)
-
-private fun parseTime(time: Long): String {
-    val hours = (time / (60 * 60 * 1000)) % 24
-    val minutes = (time / (60 * 1000)) % 60
-    val seconds = (time / 1000) % 60
-    return buildString {
-        if (hours > 0) append("$hours h ")
-        if (minutes > 0) append("$minutes min ")
-        if (seconds > 0) append("$seconds s ")
-        append("${time % 1000} ms")
-    }
-}
-
