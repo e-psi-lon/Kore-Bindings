@@ -1,8 +1,13 @@
 package io.github.e_psi_lon.kore.bindings.generation
 
-import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.ExperimentalKotlinPoetApi
+import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.ParameterSpec
+import com.squareup.kotlinpoet.asClassName
 import io.github.ayfri.kore.commands.Command
-import io.github.e_psi_lon.kore.bindings.generation.poet.*
+import io.github.e_psi_lon.kore.bindings.generation.poet.TypeBuilder
+import io.github.e_psi_lon.kore.bindings.generation.poet.addDocs
+import io.github.e_psi_lon.kore.bindings.generation.poet.fileSpec
 import java.io.File
 import java.nio.file.FileSystems
 import java.nio.file.Path

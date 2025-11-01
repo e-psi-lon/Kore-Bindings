@@ -1,7 +1,7 @@
 package io.github.e_psi_lon.kore.bindings.generation
 
-import io.github.e_psi_lon.kore.bindings.generation.data.Scoreboard
 import io.github.e_psi_lon.kore.bindings.generation.data.Macro
+import io.github.e_psi_lon.kore.bindings.generation.data.Scoreboard
 import io.github.e_psi_lon.kore.bindings.generation.data.Storage
 import java.nio.file.Path
 import kotlin.io.path.nameWithoutExtension

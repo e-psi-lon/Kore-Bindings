@@ -1,23 +1,10 @@
 package io.github.e_psi_lon.kore.bindings.generation
 
-import io.github.e_psi_lon.kore.bindings.generation.data.Component
-import io.github.e_psi_lon.kore.bindings.generation.data.Datapack
-import io.github.e_psi_lon.kore.bindings.generation.data.DatapackBuilder
-import io.github.e_psi_lon.kore.bindings.generation.data.Macro
-import io.github.e_psi_lon.kore.bindings.generation.data.ParsedNamespace
-import io.github.e_psi_lon.kore.bindings.generation.data.Scoreboard
-import io.github.e_psi_lon.kore.bindings.generation.data.Storage
-import kotlinx.coroutines.*
+import io.github.e_psi_lon.kore.bindings.generation.data.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.exists
-import kotlin.io.path.extension
-import kotlin.io.path.isDirectory
-import kotlin.io.path.isRegularFile
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.nameWithoutExtension
-import kotlin.io.path.readText
-import kotlin.io.path.walk
+import kotlin.io.path.*
 
 class DatapackParser(
     private val datapackDir: Path,
