@@ -61,14 +61,11 @@ class GenerateBindings : CliktCommand(name = "java -jar kore-bindings-generator.
         // Create logger
         val logger = Logger.echo(this, level)
 
-        val originalOutputPath: String
         val startTime = measureTime {
-            originalOutputPath = outputPath
-            val outputPathValue = outputPath
-            val bundled = outputPathValue.endsWith(".zip")
-            val outputDir = Path(outputPathValue)
+            val bundled = outputPath.endsWith(".zip")
+            val outputDir = Path(outputPath)
 
-            logger.info("Output path: $originalOutputPath")
+            logger.info("Output path: $outputPath")
 
             val fileSystem = if (bundled)
                 FileSystems.newFileSystem(outputDir, emptyMap<String, Any>())
@@ -79,13 +76,13 @@ class GenerateBindings : CliktCommand(name = "java -jar kore-bindings-generator.
                 val finalPath = fs?.getPath("/") ?: outputDir
 
                 if (useRefactor) {
-                    val source = when (val dpSource = datapackSource) {
-                        is DatapackSource.Directory -> dpSource.path
-                        is DatapackSource.Zip -> dpSource.path
+                    val (source, isZip) = when (val dpSource = datapackSource) {
+                        is DatapackSource.Directory -> dpSource.path to false
+                        is DatapackSource.Zip -> dpSource.path to true
                     }
                     generateDatapackBinding(
                         datapackSource = source,
-                        isZip = datapackSource is DatapackSource.Zip,
+                        isZip = isZip,
                         outputDir = finalPath,
                         packageName = packageName,
                         parentPackage = parentPackage,
@@ -109,7 +106,7 @@ class GenerateBindings : CliktCommand(name = "java -jar kore-bindings-generator.
         }
 
 
-        echo("Bindings generated successfully in ${Path(originalOutputPath).absolutePathString()} in ${formatDuration(startTime)}")
+        echo("Bindings generated successfully in ${Path(outputPath).absolutePathString()} in ${formatDuration(startTime)}")
     }
 
 
