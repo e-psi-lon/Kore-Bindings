@@ -22,6 +22,12 @@ sealed class DatapackSource {
 class GenerateBindings : CliktCommand(name = "java -jar kore-bindings-generator.jar") {
     private val packageName by option("-p", "--package", help = "The package name for the generated bindings (required)")
         .required()
+        .validate {
+            if (it.isBlank())
+                fail("Package name cannot be blank")
+            else if (!it.matches(Regex("^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$")))
+                fail("Package name must be a valid Java package name")
+        }
 
     private val parentPackage by option("-pp", "--parent-package", help = "Parent package name (default: package name without the last part)")
         .defaultLazy { packageName.substringBeforeLast(".", "") }
