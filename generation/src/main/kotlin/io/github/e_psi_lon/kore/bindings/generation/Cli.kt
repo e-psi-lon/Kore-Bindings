@@ -56,9 +56,9 @@ class GenerateBindings : CliktCommand(name = "java -jar kore-bindings-generator.
     ).single().required()
 
     private val level by mutuallyExclusiveOptions(
-        option("-v", "--verbose", help = "Enable verbose output").flag().convert { Level.DEBUG },
-        option("-q", "--quiet", help = "Minimize output").flag().convert { Level.ERROR }
-    ).default(Level.INFO)
+        option("-v", "--verbose", help = "Enable verbose output").flag().convert { LogLevel.DEBUG },
+        option("-q", "--quiet", help = "Minimize output").flag().convert { LogLevel.ERROR }
+    ).default(LogLevel.INFO)
 
     // Temporary. To remove once the refactor is done
     private val useRefactor by option("-r", "--refactor", help = "Use refactored generation system (temporary)").flag()
@@ -104,7 +104,7 @@ class GenerateBindings : CliktCommand(name = "java -jar kore-bindings-generator.
                         outputDir = finalPath.toFile(),
                         packageName = packageName,
                         parentPackage = parentPackage,
-                        verbose = level <= Level.DEBUG,
+                        verbose = level <= LogLevel.DEBUG,
                         logger = logger
                     )
                 }

@@ -71,7 +71,7 @@ class BindingGradlePlugin : Plugin<Project> {
 			sourceSet.configure {
 				java.srcDir(outputDir)
 
-				// Configurer la sortie pour inclure les fichiers générés
+				// Configure output to include generated file
 				output.dir(
 					mapOf("builtBy" to generateTask),
 					outputDir
@@ -80,14 +80,14 @@ class BindingGradlePlugin : Plugin<Project> {
 		}
 	}
 
-    private val GradleLogger.logLevel: Level
+    private val GradleLogger.logLevel: LogLevel
         get() = when {
-            isTraceEnabled -> Level.TRACE
-            isDebugEnabled -> Level.DEBUG
-            isInfoEnabled -> Level.INFO
-            isWarnEnabled -> Level.WARN
-            isErrorEnabled -> Level.ERROR
-            else -> Level.INFO
+            isTraceEnabled -> LogLevel.TRACE
+            isDebugEnabled -> LogLevel.DEBUG
+            isInfoEnabled -> LogLevel.INFO
+            isWarnEnabled -> LogLevel.WARN
+            isErrorEnabled -> LogLevel.ERROR
+            else -> LogLevel.INFO
         }
 }
 
