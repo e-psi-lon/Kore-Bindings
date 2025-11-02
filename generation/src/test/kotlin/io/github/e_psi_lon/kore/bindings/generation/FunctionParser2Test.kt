@@ -9,7 +9,7 @@ import kotlin.test.assertTrue
 
 class FunctionParser2Test {
 
-    private val testLogger = Logger(useGradleLogger = false, level = Level.ERROR)
+    private val testLogger = Logger.println(level = LogLevel.ERROR)
 
     @Test
     fun `should extract scoreboards from function content`() {

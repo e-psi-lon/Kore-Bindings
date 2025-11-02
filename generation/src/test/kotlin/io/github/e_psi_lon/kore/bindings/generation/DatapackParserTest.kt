@@ -13,7 +13,7 @@ import kotlin.test.assertTrue
 
 class DatapackParserTest {
 
-    private val testLogger = Logger(useGradleLogger = false, level = Level.ERROR)
+    private val testLogger = Logger.println(level = LogLevel.ERROR)
 
     @Test
     fun `should parse simple datapack with single namespace`(@TempDir tempDir: Path) = runTest {
