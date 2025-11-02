@@ -1,9 +1,16 @@
 package io.github.e_psi_lon.kore.bindings.generation
 
+import com.squareup.kotlinpoet.ExperimentalKotlinPoetApi
 import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.asClassName
+import io.github.ayfri.kore.arguments.types.resources.FunctionArgument
+import io.github.ayfri.kore.functions.Function
+import io.github.e_psi_lon.kore.bindings.generation.components.ClassOrMemberName
+import io.github.e_psi_lon.kore.bindings.generation.components.ParameterValueSource
 import io.github.e_psi_lon.kore.bindings.generation.data.Component
 import io.github.e_psi_lon.kore.bindings.generation.data.Datapack
 import io.github.e_psi_lon.kore.bindings.generation.data.ParsedNamespace
+import io.github.e_psi_lon.kore.bindings.generation.poet.TypeBuilder
 import io.github.e_psi_lon.kore.bindings.generation.poet.fileSpec
 import java.nio.file.Path
 import kotlin.io.path.bufferedWriter
@@ -60,7 +67,7 @@ class BindingGenerator(
                                 }
                             }
                             when (component) {
-                                is Component.Function -> {}
+                                is Component.Function -> generateFunctionBindings(component, namespace)
                                 is Component.FunctionTag -> {}
                                 is Component.Simple -> {
                                     property(
@@ -145,5 +152,21 @@ class BindingGenerator(
     }
 
 
-    fun generateFunctionBindings(function: Component.Function, namespace: ParsedNamespace) {}
+    @OptIn(ExperimentalKotlinPoetApi::class)
+    internal fun TypeBuilder.generateFunctionBindings(function: Component.Function, namespace: ParsedNamespace) {
+        val functionName = function.fileName
+        var safeFunctionName = function.fileName.sanitizeCamel()
+        if (!safeFunctionName.isValidKotlinIdentifier()) safeFunctionName = "n$safeFunctionName"
+        val namespaceName = namespace.name
+        val className = FunctionArgument::class.asClassName()
+        property<FunctionArgument>(safeFunctionName) {
+            initializer("%T(%S, %S, %L)", className, functionName, namespaceName, false)
+        }
+        function(safeFunctionName) {
+            contextParameter("function", Function::class.asClassName())
+            returns(function.componentType.returnType)
+            val member = function.componentType.koreMethodOrClass as ClassOrMemberName.Member
+            addStatement("return %M(%S, %S, %L)", member.name, functionName, namespaceName, false)
+        }
+    }
 }
