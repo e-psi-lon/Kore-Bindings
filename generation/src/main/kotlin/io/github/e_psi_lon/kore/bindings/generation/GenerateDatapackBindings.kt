@@ -118,7 +118,7 @@ class GenerateDatapackBindings(
 					// Create main object for the namespace
 					objectBuilder(fullCapitalized) {
 						// Check if object name might not be a valid Kotlin identifier
-						if (!isValidKotlinIdentifier(fullCapitalized)) {
+						if (!fullCapitalized.isValidKotlinIdentifier()) {
 							addAnnotation<Suppress> {
 								addMember("%S", "ClassName")
 							}
@@ -167,7 +167,7 @@ class GenerateDatapackBindings(
 			}
 			objectBuilder(capitalizedName) {
 				// Check if object name might not be a valid Kotlin identifier
-				if (!isValidKotlinIdentifier(capitalizedName)) {
+				if (!capitalizedName.isValidKotlinIdentifier()) {
 					addAnnotation<Suppress> {
 						addMember("%S", "ClassName")
 					}
@@ -203,16 +203,6 @@ class GenerateDatapackBindings(
 		file.writeTo(outputDir)
 	}
 
-	/**
-	 * Checks if the given name is a valid Kotlin identifier.
-	 * Returns false if it starts with a number or contains invalid characters.
-	 */
-	private fun isValidKotlinIdentifier(name: String): Boolean {
-		if (name.isEmpty()) return false
-		if (name[0].isDigit()) return false
-		return name.all { it.isLetterOrDigit() }
-	}
-
 	private fun TypeBuilder.handleComponent(
         componentType: DatapackComponentType,
         namespace: File,
@@ -245,8 +235,8 @@ class GenerateDatapackBindings(
 
 					val subObjectBuilder = currentBuilder.objectBuilder(sanitizedSubDirectoryName) {
 						// Check if object name might not be a valid Kotlin identifier
-						logger.debug("Adding sub-object for $newParentClassName in namespace $namespaceName which is valid : ${isValidKotlinIdentifier(sanitizedSubDirectoryName)}")
-						if (!isValidKotlinIdentifier(sanitizedSubDirectoryName) &&
+						logger.debug("Adding sub-object for $newParentClassName in namespace $namespaceName which is valid : ${sanitizedSubDirectoryName.isValidKotlinIdentifier()}")
+						if (!sanitizedSubDirectoryName.isValidKotlinIdentifier() &&
 							!currentBuilder.typeSpecs.containsKey(sanitizedSubDirectoryName)
 						) {
 							addAnnotation<Suppress> {
@@ -295,7 +285,7 @@ class GenerateDatapackBindings(
 					if (needsPrefix) {
 						sanitizedFileName = "n$sanitizedFileName"
 					}
-					val needsSuppressAnnotation = !isValidKotlinIdentifier(sanitizedFileName)
+					val needsSuppressAnnotation = !sanitizedFileName.isValidKotlinIdentifier()
 
 					if (componentType.returnType != componentType.koreMethodOrClass) {
 						if (currentBuilder.functions.containsKey(sanitizedFileName))
@@ -377,6 +367,12 @@ class GenerateDatapackBindings(
 	}
 }
 
+private val nameTypes = setOf(
+    "name", "damageType", "tagName", "paintingVariant", "biome", "structure",
+    "worldPreset", "densityFunctionType", "feature", "instrument", "dimension",
+    "preset"
+)
+
 @OptIn(ExperimentalPathApi::class)
 private fun getZipFs(zipPath: Path) = FileSystems.newFileSystem(zipPath, emptyMap<String, Any>())
 
@@ -397,12 +393,6 @@ fun generateDatapackBinding(
         val datapack = parser()
         val generator = BindingGenerator(logger, datapack, outputDir, packageName, parentPackage, prefix)
         generator()
-
     }
 }
 
-private val nameTypes = setOf(
-	"name", "damageType", "tagName", "paintingVariant", "biome", "structure",
-	"worldPreset", "densityFunctionType", "feature", "instrument", "dimension",
-	"preset"
-)

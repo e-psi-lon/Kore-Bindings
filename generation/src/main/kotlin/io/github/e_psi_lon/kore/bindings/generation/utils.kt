@@ -25,6 +25,16 @@ fun String.sanitizePascal() = pascalCase().replaceDotsAndHyphens()
 private fun String.replaceDotsAndHyphens() = replace('.', '_').replace('-', '_')
 
 /**
+ * Checks if the given name is a valid Kotlin identifier.
+ * Returns false if it starts with a number or contains invalid characters.
+ */
+fun String.isValidKotlinIdentifier(): Boolean {
+    if (isEmpty()) return false
+    if (this[0].isDigit()) return false
+    return all { it.isLetterOrDigit() }
+}
+
+/**
  * Maps each element of the collection to a result using the given suspend block,
  * executing all transformations in parallel on the specified dispatcher.
  *
