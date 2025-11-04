@@ -55,9 +55,8 @@ enum class DatapackComponentType(
         koreMethodOrClass = MemberName("io.github.ayfri.kore.commands", "function").toClassOrMemberName(),
         returnType = Command::class.asClassName(),
         requiredContext = Function::class.asClassName(),
-        parameters = ComponentType.usualParam().plus(
-            ParameterSpec.builder("group", Boolean::class).build() to ParameterValueSource.Default(false)
-        )
+        parameters = ComponentType.usualParam() +
+            (ParameterSpec.builder("group", Boolean::class).build() to ParameterValueSource.Default(false))
     ),
     INSTRUMENT("instrument", koreMethodOrClass = InstrumentArgument::class.asClassName().toClassOrMemberName()),
     JUKEBOX_SONG(
@@ -83,9 +82,8 @@ enum class DatapackComponentType(
         koreMethodOrClass = MemberName("io.github.ayfri.kore.commands", "function").toClassOrMemberName(),
         returnType = Command::class.asClassName(),
         requiredContext = Function::class.asClassName(),
-        parameters = ComponentType.usualParam().plus(
-            ParameterSpec.builder("group", Boolean::class).build() to ParameterValueSource.Default(true)
-        )
+        parameters = ComponentType.usualParam() +
+            (ParameterSpec.builder("group", Boolean::class).build() to ParameterValueSource.Default(true))
     ),
     FUNCTION_TAG_ARGUMENT(
         "tags/function",
