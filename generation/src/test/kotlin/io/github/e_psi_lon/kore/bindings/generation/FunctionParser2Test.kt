@@ -204,7 +204,7 @@ class FunctionParser2Test {
     @Test
     fun `should handle nested directory paths in function path`() {
         // Arrange
-        val content = "say hello"
+        val content = $$"$say Hello $(name)!"
         val relativePath = Path("subdir/nested/function.mcfunction")
         val parser = FunctionParser2(content, "test", relativePath, testLogger)
 
