@@ -131,7 +131,3 @@ internal class TypeBuilder(
 
 	}
 }
-
-fun FunSpec.Builder.addDocs(vararg docs: String): FunSpec.Builder {
-	return addKdoc("%L", docs.joinToString("\n"))
-}
