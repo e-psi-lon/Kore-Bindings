@@ -9,20 +9,19 @@ import kotlinx.coroutines.coroutineScope
 
 /**
  * Sanitize a string for use as a Kotlin identifier and convert it to camelCase.
+ * Replaces dots with underscores after conversion.
  *
  * @return The sanitized string in camelCase
  */
-fun String.sanitizeCamel() = camelCase().replaceDotsAndHyphens()
+fun String.sanitizeCamel() = camelCase().replace('.', '_')
 
 /**
  * Sanitize a string for use as a Kotlin identifier and convert it to PascalCase.
+ * Replaces dots with underscores after conversion.
  *
  * @return The sanitized string in PascalCase
  */
-fun String.sanitizePascal() = pascalCase().replaceDotsAndHyphens()
-
-
-private fun String.replaceDotsAndHyphens() = replace('.', '_').replace('-', '_')
+fun String.sanitizePascal() = pascalCase().replace('.', '_')
 
 /**
  * Checks if the given name is a valid Kotlin identifier.
