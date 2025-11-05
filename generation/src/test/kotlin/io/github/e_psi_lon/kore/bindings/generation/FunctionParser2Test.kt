@@ -68,7 +68,6 @@ class FunctionParser2Test {
 
         // Assert
         assertNotNull(macro)
-        assertEquals("macro_func", macro.functionName)
         assertEquals(5, macro.parameters.size)
         assertTrue(macro.parameters.contains("name"))
         assertTrue(macro.parameters.contains("value"))
@@ -199,22 +198,6 @@ class FunctionParser2Test {
         assertEquals(2, macro.parameters.size)
         assertTrue(macro.parameters.contains("name"))
         assertTrue(macro.parameters.contains("value"))
-    }
-
-    @Test
-    fun `should handle nested directory paths in function path`() {
-        // Arrange
-        val content = $$"$say Hello $(name)!"
-        val relativePath = Path("subdir/nested/function.mcfunction")
-        val parser = FunctionParser2(content, "test", relativePath, testLogger)
-
-        // Act
-        val (_, _, macro) = parser()
-
-        // Assert - even without macro, test the path handling
-        // Path should be normalized in Component.Function usage
-        assertNotNull(macro)
-        assertEquals("function", macro.functionName)
     }
 
     @Test

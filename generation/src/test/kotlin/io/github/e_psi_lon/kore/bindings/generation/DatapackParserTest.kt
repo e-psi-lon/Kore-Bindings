@@ -84,7 +84,6 @@ class DatapackParserTest {
         val parsedNamespace = result.namespaces.first()
         assertEquals(1, parsedNamespace.macros.size)
         val macro = parsedNamespace.macros.first()
-        assertEquals("macro_func", macro.functionName)
         assertTrue(macro.parameters.contains("name"))
         assertTrue(macro.parameters.contains("value"))
     }

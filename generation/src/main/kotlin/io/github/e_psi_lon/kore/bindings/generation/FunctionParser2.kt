@@ -91,9 +91,6 @@ class FunctionParser2(
 
         return if (parameters.isNotEmpty()) {
             Macro(
-                // Function path should be relative, normalized, without extension
-                functionPath = relativePath.toString().replace('\\', '/').removeSuffix(".mcfunction"),
-                functionName = relativePath.nameWithoutExtension,
                 parameters = parameters.distinct()
             )
         } else null
