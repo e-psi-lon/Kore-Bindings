@@ -37,12 +37,13 @@ internal class TypeBuilder(
 		builder.addAnnotation(AnnotationSpec.builder(T::class).apply(block).build())
 	}
 
-	inline fun <reified T : Any> property(name: String, noinline block: PropertyBuilder.() -> Unit = {}): PropertyBuilder {
-		val className = T::class.asClassName()
+	inline fun <reified T> property(name: String, noinline block: PropertyBuilder.() -> Unit = {}): PropertyBuilder {
+		val className = typeNameOf<T>()
 		return property(name, className, block)
 	}
 
-	fun property(name: String, type: ClassName, block: PropertyBuilder.() -> Unit = {}): PropertyBuilder {
+
+	fun property(name: String, type: TypeName, block: PropertyBuilder.() -> Unit = {}): PropertyBuilder {
 		return if (properties.containsKey(name) && name != "path") {
 			// while there's a suffix, add +1 to the suffix
 			var newName = name

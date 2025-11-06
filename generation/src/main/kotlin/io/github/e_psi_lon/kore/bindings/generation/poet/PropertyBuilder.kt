@@ -4,7 +4,7 @@ import com.squareup.kotlinpoet.*
 
 internal class PropertyBuilder(
 	name: String,
-	type: ClassName,
+	type: TypeName,
 ) {
 	private var builder = PropertySpec.builder(name, type)
 	private var getterFunc: FunSpec.Builder? = null
@@ -14,6 +14,14 @@ internal class PropertyBuilder(
 			this.initializer(format, *args)
 		}
 	}
+
+    fun delegate(memberName: MemberName, block: CodeBlock.Builder.() -> Unit) {
+        delegate("%M { %L }", memberName, codeBlock(block))
+    }
+
+    fun delegate(format: String, vararg args: Any) {
+        builder = builder.delegate(format, *args)
+    }
 
 	inline fun <reified T : Annotation> addAnnotation(
 		noinline block: AnnotationSpec.Builder.() -> Unit = {}
