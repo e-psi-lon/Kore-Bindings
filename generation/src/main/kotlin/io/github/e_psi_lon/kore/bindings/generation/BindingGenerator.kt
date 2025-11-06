@@ -32,93 +32,78 @@ class BindingGenerator(
      */
     operator fun invoke() {
         for (namespace in datapack.namespaces) {
-            logger.info("Generating ${namespace.name} resources bindings")
-            val namespaceFile = fileSpec(packageName, namespace.name.sanitizePascal()) {
-                addAnnotation<Suppress> {
-                    addMember("%S", "unused")
-                    addMember("%S", "RedundantVisibilityModifier")
-                    addMember("%S", "UnusedReceiverParameter")
-                }
-                objectBuilder(namespace.name.sanitizePascal()) {
-                    property<String>("PATH") {
-                        addModifiers(KModifier.CONST, KModifier.PRIVATE)
-                        initializer("%S", "")
-                    }
-
-                    property<String>("namespace") {
-                        addAnnotation<Suppress> {
-                            addMember("%S", "ConstPropertyName")
-                        }
-                        addModifiers(KModifier.CONST)
-                        initializer("%S", namespace.name)
-                    }
-                    for (component in namespace.components) {
-                        val directoryHierarchy = component.directoryHierarchy.map { it.sanitizePascal() }
-                        getOrCreateSubObjectBuilder(directoryHierarchy) {
-                            if (!properties.containsKey("PATH")) {
-                                property<String>("PATH") {
-                                    addModifiers(KModifier.CONST, KModifier.PRIVATE)
-                                    if (directoryHierarchy.isEmpty()) {
-                                        initializer("%S", "")
-                                    } else {
-                                        val parentRef = calculateParentRef(directoryHierarchy, namespace)
-                                        initializer("%P", $$"${$${parentRef}.PATH}$${component.directoryHierarchy.last()}/")
-                                    }
-                                }
-                            }
-                            when (component) {
-                                is Component.Function -> generateFunctionBindings(component, namespace)
-                                is Component.FunctionTag -> {}
-                                is Component.Simple -> {
-                                    property(
-                                        component.fileName.sanitizeCamel(),
-                                        component.componentType.returnType
-                                    ) {
-                                        getter {
-                                            val type = component.componentType
-                                            val parameters = type.parameters
-                                            val nameToDefault = parameters.mapKeys { it.key.name }.toList()
-                                            val isType = type.koreMethodOrClass is ClassOrMemberName.Class && type.koreMethodOrClass.name == type.returnType
-
-                                            val callString = (if (isType) "%T(" else "%M(") +
-                                                nameToDefault.joinToString(", ") { (_, value) -> getFormatPattern(value) } +
-                                                ")"
-                                            logger.debug("Generating getter for ${component.fileName} with template `$callString`")
-
-                                            val args = buildList {
-                                                if (isType) add(type.returnType) else add((type.koreMethodOrClass as ClassOrMemberName.Member).name)
-                                                for ((paramName, paramValue) in nameToDefault) {
-                                                    add(paramName)
-                                                    add(getParameterValue(paramValue, namespace, component))
-                                                }
-                                            }
-                                            logger.debug("Generated args: $args")
-                                            addStatement("return $callString", *args.toTypedArray())
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    for (scoreboard in namespace.localScoreboards) {
-
-                    }
-
-                    for (storage in namespace.localStorages) {
-
-                    }
-                }
-            }
-
-            val outputPath = outputDir.resolve("${namespace.name.sanitizePascal()}.kt")
-            if (!outputPath.exists()) outputPath.createFile()
-            outputPath.bufferedWriter().use {
-                namespaceFile.writeTo(it)
-            }
+            generateNamespaceBindings(namespace)
         }
         for (group in datapack.namespaceGroups) {
             logger.info("Generating group ${group.prefix} resources bindings")
+        }
+    }
 
+    private fun generateNamespaceBindings(namespace: ParsedNamespace) {
+        val lazyFunc: KFunction1<() -> Any, Lazy<Any>> = ::lazy
+        logger.info("Generating ${namespace.name} resources bindings")
+        val namespaceFile = fileSpec(packageName, namespace.name.sanitizePascal()) {
+            addAnnotation<Suppress> {
+                addMember("%S", "unused")
+                addMember("%S", "RedundantVisibilityModifier")
+                addMember("%S", "UnusedReceiverParameter")
+            }
+            objectBuilder(namespace.name.sanitizePascal()) {
+                property<String>("PATH") {
+                    addModifiers(KModifier.CONST, KModifier.PRIVATE)
+                    initializer("%S", "")
+                }
+                property<DataPack>("dataPack") {
+                    addModifiers(KModifier.PRIVATE)
+                    delegate(lazyFunc.asMemberName()) {
+                        addStatement("%T(%S)", DataPack::class.asClassName(), namespace.name)
+                    }
+                }
+
+                property<String>("namespace") {
+                    addModifiers(KModifier.CONST)
+                    initializer("%S", namespace.name)
+                }
+                for (component in namespace.components) {
+                    val directoryHierarchy = component.directoryHierarchy.map { it.sanitizePascal() }
+                    getOrCreateSubObjectBuilder(directoryHierarchy) {
+                        if (!properties.containsKey("PATH")) {
+                            property<String>("PATH") {
+                                addModifiers(KModifier.CONST, KModifier.PRIVATE)
+                                if (directoryHierarchy.isEmpty()) {
+                                    initializer("%S", "")
+                                } else {
+                                    val parentRef = calculateParentRef(directoryHierarchy, namespace)
+                                    initializer(
+                                        "%P",
+                                        $$"${$${parentRef}.PATH}$${component.directoryHierarchy.last()}/"
+                                    )
+                                }
+                            }
+                        }
+                        when (component) {
+                            is Component.Function -> generateFunctionBindings(component, namespace)
+                            is Component.FunctionTag -> {}
+                            is Component.Simple -> generateRegularComponentBindings(component, namespace)
+                        }
+                    }
+                }
+                for (scoreboard in namespace.localScoreboards) {
+                    // TODO: Handle scoreboards
+                    continue
+                }
+
+                for (storage in namespace.localStorages) {
+                    // TODO: Handle storages
+                    continue
+                }
+            }
+        }
+
+        val outputPath = outputDir.resolve("${namespace.name.sanitizePascal()}.kt")
+        if (!outputPath.exists()) outputPath.createFile()
+        outputPath.bufferedWriter().use {
+            namespaceFile.writeTo(it)
         }
     }
 
@@ -143,14 +128,39 @@ class BindingGenerator(
         if (value !is ParameterValueSource.Default<*>) "%L = %S"
         else "%L = %L"
 
-    private fun calculateParentRef(directoryHierarchy: List<String>, namespace: ParsedNamespace) = directoryHierarchy.dropLast(1).let {
-        when (it.size) {
-            0 -> namespace.name.sanitizePascal()
-            1 -> listOf(namespace.name.sanitizePascal(), it.first()).joinToString(".")
-            else -> it.takeLast(2).joinToString(".")
+    private fun calculateParentRef(directoryHierarchy: List<String>, namespace: ParsedNamespace) =
+        directoryHierarchy.dropLast(1).let {
+            when (it.size) {
+                0 -> namespace.name.sanitizePascal()
+                1 -> listOf(namespace.name.sanitizePascal(), it.first()).joinToString(".")
+                else -> it.takeLast(2).joinToString(".")
+            }
+        }
+
+    private fun TypeBuilder.generateRegularComponentBindings(component: Component.Simple, namespace: ParsedNamespace) {
+        property(
+            component.fileName.sanitizeCamel(),
+            component.componentType.returnType
+        ) {
+            getter {
+                val type = component.componentType
+                val parameters = type.parameters
+                val nameToDefault = parameters.mapKeys { it.key.name }.toList()
+                val isType =
+                    type.koreMethodOrClass is ClassOrMemberName.Class && type.koreMethodOrClass.name == type.returnType
+                val codeBlock = codeBlock {
+                    if (isType) add("%T(", type.returnType)
+                    else add("%M(", (type.koreMethodOrClass as ClassOrMemberName.Member).name)
+                    nameToDefault.forEachIndexed { index, (paramName, paramValue) ->
+                        if (index != 0) add(", ")
+                        add(getFormatPattern(paramValue), paramName, getParameterValue(paramValue, namespace, component))
+                    }
+                    add(")")
+                }
+                addStatement("return %L", codeBlock)
+            }
         }
     }
-
 
     @OptIn(ExperimentalKotlinPoetApi::class)
     internal fun TypeBuilder.generateFunctionBindings(function: Component.Function, namespace: ParsedNamespace) {
