@@ -21,12 +21,16 @@ inline fun <reified T> FunSpec.Builder.addParameter(name: String, block: Paramet
 fun KFunction<*>.asMemberName(): MemberName {
     val javaMethod = this.javaMethod ?: error("Function has no Java method: $this")
     val declaringClass = javaMethod.declaringClass
-    val packageName = declaringClass.`package`.name
-    val rawClassName = declaringClass.name.removePrefix("$packageName.")
-    val className = ClassName(packageName, rawClassName.split('.'))
-    return className.member(this.name)
+    val packageName = declaringClass.`package`?.name ?: error("Cannot determine package")
+    val isTopLevel = declaringClass.simpleName.endsWith("Kt")
+    return if (isTopLevel) {
+        MemberName(packageName, this.name)
+    } else {
+        val rawClassName = declaringClass.name.removePrefix("$packageName.").split('.')
+        val className = ClassName(packageName, rawClassName.first(), *rawClassName.drop(1).toTypedArray())
+        className.member(this.name)
+    }
 }
-
 
 fun codeBlock(builder: CodeBlock.Builder.() -> Unit) =
     CodeBlock.builder().apply(builder).build()
