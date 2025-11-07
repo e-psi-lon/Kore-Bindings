@@ -44,6 +44,7 @@ class FunctionParser2(
         val macro = extractMacro(fileContent)
 
         logger.debug("Parsed function $namespaceName:${relativePath.nameWithoutExtension}, found ${scoreboards.size} scoreboards, ${storages.size} storages, macro: ${macro != null}")
+        if (macro != null) logger.debug("Macros are ${macro.parameters.joinToString(",")}")
         return Triple(scoreboards, storages, macro)
     }
 

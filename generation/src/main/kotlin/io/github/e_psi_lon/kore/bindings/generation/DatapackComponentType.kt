@@ -1,12 +1,12 @@
 package io.github.e_psi_lon.kore.bindings.generation
 
 import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.asClassName
 import io.github.ayfri.kore.arguments.types.resources.tagged.FunctionTagArgument
 import io.github.ayfri.kore.arguments.types.resources.tagged.ItemTagArgument
 import io.github.ayfri.kore.commands.Command
+import io.github.ayfri.kore.commands.function
 import io.github.ayfri.kore.functions.Function
 import io.github.ayfri.kore.generated.arguments.tagged.*
 import io.github.ayfri.kore.generated.arguments.types.*
@@ -17,8 +17,12 @@ import io.github.ayfri.kore.generated.arguments.worldgen.tagged.WorldPresetTagAr
 import io.github.ayfri.kore.generated.arguments.worldgen.types.*
 import io.github.e_psi_lon.kore.bindings.generation.components.ClassOrMemberName
 import io.github.e_psi_lon.kore.bindings.generation.components.ComponentType
+import io.github.e_psi_lon.kore.bindings.generation.components.ComponentType.Companion.classOrMemberOf
 import io.github.e_psi_lon.kore.bindings.generation.components.ParameterValueSource
 import io.github.e_psi_lon.kore.bindings.generation.components.toClassOrMemberName
+import io.github.e_psi_lon.kore.bindings.generation.poet.asMemberName
+import net.benwoodworth.knbt.NbtCompound
+import kotlin.reflect.KFunction4
 
 enum class DatapackComponentType(
     override val directoryName: String,
@@ -37,49 +41,55 @@ enum class DatapackComponentType(
     override val parameters: Map<ParameterSpec, ParameterValueSource> = ComponentType.usualParam(),
 
 ) : ComponentType {
-    ADVANCEMENT("advancement", koreMethodOrClass = AdvancementArgument::class.asClassName().toClassOrMemberName()),
-    BANNER_PATTERN("banner_pattern", koreMethodOrClass = BannerPatternArgument::class.asClassName().toClassOrMemberName()),
-    CAT_VARIANT("cat_variant", koreMethodOrClass = CatVariantArgument::class.asClassName().toClassOrMemberName()),
-    CHAT_TYPE("chat", koreMethodOrClass = ChatTypeArgument::class.asClassName().toClassOrMemberName()),
-    CHICKEN_VARIANT("chicken_variant", koreMethodOrClass = ChickenVariantArgument::class.asClassName().toClassOrMemberName()),
-    COW_VARIANT("cow_variant", koreMethodOrClass = CowVariantArgument::class.asClassName().toClassOrMemberName()),
-    DAMAGE_TYPE("damage_type", koreMethodOrClass = DamageTypeArgument::class.asClassName().toClassOrMemberName()),
-    DIALOG("dialog", koreMethodOrClass = DialogArgument::class.asClassName().toClassOrMemberName()),
-    DIMENSION_TYPE("dimension_type", koreMethodOrClass = DimensionTypeArgument::class.asClassName().toClassOrMemberName()),
-    ENCHANTMENT("enchantment", koreMethodOrClass = EnchantmentArgument::class.asClassName().toClassOrMemberName()),
-    ENCHANTMENT_PROVIDER("enchantment_provider", koreMethodOrClass = EnchantmentProviderArgument::class.asClassName().toClassOrMemberName()),
-    FROG_VARIANT("frog_variant", koreMethodOrClass = FrogVariantArgument::class.asClassName().toClassOrMemberName()),
+    ADVANCEMENT("advancement", koreMethodOrClass = classOrMemberOf<AdvancementArgument>()),
+    BANNER_PATTERN("banner_pattern", koreMethodOrClass = classOrMemberOf<BannerPatternArgument>()),
+    CAT_VARIANT("cat_variant", koreMethodOrClass = classOrMemberOf<CatVariantArgument>()),
+    CHAT_TYPE("chat", koreMethodOrClass = classOrMemberOf<ChatTypeArgument>()),
+    CHICKEN_VARIANT("chicken_variant", koreMethodOrClass = classOrMemberOf<ChickenVariantArgument>()),
+    COW_VARIANT("cow_variant", koreMethodOrClass = classOrMemberOf<CowVariantArgument>()),
+    DAMAGE_TYPE("damage_type", koreMethodOrClass = classOrMemberOf<DamageTypeArgument>()),
+    DIALOG("dialog", koreMethodOrClass = classOrMemberOf<DialogArgument>()),
+    DIMENSION_TYPE("dimension_type", koreMethodOrClass = classOrMemberOf<DimensionTypeArgument>()),
+    ENCHANTMENT("enchantment", koreMethodOrClass = classOrMemberOf<EnchantmentArgument>()),
+    ENCHANTMENT_PROVIDER("enchantment_provider", koreMethodOrClass = classOrMemberOf<EnchantmentProviderArgument>()),
+    FROG_VARIANT("frog_variant", koreMethodOrClass = classOrMemberOf<FrogVariantArgument>()),
     FUNCTION(
         "function",
         fileExtension = "mcfunction",
-        koreMethodOrClass = MemberName("io.github.ayfri.kore.commands", "function").toClassOrMemberName(),
+        koreMethodOrClass = run {
+            val temp: KFunction4<Function, String, Boolean, NbtCompound?, Command> = Function::function
+            temp.asMemberName().toClassOrMemberName()
+        },
         returnType = Command::class.asClassName(),
         requiredContext = Function::class.asClassName(),
         parameters = ComponentType.usualParam() +
             (ParameterSpec.builder("group", Boolean::class).build() to ParameterValueSource.Default(false))
     ),
-    INSTRUMENT("instrument", koreMethodOrClass = InstrumentArgument::class.asClassName().toClassOrMemberName()),
+    INSTRUMENT("instrument", koreMethodOrClass = classOrMemberOf<InstrumentArgument>()),
     JUKEBOX_SONG(
         "jukebox_song",
-        koreMethodOrClass = JukeboxSongArgument::class.asClassName().toClassOrMemberName(),
+        koreMethodOrClass = classOrMemberOf<JukeboxSongArgument>(),
     ),
-    LOOT_TABLE("loot_table", koreMethodOrClass = LootTableArgument::class.asClassName().toClassOrMemberName()),
-    PAINTING_VARIANT("painting_variant", koreMethodOrClass = PaintingVariantArgument::class.asClassName().toClassOrMemberName()),
-    RECIPE("recipe", koreMethodOrClass = RecipeArgument::class.asClassName().toClassOrMemberName()),
-    STRUCTURE("structure", fileExtension = "nbt", koreMethodOrClass = StructureArgument::class.asClassName().toClassOrMemberName()),
+    LOOT_TABLE("loot_table", koreMethodOrClass = classOrMemberOf<LootTableArgument>()),
+    PAINTING_VARIANT("painting_variant", koreMethodOrClass = classOrMemberOf<PaintingVariantArgument>()),
+    RECIPE("recipe", koreMethodOrClass = classOrMemberOf<RecipeArgument>()),
+    STRUCTURE("structure", fileExtension = "nbt", koreMethodOrClass = classOrMemberOf<StructureArgument>()),
 
     // TAGS
-    BANNER_PATTERN_TAG("tags/banner_pattern", koreMethodOrClass = BannerPatternTagArgument::class.asClassName().toClassOrMemberName()),
-    BLOCK_TAG("tags/block", koreMethodOrClass = BlockTypeTagArgument::class.asClassName().toClassOrMemberName()),
-    CAT_VARIANT_TAG("tags/cat_variant", koreMethodOrClass = CatVariantTagArgument::class.asClassName().toClassOrMemberName()),
-    DAMAGE_TYPE_TAG("tags/damage_type", koreMethodOrClass = DamageTypeTagArgument::class.asClassName().toClassOrMemberName()),
-    DIALOG_TAG("tags/dialog", koreMethodOrClass = DialogTagArgument::class.asClassName().toClassOrMemberName()),
-    ENCHANTMENT_TAG("tags/enchantment", koreMethodOrClass = EnchantmentTagArgument::class.asClassName().toClassOrMemberName()),
-    ENTITY_TYPE_TAG("tags/entity_type", koreMethodOrClass = EntityTypeTagArgument::class.asClassName().toClassOrMemberName()),
-    FLUID_TAG("tags/fluid", koreMethodOrClass = FluidTagArgument::class.asClassName().toClassOrMemberName()),
+    BANNER_PATTERN_TAG("tags/banner_pattern", koreMethodOrClass = classOrMemberOf<BannerPatternTagArgument>()),
+    BLOCK_TAG("tags/block", koreMethodOrClass = classOrMemberOf<BlockTypeTagArgument>()),
+    CAT_VARIANT_TAG("tags/cat_variant", koreMethodOrClass = classOrMemberOf<CatVariantTagArgument>()),
+    DAMAGE_TYPE_TAG("tags/damage_type", koreMethodOrClass = classOrMemberOf<DamageTypeTagArgument>()),
+    DIALOG_TAG("tags/dialog", koreMethodOrClass = classOrMemberOf<DialogTagArgument>()),
+    ENCHANTMENT_TAG("tags/enchantment", koreMethodOrClass = classOrMemberOf<EnchantmentTagArgument>()),
+    ENTITY_TYPE_TAG("tags/entity_type", koreMethodOrClass = classOrMemberOf<EntityTypeTagArgument>()),
+    FLUID_TAG("tags/fluid", koreMethodOrClass = classOrMemberOf<FluidTagArgument>()),
     FUNCTION_TAG(
         "tags/function",
-        koreMethodOrClass = MemberName("io.github.ayfri.kore.commands", "function").toClassOrMemberName(),
+        koreMethodOrClass = run {
+            val temp: KFunction4<Function, String, Boolean, NbtCompound?, Command> = Function::function
+            temp.asMemberName().toClassOrMemberName()
+        },
         returnType = Command::class.asClassName(),
         requiredContext = Function::class.asClassName(),
         parameters = ComponentType.usualParam() +
@@ -87,41 +97,41 @@ enum class DatapackComponentType(
     ),
     FUNCTION_TAG_ARGUMENT(
         "tags/function",
-        koreMethodOrClass = FunctionTagArgument::class.asClassName().toClassOrMemberName(),
+        koreMethodOrClass = classOrMemberOf<FunctionTagArgument>(),
         parameters = ComponentType.usualParam("tagName")
     ) {
         override val duplicateSuffix = "FunctionTagArgument"
     },
-    GAME_EVENT_TAG("tags/game_event", koreMethodOrClass = GameEventTagArgument::class.asClassName().toClassOrMemberName()),
-    INSTRUMENT_TAG("tags/instrument", koreMethodOrClass = InstrumentTagArgument::class.asClassName().toClassOrMemberName()),
-    ITEM_TAG("tags/item", koreMethodOrClass = ItemTagArgument::class.asClassName().toClassOrMemberName()),
-    PAINTING_VARIANT_TAG("tags/painting_variant", koreMethodOrClass = PaintingVariantTagArgument::class.asClassName().toClassOrMemberName()),
-    POINT_OF_INTEREST_TYPE_TAG("tags/point_of_interest_type", koreMethodOrClass = PointOfInterestTypeTagArgument::class.asClassName().toClassOrMemberName()),
+    GAME_EVENT_TAG("tags/game_event", koreMethodOrClass = classOrMemberOf<GameEventTagArgument>()),
+    INSTRUMENT_TAG("tags/instrument", koreMethodOrClass = classOrMemberOf<InstrumentTagArgument>()),
+    ITEM_TAG("tags/item", koreMethodOrClass = classOrMemberOf<ItemTagArgument>()),
+    PAINTING_VARIANT_TAG("tags/painting_variant", koreMethodOrClass = classOrMemberOf<PaintingVariantTagArgument>()),
+    POINT_OF_INTEREST_TYPE_TAG("tags/point_of_interest_type", koreMethodOrClass = classOrMemberOf<PointOfInterestTypeTagArgument>()),
 
     // SUBTAGS FOR WORLDGEN
-    BIOME_TAG("tags/worldgen/biome", koreMethodOrClass = BiomeTagArgument::class.asClassName().toClassOrMemberName()),
-    FLAT_LEVEL_GENERATOR_PRESET_TAG("tags/worldgen/flat_level_generator_preset", koreMethodOrClass = FlatLevelGeneratorPresetTagArgument::class.asClassName().toClassOrMemberName()),
-    STRUCTURE_TAG("tags/worldgen/structure", koreMethodOrClass = StructureTagArgument::class.asClassName().toClassOrMemberName()),
-    WORLD_PRESET_TAG("tags/worldgen/world_preset", koreMethodOrClass = WorldPresetTagArgument::class.asClassName().toClassOrMemberName()),
-    TRIAL_SPAWNER("trial_spawner", koreMethodOrClass = TrialSpawnerArgument::class.asClassName().toClassOrMemberName()),
-    TRIM_MATERIAL("trim_material", koreMethodOrClass = TrimMaterialArgument::class.asClassName().toClassOrMemberName()),
-    TRIM_PATTERN("trim_pattern", koreMethodOrClass = TrimPatternArgument::class.asClassName().toClassOrMemberName()),
-    WOLF_SOUND_VARIANT("wolf_sound_variant", koreMethodOrClass = WolfSoundVariantArgument::class.asClassName().toClassOrMemberName()),
-    WOLF_VARIANT("wolf_variant", koreMethodOrClass = WolfVariantArgument::class.asClassName().toClassOrMemberName()),
+    BIOME_TAG("tags/worldgen/biome", koreMethodOrClass = classOrMemberOf<BiomeTagArgument>()),
+    FLAT_LEVEL_GENERATOR_PRESET_TAG("tags/worldgen/flat_level_generator_preset", koreMethodOrClass = classOrMemberOf<FlatLevelGeneratorPresetTagArgument>()),
+    STRUCTURE_TAG("tags/worldgen/structure", koreMethodOrClass = classOrMemberOf<StructureTagArgument>()),
+    WORLD_PRESET_TAG("tags/worldgen/world_preset", koreMethodOrClass = classOrMemberOf<WorldPresetTagArgument>()),
+    TRIAL_SPAWNER("trial_spawner", koreMethodOrClass = classOrMemberOf<TrialSpawnerArgument>()),
+    TRIM_MATERIAL("trim_material", koreMethodOrClass = classOrMemberOf<TrimMaterialArgument>()),
+    TRIM_PATTERN("trim_pattern", koreMethodOrClass = classOrMemberOf<TrimPatternArgument>()),
+    WOLF_SOUND_VARIANT("wolf_sound_variant", koreMethodOrClass = classOrMemberOf<WolfSoundVariantArgument>()),
+    WOLF_VARIANT("wolf_variant", koreMethodOrClass = classOrMemberOf<WolfVariantArgument>()),
 
     // WORLDGEN
-    BIOME("worldgen/biome", koreMethodOrClass = BiomeArgument::class.asClassName().toClassOrMemberName()),
-    CONFIGURED_CARVER("worldgen/configured_carver", koreMethodOrClass = ConfiguredCarverArgument::class.asClassName().toClassOrMemberName()),
-    CONFIGURED_FEATURE("worldgen/configured_feature", koreMethodOrClass = ConfiguredFeatureArgument::class.asClassName().toClassOrMemberName()),
-    DENSITY_FUNCTION("worldgen/density_function", koreMethodOrClass = DensityFunctionArgument::class.asClassName().toClassOrMemberName()),
-    FLAT_LEVEL_GENERATOR_PRESET("worldgen/flat_level_generator_preset", koreMethodOrClass = FlatLevelGeneratorPresetArgument::class.asClassName().toClassOrMemberName()),
-    MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST("worldgen/multi_noise_biome_source_parameter_list", koreMethodOrClass = MultiNoiseBiomeSourceParameterListArgument::class.asClassName().toClassOrMemberName()),
-    NOISE("worldgen/noise", koreMethodOrClass = NoiseArgument::class.asClassName().toClassOrMemberName()),
-    NOISE_SETTINGS("worldgen/noise_settings", koreMethodOrClass = NoiseSettingsArgument::class.asClassName().toClassOrMemberName()),
-    PLACED_FEATURE("worldgen/placed_feature", koreMethodOrClass = PlacedFeatureArgument::class.asClassName().toClassOrMemberName()),
-    PROCESSOR_LIST("worldgen/processor_list", koreMethodOrClass = ProcessorListArgument::class.asClassName().toClassOrMemberName()),
-    WORLDGEN_STRUCTURE("worldgen/structure", koreMethodOrClass = StructureArgument::class.asClassName().toClassOrMemberName()),
-    STRUCTURE_SET("worldgen/structure_set", koreMethodOrClass = StructureSetArgument::class.asClassName().toClassOrMemberName()),
-    TEMPLATE_POOL("worldgen/template_pool", koreMethodOrClass = TemplatePoolArgument::class.asClassName().toClassOrMemberName()),
-    WORLD_PRESET("worldgen/world_preset", koreMethodOrClass = WorldPresetArgument::class.asClassName().toClassOrMemberName())
+    BIOME("worldgen/biome", koreMethodOrClass = classOrMemberOf<BiomeArgument>()),
+    CONFIGURED_CARVER("worldgen/configured_carver", koreMethodOrClass = classOrMemberOf<ConfiguredCarverArgument>()),
+    CONFIGURED_FEATURE("worldgen/configured_feature", koreMethodOrClass = classOrMemberOf<ConfiguredFeatureArgument>()),
+    DENSITY_FUNCTION("worldgen/density_function", koreMethodOrClass = classOrMemberOf<DensityFunctionArgument>()),
+    FLAT_LEVEL_GENERATOR_PRESET("worldgen/flat_level_generator_preset", koreMethodOrClass = classOrMemberOf<FlatLevelGeneratorPresetArgument>()),
+    MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST("worldgen/multi_noise_biome_source_parameter_list", koreMethodOrClass = classOrMemberOf<MultiNoiseBiomeSourceParameterListArgument>()),
+    NOISE("worldgen/noise", koreMethodOrClass = classOrMemberOf<NoiseArgument>()),
+    NOISE_SETTINGS("worldgen/noise_settings", koreMethodOrClass = classOrMemberOf<NoiseSettingsArgument>()),
+    PLACED_FEATURE("worldgen/placed_feature", koreMethodOrClass = classOrMemberOf<PlacedFeatureArgument>()),
+    PROCESSOR_LIST("worldgen/processor_list", koreMethodOrClass = classOrMemberOf<ProcessorListArgument>()),
+    WORLDGEN_STRUCTURE("worldgen/structure", koreMethodOrClass = classOrMemberOf<StructureArgument>()),
+    STRUCTURE_SET("worldgen/structure_set", koreMethodOrClass = classOrMemberOf<StructureSetArgument>()),
+    TEMPLATE_POOL("worldgen/template_pool", koreMethodOrClass = classOrMemberOf<TemplatePoolArgument>()),
+    WORLD_PRESET("worldgen/world_preset", koreMethodOrClass = classOrMemberOf<WorldPresetArgument>());
 }
