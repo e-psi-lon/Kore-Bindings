@@ -1,8 +1,7 @@
 package io.github.e_psi_lon.kore.bindings.generation
 
-import com.squareup.kotlinpoet.ExperimentalKotlinPoetApi
-import com.squareup.kotlinpoet.KModifier
-import com.squareup.kotlinpoet.asClassName
+import com.squareup.kotlinpoet.*
+import io.github.ayfri.kore.DataPack
 import io.github.ayfri.kore.arguments.types.resources.FunctionArgument
 import io.github.ayfri.kore.functions.Function
 import io.github.e_psi_lon.kore.bindings.generation.components.ClassOrMemberName
@@ -11,6 +10,8 @@ import io.github.e_psi_lon.kore.bindings.generation.data.Component
 import io.github.e_psi_lon.kore.bindings.generation.data.Datapack
 import io.github.e_psi_lon.kore.bindings.generation.data.ParsedNamespace
 import io.github.e_psi_lon.kore.bindings.generation.poet.TypeBuilder
+import io.github.e_psi_lon.kore.bindings.generation.poet.asMemberName
+import io.github.e_psi_lon.kore.bindings.generation.poet.codeBlock
 import io.github.e_psi_lon.kore.bindings.generation.poet.fileSpec
 import java.nio.file.Path
 import kotlin.io.path.bufferedWriter
@@ -56,7 +57,7 @@ class BindingGenerator(
                 property<DataPack>("dataPack") {
                     addModifiers(KModifier.PRIVATE)
                     delegate(lazyFunc.asMemberName()) {
-                        addStatement("%T(%S)", DataPack::class.asClassName(), namespace.name)
+                        add("%T(%S)", DataPack::class.asClassName(), namespace.name)
                     }
                 }
 
@@ -73,7 +74,7 @@ class BindingGenerator(
                                 if (directoryHierarchy.isEmpty()) {
                                     initializer("%S", "")
                                 } else {
-                                    val parentRef = calculateParentRef(directoryHierarchy, namespace)
+                                    val parentRef = calculateSmartRef(component.directoryHierarchy, namespace, 1)
                                     initializer(
                                         "%P",
                                         $$"${$${parentRef}.PATH}$${component.directoryHierarchy.last()}/"
@@ -84,7 +85,7 @@ class BindingGenerator(
                         when (component) {
                             is Component.Function -> generateFunctionBindings(component, namespace)
                             is Component.FunctionTag -> {}
-                            is Component.Simple -> generateRegularComponentBindings(component, namespace)
+                            is Component.Simple -> generateRegularComponentBindings(component)
                         }
                     }
                 }
@@ -107,10 +108,10 @@ class BindingGenerator(
         }
     }
 
-    private fun getParameterValue(source: ParameterValueSource, namespace: ParsedNamespace, component: Component): Any {
+    private fun getParameterValue(source: ParameterValueSource, component: Component): Any {
         return when (source) {
-            is ParameterValueSource.Namespace -> namespace.name
-            is ParameterValueSource.Name -> component.fileName
+            is ParameterValueSource.Namespace -> "namespace"
+            is ParameterValueSource.Name -> $$"${PATH}$${component.fileName}"
             is ParameterValueSource.Default<*> -> source.value
         }
     }
@@ -125,11 +126,13 @@ class BindingGenerator(
      *         - %L = literal value (for default values, rendered as-is)
      */
     private fun getFormatPattern(value: ParameterValueSource): String =
-        if (value !is ParameterValueSource.Default<*>) "%L = %S"
-        else "%L = %L"
+        when (value) {
+            ParameterValueSource.Name -> "%L = %P"
+            else -> "%L = %L"
+        }
 
-    private fun calculateParentRef(directoryHierarchy: List<String>, namespace: ParsedNamespace) =
-        directoryHierarchy.dropLast(1).let {
+    private fun calculateSmartRef(directoryHierarchy: List<String>, namespace: ParsedNamespace, toDrop: Int = 0) =
+        directoryHierarchy.map { it.sanitizePascal() }.dropLast(toDrop).let {
             when (it.size) {
                 0 -> namespace.name.sanitizePascal()
                 1 -> listOf(namespace.name.sanitizePascal(), it.first()).joinToString(".")
@@ -137,7 +140,7 @@ class BindingGenerator(
             }
         }
 
-    private fun TypeBuilder.generateRegularComponentBindings(component: Component.Simple, namespace: ParsedNamespace) {
+    private fun TypeBuilder.generateRegularComponentBindings(component: Component.Simple) {
         property(
             component.fileName.sanitizeCamel(),
             component.componentType.returnType
@@ -152,8 +155,8 @@ class BindingGenerator(
                     if (isType) add("%T(", type.returnType)
                     else add("%M(", (type.koreMethodOrClass as ClassOrMemberName.Member).name)
                     nameToDefault.forEachIndexed { index, (paramName, paramValue) ->
-                        if (index != 0) add(", ")
-                        add(getFormatPattern(paramValue), paramName, getParameterValue(paramValue, namespace, component))
+                        add(getFormatPattern(paramValue), paramName, getParameterValue(paramValue, component))
+                        if (index < nameToDefault.lastIndex) add(", ")
                     }
                     add(")")
                 }

@@ -23,15 +23,12 @@ fun String.sanitizeCamel() = camelCase().replace('.', '_')
  */
 fun String.sanitizePascal() = pascalCase().replace('.', '_')
 
+fun String.capitalize() = replaceFirstChar { it.titlecase() }
 /**
  * Checks if the given name is a valid Kotlin identifier.
- * Returns false if it starts with a number or contains invalid characters.
+ * Returns false if it starts with a number
  */
-fun String.isValidKotlinIdentifier(): Boolean {
-    if (isEmpty()) return false
-    if (this[0].isDigit()) return false
-    return all { it.isLetterOrDigit() }
-}
+fun String.isValidKotlinIdentifier() = isNotEmpty() && !this[0].isDigit()
 
 /**
  * Maps each element of the collection to a result using the given suspend block,
