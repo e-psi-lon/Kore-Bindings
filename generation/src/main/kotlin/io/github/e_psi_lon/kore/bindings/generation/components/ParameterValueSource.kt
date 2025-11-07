@@ -36,4 +36,7 @@ sealed interface ParameterValueSource {
      * @property value The literal value to use for this parameter in generated code.
      */
     data class Default<T : Any>(val value: T) : ParameterValueSource
+
+
+    data object SelfSafeReference : ParameterValueSource
 }
