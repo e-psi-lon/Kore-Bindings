@@ -391,7 +391,6 @@ class BindingGeneratorSimpleComponentTest {
         // Should have namespace constant with ConstPropertyName suppression
         assertContains(content, "const val namespace")
         assertContains(content, "\"testns\"")
-        testLogger.info("Generated content:\n$content")
         assertTrue(
             content.contains("@Suppress(\"ConstPropertyName\")") ||
             content.contains("@Suppress") // Within a larger suppress annotation

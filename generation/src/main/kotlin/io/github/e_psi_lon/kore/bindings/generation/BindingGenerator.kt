@@ -62,6 +62,9 @@ class BindingGenerator(
                 }
 
                 property<String>("namespace") {
+                    addAnnotation<Suppress> {
+                        addMember("%S", "ConstPropertyName")
+                    }
                     addModifiers(KModifier.CONST)
                     initializer("%S", namespace.name)
                 }
