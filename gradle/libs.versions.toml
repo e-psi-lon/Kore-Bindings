@@ -7,6 +7,7 @@ kotlin-poet = "2.2.0"
 shadow = "9.2.2"
 junit = "6.0.1"
 clikt = "5.0.3"
+kover = "0.9.3"
 
 [libraries]
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
@@ -22,4 +23,5 @@ clikt = { module = "com.github.ajalt.clikt:clikt", version.ref = "clikt" }
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 generation = { id = "io.github.e_psi_lon.kore.bindings.generation" }
