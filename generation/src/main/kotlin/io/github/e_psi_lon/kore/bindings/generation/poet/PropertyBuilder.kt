@@ -10,9 +10,11 @@ internal class PropertyBuilder(
 	private var getterFunc: FunSpec.Builder? = null
 	private var setterFunc: FunSpec.Builder? = null
 	fun initializer(format: String, vararg args: Any) {
-		builder = builder.apply {
-			this.initializer(format, *args)
-		}
+		builder = builder.initializer(format, *args)
+	}
+
+	fun initializer(block: CodeBlock.Builder.() -> Unit) {
+		builder = builder.initializer(codeBlock(block))
 	}
 
     fun delegate(memberName: MemberName, block: CodeBlock.Builder.() -> Unit) {
@@ -25,16 +27,15 @@ internal class PropertyBuilder(
 
 	inline fun <reified T : Annotation> addAnnotation(
 		noinline block: AnnotationSpec.Builder.() -> Unit = {}
-	): PropertyBuilder {
-		return addAnnotation(T::class.asClassName(), block)
+	) {
+		addAnnotation(T::class.asClassName(), block)
 	}
 
 	fun addAnnotation(
 		type: ClassName,
 		block: AnnotationSpec.Builder.() -> Unit = {}
-	): PropertyBuilder {
+	) {
 		builder = builder.addAnnotation(AnnotationSpec.builder(type).apply(block).build())
-		return this
 	}
 
 	fun addDocs(vararg docs: String) {

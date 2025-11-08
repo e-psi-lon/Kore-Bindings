@@ -58,7 +58,8 @@ enum class DatapackComponentType(
         fileExtension = "mcfunction",
         koreMethodOrClass = classOrMemberOf<FunctionArgument>(),
         returnType = Command::class.asClassName(),
-        requiredContext = Function::class.asClassName()
+        requiredContext = Function::class.asClassName(),
+        parameters = ComponentType.usualParam("function") + ("directory" to ParameterValueSource.Directory)
     ),
     INSTRUMENT("instrument", koreMethodOrClass = classOrMemberOf<InstrumentArgument>()),
     JUKEBOX_SONG("jukebox_song", koreMethodOrClass = classOrMemberOf<JukeboxSongArgument>()),

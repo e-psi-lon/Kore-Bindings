@@ -1,5 +1,6 @@
 package io.github.e_psi_lon.kore.bindings.generation.components
 
+import com.squareup.kotlinpoet.TypeName
 
 /**
  * Represents a source of parameter values for component generation.
@@ -25,7 +26,15 @@ sealed interface ParameterValueSource {
      * value (e.g., "minecraft" or "smithed.crafter").
      */
     data object Namespace : ParameterValueSource
-
-
+    /**
+     * Indicates that the parameter value should be a self-reference.
+     *
+     * When used, the generated code will pass a Kotlin-valid reference to the component
+     * as the parameter value.
+     */
     data object SelfSafeReference : ParameterValueSource
+    data object Directory : ParameterValueSource
+    data object DataPack : ParameterValueSource
+    data class Type<T : TypeName>(val value: T) : ParameterValueSource
+
 }

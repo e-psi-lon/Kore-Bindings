@@ -5,6 +5,8 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import io.github.ayfri.kore.DataPack
 import io.github.ayfri.kore.arguments.types.DataArgument
 import io.github.ayfri.kore.arguments.types.resources.FunctionArgument
+import io.github.ayfri.kore.commands.Command
+import io.github.ayfri.kore.commands.function
 import io.github.ayfri.kore.functions.Function
 import io.github.ayfri.kore.functions.FunctionWithMacros
 import io.github.ayfri.kore.functions.Macros
@@ -18,12 +20,14 @@ import io.github.e_psi_lon.kore.bindings.generation.poet.addParameter
 import io.github.e_psi_lon.kore.bindings.generation.poet.asMemberName
 import io.github.e_psi_lon.kore.bindings.generation.poet.codeBlock
 import io.github.e_psi_lon.kore.bindings.generation.poet.fileSpec
+import net.benwoodworth.knbt.NbtCompound
 import net.benwoodworth.knbt.NbtCompoundBuilder
 import java.nio.file.Path
 import kotlin.io.path.bufferedWriter
 import kotlin.io.path.createFile
 import kotlin.io.path.exists
 import kotlin.reflect.KFunction1
+import kotlin.reflect.KFunction4
 
 class BindingGenerator(
     private val logger: Logger,
@@ -94,8 +98,8 @@ class BindingGenerator(
                         }
                         when (component) {
                             is Component.Function -> generateFunctionBindings(component, namespace)
-                            is Component.FunctionTag -> generateFunctionTagBindings(component)
-                            is Component.Simple -> generateRegularComponentBindings(component)
+                            is Component.FunctionTag -> generateFunctionTagBindings(component, namespace)
+                            is Component.Simple -> generateRegularComponentBindings(component, namespace)
                         }
                     }
                 }
@@ -118,11 +122,14 @@ class BindingGenerator(
         }
     }
 
-    private fun getParameterValue(source: ParameterValueSource, component: Component): Any {
+    private fun getParameterValue(source: ParameterValueSource, component: Component, namespace: ParsedNamespace): Any {
         return when (source) {
-            is ParameterValueSource.Namespace -> "namespace"
-            is ParameterValueSource.Name -> $$"${PATH}$${component.fileName}"
-            is ParameterValueSource.SelfSafeReference -> component.fileName.sanitizeCamel().let { if (it.isValidKotlinIdentifier()) it else "n$it" }
+            ParameterValueSource.Namespace -> "namespace"
+            ParameterValueSource.Name -> $$"${PATH}$${component.fileName}"
+            ParameterValueSource.SelfSafeReference -> component.fileName.sanitizeCamel().let { if (it.isValidKotlinIdentifier()) it else "n$it" }
+            ParameterValueSource.DataPack -> "dataPack"
+            ParameterValueSource.Directory -> "${calculateSmartRef(component.directoryHierarchy, namespace)}.PATH"
+            is ParameterValueSource.Type<*> -> source.value
         }
     }
 
@@ -138,6 +145,8 @@ class BindingGenerator(
     private fun getFormatPattern(value: ParameterValueSource): String =
         when (value) {
             ParameterValueSource.Name -> "%L = %P"
+            ParameterValueSource.DataPack -> "%L = %N"
+            is ParameterValueSource.Type<*> -> "%L = %T"
             else -> "%L = %L"
         }
 
@@ -150,50 +159,48 @@ class BindingGenerator(
             }
         }
 
-    private fun TypeBuilder.generateRegularComponentBindings(component: Component.Simple) {
+    private fun TypeBuilder.generateRegularComponentBindings(component: Component.Simple, namespace: ParsedNamespace) {
         property(
             component.fileName.sanitizeCamel(),
             component.componentType.returnType
         ) {
-            getter {
+            initializer {
                 val type = component.componentType
-                val parameters = type.parameters
                 val isType =
                     type.koreMethodOrClass is ClassOrMemberName.Class && type.koreMethodOrClass.name == type.returnType
-                val codeBlock = codeBlock {
-                    if (isType) add("%T(", type.returnType)
-                    else add("%M(", (type.koreMethodOrClass as ClassOrMemberName.Member).name)
-                    addParameters(parameters, component)
-                    add(")")
-                }
-                addStatement("return %L", codeBlock)
+                if (isType) add("%T(", type.returnType)
+                else add("%M(", (type.koreMethodOrClass as ClassOrMemberName.Member).name)
+                addParameters(component, namespace)
+                add(")")
             }
         }
     }
 
     @OptIn(ExperimentalKotlinPoetApi::class)
-    internal fun TypeBuilder.generateFunctionTagBindings(functionTag: Component.FunctionTag) {
+    internal fun TypeBuilder.generateFunctionTagBindings(functionTag: Component.FunctionTag, namespace: ParsedNamespace) {
         val safeFunctionName = functionTag.fileName.sanitizeCamel()
         val contextParameterName = functionTag.componentType.requiredContext!!.simpleName.sanitizeCamel()
         function(safeFunctionName) {
             contextParameter(contextParameterName, functionTag.componentType.requiredContext)
             returns(functionTag.componentType.returnType)
-            val parameters = functionTag.componentType.parameters
             codeBlock {
                 add("return %L.%M(", contextParameterName, (functionTag.componentType.koreMethodOrClass as ClassOrMemberName.Member).name)
-                addParameters(parameters, functionTag)
+                addParameters(functionTag, namespace)
                 add(")")
             }
         }
     }
 
     private fun CodeBlock.Builder.addParameters(
-        parameters: Map<String, ParameterValueSource>,
-        component: Component
+        component: Component,
+        namespace: ParsedNamespace,
+        componentListModifier: MutableList<Pair<String, ParameterValueSource>>.() -> Unit = { }
     ) {
-        val parameterList = parameters.toList()
+        val parameterList = component.componentType.parameters.toList().toMutableList().apply {
+            componentListModifier()
+        }
         parameterList.forEachIndexed { index, (paramName, paramValue) ->
-            add(getFormatPattern(paramValue), paramName, getParameterValue(paramValue, component))
+            add(getFormatPattern(paramValue), paramName, getParameterValue(paramValue, component, namespace))
             if (index < parameterList.lastIndex) add(", ")
         }
     }
@@ -225,15 +232,17 @@ class BindingGenerator(
             property(safeFunctionName, typedFunctionWithMacros) {
                 val lazyFunc: KFunction1<() -> FunctionWithMacros<*>, Lazy<FunctionWithMacros<*>>> = ::lazy
                 delegate(lazyFunc.asMemberName()) {
-                    add(
-                        "%T(%L = %S, %L = ::%T, %L = %L, %L = %L, %L = %N)",
-                        FunctionWithMacros::class.asClassName(),
-                        "name", functionName,
-                        "macros", clazzName,
-                        "namespace", "namespace",
-                        "directory", "$selfRef.PATH",
-                        "datapack", "dataPack"
-                    )
+                    add("%T(", FunctionWithMacros::class.asClassName())
+                    addParameters(function, namespace) {
+                        // Rename "function" to "name"
+                        set(
+                            indexOfFirst { it.first == "function" },
+                            "name" to ParameterValueSource.Name
+                        )
+                        add("macros" to ParameterValueSource.Type(clazzName))
+                        add("datapack" to ParameterValueSource.DataPack)
+                    }
+                    add(")")
                 }
             }
             function(safeFunctionName) {
