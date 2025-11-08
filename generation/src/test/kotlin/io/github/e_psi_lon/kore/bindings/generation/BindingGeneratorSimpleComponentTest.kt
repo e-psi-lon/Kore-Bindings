@@ -258,8 +258,8 @@ class BindingGeneratorSimpleComponentTest {
         // Assert
         val content = tempDir.resolve("Defaults.kt").readText()
 
-        // Should contain getter with proper parameter handling
-        assertContains(content, "get()")
+        // Should contain initializer with proper parameter handling
+        assertContains(content, ": AdvancementArgument =")
         assertContains(content, "AdvancementArgument")
     }
 

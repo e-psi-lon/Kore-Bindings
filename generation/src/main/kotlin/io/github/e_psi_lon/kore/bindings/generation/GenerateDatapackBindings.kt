@@ -5,6 +5,7 @@ import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.asClassName
 import io.github.ayfri.kore.commands.Command
+import io.github.e_psi_lon.kore.bindings.generation.components.ParameterValueSource
 import io.github.e_psi_lon.kore.bindings.generation.poet.TypeBuilder
 import io.github.e_psi_lon.kore.bindings.generation.poet.addDocs
 import io.github.e_psi_lon.kore.bindings.generation.poet.fileSpec
