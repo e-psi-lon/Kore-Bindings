@@ -203,10 +203,11 @@ class BindingGenerator(
         val functionName = function.fileName
         val selfRef = calculateSmartRef(function.directoryHierarchy, namespace)
         val safeFunctionName = function.fileName.sanitizeCamel().let { if (it.isValidKotlinIdentifier()) it else "n$it" }
-        val functionArgumentClassName = FunctionArgument::class.asClassName()
         val functionClassName = Function::class.asClassName()
-        val member = function.componentType.koreMethodOrClass as ClassOrMemberName.Member
+        val koreClass = function.componentType.koreMethodOrClass as ClassOrMemberName.Class
         val contextParameterName = functionClassName.simpleName.sanitizeCamel()
+        val kFunction: KFunction4<Function, String, Boolean, NbtCompound?, Command> = Function::function
+        val kMember = kFunction.asMemberName()
 
         if (function.macro?.hasParameters == true) {
             val parameters = function.macro.parameters
@@ -242,7 +243,7 @@ class BindingGenerator(
                     addParameter<String>(parameter.lowercase())
                 }
                 val block = codeBlock {
-                    addStatement("%L.%M(", contextParameterName, member.name)
+                    addStatement("%L.%M(", contextParameterName, kMember)
                     withIndent {
                         addStatement("%L = %N", "function", safeFunctionName)
                         beginControlFlow(")")
@@ -264,7 +265,7 @@ class BindingGenerator(
                 addStatement(
                     "return %L.%M(%L = %L, %L = %L)",
                     contextParameterName,
-                    member.name,
+                    kMember,
                     "function",
                     safeFunctionName,
                     "builder",
@@ -282,7 +283,7 @@ class BindingGenerator(
                 addStatement(
                     "return %L.%M(%L = %L, %L = %L, %L = %L)",
                     contextParameterName,
-                    member.name,
+                    kMember,
                     "function",
                     safeFunctionName,
                     "arguments",
@@ -293,7 +294,7 @@ class BindingGenerator(
             }
         } else {
             property<FunctionArgument>(safeFunctionName) {
-                initializer("%T(%L = %S, %L = %L, %L = %L)", functionArgumentClassName, "name", functionName, "namespace", "namespace", "directory", "$selfRef.PATH")
+                initializer("%T(%L = %S, %L = %L, %L = %L)", koreClass.name, "name", functionName, "namespace", "namespace", "directory", "$selfRef.PATH")
             }
             function(safeFunctionName) {
                 contextParameter(contextParameterName, functionClassName)
@@ -301,7 +302,7 @@ class BindingGenerator(
                 addStatement(
                     "return %L.%M(%L = %N)",
                     contextParameterName,
-                    member.name,
+                    kMember,
                     "function",
                     safeFunctionName
                 )
