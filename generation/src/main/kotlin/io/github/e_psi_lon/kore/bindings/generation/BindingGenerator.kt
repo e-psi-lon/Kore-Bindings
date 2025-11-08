@@ -1,22 +1,29 @@
 package io.github.e_psi_lon.kore.bindings.generation
 
 import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import io.github.ayfri.kore.DataPack
+import io.github.ayfri.kore.arguments.types.DataArgument
 import io.github.ayfri.kore.arguments.types.resources.FunctionArgument
 import io.github.ayfri.kore.functions.Function
+import io.github.ayfri.kore.functions.FunctionWithMacros
+import io.github.ayfri.kore.functions.Macros
 import io.github.e_psi_lon.kore.bindings.generation.components.ClassOrMemberName
 import io.github.e_psi_lon.kore.bindings.generation.components.ParameterValueSource
 import io.github.e_psi_lon.kore.bindings.generation.data.Component
 import io.github.e_psi_lon.kore.bindings.generation.data.Datapack
 import io.github.e_psi_lon.kore.bindings.generation.data.ParsedNamespace
 import io.github.e_psi_lon.kore.bindings.generation.poet.TypeBuilder
+import io.github.e_psi_lon.kore.bindings.generation.poet.addParameter
 import io.github.e_psi_lon.kore.bindings.generation.poet.asMemberName
 import io.github.e_psi_lon.kore.bindings.generation.poet.codeBlock
 import io.github.e_psi_lon.kore.bindings.generation.poet.fileSpec
+import net.benwoodworth.knbt.NbtCompoundBuilder
 import java.nio.file.Path
 import kotlin.io.path.bufferedWriter
 import kotlin.io.path.createFile
 import kotlin.io.path.exists
+import kotlin.reflect.KFunction1
 
 class BindingGenerator(
     private val logger: Logger,
@@ -194,18 +201,111 @@ class BindingGenerator(
     @OptIn(ExperimentalKotlinPoetApi::class)
     internal fun TypeBuilder.generateFunctionBindings(function: Component.Function, namespace: ParsedNamespace) {
         val functionName = function.fileName
-        var safeFunctionName = function.fileName.sanitizeCamel()
-        if (!safeFunctionName.isValidKotlinIdentifier()) safeFunctionName = "n$safeFunctionName"
-        val namespaceName = namespace.name
-        val className = FunctionArgument::class.asClassName()
-        property<FunctionArgument>(safeFunctionName) {
-            initializer("%T(%S, %S, %L)", className, functionName, namespaceName, false)
-        }
-        function(safeFunctionName) {
-            contextParameter("function", Function::class.asClassName())
-            returns(function.componentType.returnType)
-            val member = function.componentType.koreMethodOrClass as ClassOrMemberName.Member
-            addStatement("return %M(%S, %S, %L)", member.name, functionName, namespaceName, false)
+        val selfRef = calculateSmartRef(function.directoryHierarchy, namespace)
+        val safeFunctionName = function.fileName.sanitizeCamel().let { if (it.isValidKotlinIdentifier()) it else "n$it" }
+        val functionArgumentClassName = FunctionArgument::class.asClassName()
+        val functionClassName = Function::class.asClassName()
+        val member = function.componentType.koreMethodOrClass as ClassOrMemberName.Member
+        val contextParameterName = functionClassName.simpleName.sanitizeCamel()
+
+        if (function.macro?.hasParameters == true) {
+            val parameters = function.macro.parameters
+            val functionWithMacros = FunctionWithMacros::class.asClassName()
+            val clazz = classBuilder("${safeFunctionName.capitalize()}Macro") {
+                superclass(Macros::class.asClassName())
+                parameters.forEach { parameter ->
+                    property<String>(parameter.sanitizeCamel()) {
+                        delegate("%S", parameter)
+                    }
+                }
+            }
+            val clazzName = ClassName("", clazz.name)
+            val typedFunctionWithMacros = functionWithMacros.parameterizedBy(clazzName)
+            property(safeFunctionName, typedFunctionWithMacros) {
+                val lazyFunc: KFunction1<() -> FunctionWithMacros<*>, Lazy<FunctionWithMacros<*>>> = ::lazy
+                delegate(lazyFunc.asMemberName()) {
+                    add(
+                        "%T(%L = %S, %L = ::%T, %L = %L, %L = %L, %L = %N)",
+                        FunctionWithMacros::class.asClassName(),
+                        "name", functionName,
+                        "macros", clazzName,
+                        "namespace", "namespace",
+                        "directory", "$selfRef.PATH",
+                        "datapack", "dataPack"
+                    )
+                }
+            }
+            function(safeFunctionName) {
+                contextParameter(contextParameterName, functionClassName)
+                returns(function.componentType.returnType)
+                parameters.forEach { parameter ->
+                    addParameter<String>(parameter.lowercase())
+                }
+                val block = codeBlock {
+                    addStatement("%L.%M(", contextParameterName, member.name)
+                    withIndent {
+                        addStatement("%L = %N", "function", safeFunctionName)
+                        beginControlFlow(")")
+                        parameters.forEach { parameter ->
+                            addStatement("this[%S] = %L", parameter, parameter.lowercase())
+                        }
+                        endControlFlow()
+                    }
+                    add(")")
+                }
+                addStatement("return %L", block)
+            }
+
+            // NBT tag overload
+            function(safeFunctionName) {
+                contextParameter(contextParameterName, functionClassName)
+                returns(function.componentType.returnType)
+                addParameter<NbtCompoundBuilder.() -> Unit>("nbt") { defaultValue("%L", "{}") }
+                addStatement(
+                    "return %L.%M(%L = %L, %L = %L)",
+                    contextParameterName,
+                    member.name,
+                    "function",
+                    safeFunctionName,
+                    "builder",
+                    "nbt"
+                )
+
+            }
+
+            // DataArgument overload
+            function(safeFunctionName) {
+                contextParameter(contextParameterName, functionClassName)
+                returns(function.componentType.returnType)
+                addParameter<DataArgument>("arguments")
+                addParameter<String?>("path") { defaultValue("%L", null) }
+                addStatement(
+                    "return %L.%M(%L = %L, %L = %L, %L = %L)",
+                    contextParameterName,
+                    member.name,
+                    "function",
+                    safeFunctionName,
+                    "arguments",
+                    "arguments",
+                    "path",
+                    "path"
+                )
+            }
+        } else {
+            property<FunctionArgument>(safeFunctionName) {
+                initializer("%T(%L = %S, %L = %L, %L = %L)", functionArgumentClassName, "name", functionName, "namespace", "namespace", "directory", "$selfRef.PATH")
+            }
+            function(safeFunctionName) {
+                contextParameter(contextParameterName, functionClassName)
+                returns(function.componentType.returnType)
+                addStatement(
+                    "return %L.%M(%L = %N)",
+                    contextParameterName,
+                    member.name,
+                    "function",
+                    safeFunctionName
+                )
+            }
         }
     }
 }
