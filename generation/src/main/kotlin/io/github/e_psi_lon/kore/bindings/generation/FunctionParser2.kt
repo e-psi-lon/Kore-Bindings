@@ -98,12 +98,26 @@ class FunctionParser2(
     }
 }
 
-private fun stripCommentOutsideString(line: String): String {
-    var inString = false
-    for (i in line.indices) {
-        val c = line[i]
-        if (c in setOf('"', '\'')) inString = !inString
-        if (c == '#' && !inString) return line.take(i)
+fun stripCommentOutsideString(line: String): String {
+    var inString: Char? = null
+    var escaped = false
+    val quotes = setOf('"', '\'')
+
+    for ((i, c) in line.withIndex()) {
+        if (escaped) {
+            escaped = false
+            continue
+        }
+        if (c == '\\') {
+            escaped = true
+            continue
+        }
+        if (c in quotes) {
+            inString = if (inString == null) c else if (inString == c) null else inString
+        }
+        if (c == '#' && inString == null) {
+            return line.take(i)
+        }
     }
     return line
 }
