@@ -1,7 +1,5 @@
 package io.github.e_psi_lon.kore.bindings.generation.data
 
-import io.github.e_psi_lon.kore.bindings.generation.sanitizePascal
-
 
 /**
  * A fully parsed namespace with all its components and resources
@@ -14,11 +12,6 @@ data class ParsedNamespace(
     val localScoreboards: Set<Scoreboard>,  // Scoreboards unique to this namespace
     val macros: List<Macro>
 ) {
-    /**
-     * Sanitized name for Kotlin object (e.g., "BsMath")
-     */
-    val kotlinName: String = name.sanitizePascal()
-
     /**
      * Whether this namespace is part of a group
      */

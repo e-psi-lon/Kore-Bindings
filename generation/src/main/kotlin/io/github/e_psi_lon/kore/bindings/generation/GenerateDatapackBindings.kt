@@ -2,7 +2,6 @@ package io.github.e_psi_lon.kore.bindings.generation
 
 import com.squareup.kotlinpoet.ExperimentalKotlinPoetApi
 import com.squareup.kotlinpoet.KModifier
-import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.asClassName
 import io.github.ayfri.kore.commands.Command
 import io.github.e_psi_lon.kore.bindings.generation.components.ParameterValueSource
@@ -306,8 +305,8 @@ class GenerateDatapackBindings(
 							}
 
 							if (componentType.requiredContext != null) {
-								val contextParamName = componentType.requiredContext!!.simpleName.sanitizeCamel()
-								this.contextParameter(contextParamName, componentType.requiredContext!!)
+								val contextParamName = componentType.requiredContext.simpleName.sanitizeCamel()
+								this.contextParameter(contextParamName, componentType.requiredContext)
 								returns(Command::class.asClassName())
 								addStatement(
 									"return $contextParamName.%T(%L)",
@@ -352,18 +351,10 @@ class GenerateDatapackBindings(
 		}
 	}
 
-	private fun handleComponentParameters(parameters: Map<ParameterSpec, Any?>, context: Map<String, String>): String {
+	private fun handleComponentParameters(parameters: Map<String, ParameterValueSource>, context: Map<String, String>): String {
 		return parameters.map { (parameter, value) ->
-			val parameterName = parameter.name
-			if (value == null) {
-				"$parameterName = ${when (parameterName) {
-					in nameTypes -> $$"\"${PATH}$${context["name"]}\""
-					"namespace" -> "namespace"
-					else -> if (context.containsKey(parameterName)) "\"${context[parameterName]}\"" else throw IllegalArgumentException("Unknown base parameter name: $parameterName")
-				}}"
-			} else {
-				"$parameterName = $value"
-			}
+			val parameterName = parameter
+            "$parameterName = $value"
 		}.joinToString(", ")
 	}
 }
