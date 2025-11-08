@@ -38,7 +38,7 @@ enum class DatapackComponentType(
     },
     override val requiredContext: ClassName? = null,
     // The default provides 'name' and 'namespace' parameters sourced from ParameterValueSource.Name and .Namespace
-    override val parameters: Map<ParameterSpec, ParameterValueSource> = ComponentType.usualParam(),
+    override val parameters: Map<String, ParameterValueSource> = ComponentType.usualParam(),
 
 ) : ComponentType {
     ADVANCEMENT("advancement", koreMethodOrClass = classOrMemberOf<AdvancementArgument>()),

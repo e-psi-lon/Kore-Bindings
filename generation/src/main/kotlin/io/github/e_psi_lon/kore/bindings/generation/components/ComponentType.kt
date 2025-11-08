@@ -1,7 +1,6 @@
 package io.github.e_psi_lon.kore.bindings.generation.components
 
 import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.asClassName
 import io.github.ayfri.kore.utils.pascalCase
 

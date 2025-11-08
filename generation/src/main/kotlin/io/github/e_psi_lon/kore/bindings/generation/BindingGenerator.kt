@@ -87,7 +87,7 @@ class BindingGenerator(
                         }
                         when (component) {
                             is Component.Function -> generateFunctionBindings(component, namespace)
-                            is Component.FunctionTag -> {}
+                            is Component.FunctionTag -> generateFunctionTagBindings(component)
                             is Component.Simple -> generateRegularComponentBindings(component)
                         }
                     }
@@ -151,20 +151,43 @@ class BindingGenerator(
             getter {
                 val type = component.componentType
                 val parameters = type.parameters
-                val nameToDefault = parameters.mapKeys { it.key.name }.toList()
                 val isType =
                     type.koreMethodOrClass is ClassOrMemberName.Class && type.koreMethodOrClass.name == type.returnType
                 val codeBlock = codeBlock {
                     if (isType) add("%T(", type.returnType)
                     else add("%M(", (type.koreMethodOrClass as ClassOrMemberName.Member).name)
-                    nameToDefault.forEachIndexed { index, (paramName, paramValue) ->
-                        add(getFormatPattern(paramValue), paramName, getParameterValue(paramValue, component))
-                        if (index < nameToDefault.lastIndex) add(", ")
-                    }
+                    addParameters(parameters, component)
                     add(")")
                 }
                 addStatement("return %L", codeBlock)
             }
+        }
+    }
+
+    @OptIn(ExperimentalKotlinPoetApi::class)
+    internal fun TypeBuilder.generateFunctionTagBindings(functionTag: Component.FunctionTag) {
+        val safeFunctionName = functionTag.fileName.sanitizeCamel()
+        val contextParameterName = functionTag.componentType.requiredContext!!.simpleName.sanitizeCamel()
+        function(safeFunctionName) {
+            contextParameter(contextParameterName, functionTag.componentType.requiredContext)
+            returns(functionTag.componentType.returnType)
+            val parameters = functionTag.componentType.parameters
+            codeBlock {
+                add("return %L.%M(", contextParameterName, (functionTag.componentType.koreMethodOrClass as ClassOrMemberName.Member).name)
+                addParameters(parameters, functionTag)
+                add(")")
+            }
+        }
+    }
+
+    private fun CodeBlock.Builder.addParameters(
+        parameters: Map<String, ParameterValueSource>,
+        component: Component
+    ) {
+        val parameterList = parameters.toList()
+        parameterList.forEachIndexed { index, (paramName, paramValue) ->
+            add(getFormatPattern(paramValue), paramName, getParameterValue(paramValue, component))
+            if (index < parameterList.lastIndex) add(", ")
         }
     }
 
