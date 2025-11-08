@@ -1,8 +1,8 @@
 package io.github.e_psi_lon.kore.bindings.generation
 
 import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.asClassName
+import io.github.ayfri.kore.arguments.types.resources.FunctionArgument
 import io.github.ayfri.kore.arguments.types.resources.tagged.FunctionTagArgument
 import io.github.ayfri.kore.arguments.types.resources.tagged.ItemTagArgument
 import io.github.ayfri.kore.commands.Command
@@ -56,20 +56,12 @@ enum class DatapackComponentType(
     FUNCTION(
         "function",
         fileExtension = "mcfunction",
-        koreMethodOrClass = run {
-            val temp: KFunction4<Function, String, Boolean, NbtCompound?, Command> = Function::function
-            temp.asMemberName().toClassOrMemberName()
-        },
+        koreMethodOrClass = classOrMemberOf<FunctionArgument>(),
         returnType = Command::class.asClassName(),
-        requiredContext = Function::class.asClassName(),
-        parameters = ComponentType.usualParam() +
-            (ParameterSpec.builder("group", Boolean::class).build() to ParameterValueSource.Default(false))
+        requiredContext = Function::class.asClassName()
     ),
     INSTRUMENT("instrument", koreMethodOrClass = classOrMemberOf<InstrumentArgument>()),
-    JUKEBOX_SONG(
-        "jukebox_song",
-        koreMethodOrClass = classOrMemberOf<JukeboxSongArgument>(),
-    ),
+    JUKEBOX_SONG("jukebox_song", koreMethodOrClass = classOrMemberOf<JukeboxSongArgument>()),
     LOOT_TABLE("loot_table", koreMethodOrClass = classOrMemberOf<LootTableArgument>()),
     PAINTING_VARIANT("painting_variant", koreMethodOrClass = classOrMemberOf<PaintingVariantArgument>()),
     RECIPE("recipe", koreMethodOrClass = classOrMemberOf<RecipeArgument>()),
@@ -92,8 +84,7 @@ enum class DatapackComponentType(
         },
         returnType = Command::class.asClassName(),
         requiredContext = Function::class.asClassName(),
-        parameters = ComponentType.usualParam() +
-            (ParameterSpec.builder("group", Boolean::class).build() to ParameterValueSource.Default(true))
+        parameters = mapOf("function" to ParameterValueSource.SelfSafeReference)
     ),
     FUNCTION_TAG_ARGUMENT(
         "tags/function",

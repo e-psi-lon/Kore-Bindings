@@ -115,8 +115,7 @@ class BindingGenerator(
         return when (source) {
             is ParameterValueSource.Namespace -> "namespace"
             is ParameterValueSource.Name -> $$"${PATH}$${component.fileName}"
-            is ParameterValueSource.Default<*> -> source.value
-            is ParameterValueSource.SelfSafeReference -> component.fileName.sanitizeCamel()
+            is ParameterValueSource.SelfSafeReference -> component.fileName.sanitizeCamel().let { if (it.isValidKotlinIdentifier()) it else "n$it" }
         }
     }
 

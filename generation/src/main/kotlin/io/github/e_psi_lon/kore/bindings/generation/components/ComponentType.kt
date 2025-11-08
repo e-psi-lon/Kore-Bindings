@@ -12,14 +12,14 @@ interface ComponentType {
     val koreMethodOrClass: ClassOrMemberName
     val returnType: ClassName
     val requiredContext: ClassName?
-    val parameters: Map<ParameterSpec, ParameterValueSource>
+    val parameters: Map<String, ParameterValueSource>
     val duplicateSuffix: String
         get() = name.pascalCase()
 
     companion object {
         fun usualParam(name: String = "name") = mapOf(
-            ParameterSpec.builder(name, String::class).build() to ParameterValueSource.Name,
-            ParameterSpec.builder("namespace", String::class).build() to ParameterValueSource.Namespace
+            name to ParameterValueSource.Name,
+            "namespace" to ParameterValueSource.Namespace
         )
 
         inline fun <reified T> classOrMemberOf(): ClassOrMemberName = T::class.asClassName().toClassOrMemberName()
