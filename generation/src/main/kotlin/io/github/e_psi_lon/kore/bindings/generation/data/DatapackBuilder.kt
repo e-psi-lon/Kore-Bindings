@@ -10,7 +10,8 @@ class DatapackBuilder {
 
     fun build(): Datapack {
         val groups = identifyNamespaceGroups()
-        return Datapack(namespaces, groups)
+        val cleanedNamespaces = cleanupNamespaces(groups)
+        return Datapack(cleanedNamespaces, groups)
     }
 
     private fun identifyNamespaceGroups(): List<NamespaceGroup> {
@@ -25,6 +26,21 @@ class DatapackBuilder {
                 prefix = prefix,
                 subNamespaces = namespacesInGroup.map { it.name },
                 sharedResources = sharedResources
+            )
+        }
+    }
+
+    private fun cleanupNamespaces(groups: List<NamespaceGroup>): List<ParsedNamespace> {
+        val sharedByPrefix = groups.associate { group ->
+            group.prefix to group.sharedResources
+        }
+        return namespaces.map { namespace ->
+            val prefix = namespace.name.substringBefore('.')
+            val shared = sharedByPrefix[prefix] ?: SharedResources.EMPTY
+
+            namespace.copy(
+                localStorages = namespace.localStorages - shared.storages,
+                localScoreboards = namespace.localScoreboards - shared.scoreboards
             )
         }
     }
