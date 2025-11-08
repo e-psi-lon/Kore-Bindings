@@ -6,6 +6,13 @@ import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.kotlin.dsl.getByType
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.createDirectory
+import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
 import org.gradle.api.logging.Logger as GradleLogger
 
 /**
@@ -30,7 +37,7 @@ import org.gradle.api.logging.Logger as GradleLogger
  */
 class BindingGradlePlugin : Plugin<Project> {
 	override fun apply(project: Project) {
-		val logger = Logger.gradle(project.logger, project.logger.logLevel)
+		val gradleLogger = Logger.gradle(project.logger, project.logger.logLevel)
 		val extension = project.extensions.create("bindings", BindingExtension::class.java, project)
 		val outputDir = project.layout.buildDirectory.dir("generated/kore-bindings/main/kotlin/")
 		val sourceSet = project.extensions.getByType<SourceSetContainer>().named("main")
@@ -38,30 +45,31 @@ class BindingGradlePlugin : Plugin<Project> {
 			group = "datapack"
 			description = "Generate Kotlin bindings for Minecraft datapacks."
 			doLast {
-				val datapackDir = extension.datapackDir.orNull
-					?: project.layout.projectDirectory.dir("src/main/resources/datapacks")
-				if (!datapackDir.asFile.exists()) {
-					logger.error("Datapack directory does not exist: ${datapackDir.asFile.absolutePath}")
+				val datapackDir = (extension.datapackDir.orNull
+					?: project.layout.projectDirectory.dir("src/main/resources/datapacks")).asFile.toPath()
+				val outputDir = outputDir.get().asFile.toPath()
+				if (!datapackDir.exists()) {
+					gradleLogger.error("Datapack directory does not exist: ${datapackDir.absolutePathString()}")
 					return@doLast
 				}
-				outputDir.get().asFile.mkdirs()
-				for (datapack in datapackDir.asFile.listFiles()!!) {
-					logger.info("Generating ${datapack.name}...")
+				outputDir.createDirectory()
+				for (datapack in datapackDir.listDirectoryEntries()) {
+					gradleLogger.info("Generating ${datapack.name}...")
 					val packageName = extension.packageName.orNull ?: project.group.toString()
-					val sanitizedPackageName = packageName.sanitizePackageName()
 
-					if (datapack.isDirectory || datapack.extension == "zip") {
-
-						GenerateDatapackBindings(
-							directory = if (datapack.isDirectory) datapack else null,
-							zipFile = if (!datapack.isDirectory && datapack.extension == "zip") datapack else null,
-							outputDir = outputDir.get().asFile,
-							packageName = sanitizedPackageName,
-							parentPackage = extension.parentPackage.get().sanitizePackageName(),
-							logger = logger
-						)
+					val isZip = datapack.extension == "zip"
+					if (datapack.isDirectory() || isZip) {
+						generateDatapackBinding(
+							datapackSource = datapack,
+                            outputDir = outputDir,
+                            packageName = packageName,
+                            isZip = isZip,
+                            parentPackage = extension.parentPackage.get(),
+                            prefix = null,
+                            logger = gradleLogger
+                        )
 					} else {
-						logger.warn("Unsupported file type: ${datapack.name}. Only directories and zip files are supported.")
+						gradleLogger.warn("Unsupported file type: ${datapack.name}. Only directories and zip files are supported.")
 					}
 				}
 			}
@@ -70,7 +78,6 @@ class BindingGradlePlugin : Plugin<Project> {
 		if (extension.configureSourceSet.get()) {
 			sourceSet.configure {
 				java.srcDir(outputDir)
-
 				// Configure output to include generated file
 				output.dir(
 					mapOf("builtBy" to generateTask),
@@ -109,17 +116,3 @@ open class BindingExtension(private val project: Project) {
 		}
 	val configureSourceSet: Property<Boolean> = project.objects.property(Boolean::class.java).convention(true)
 }
-
-
-private fun String.sanitizePackageName() =
-	this.replace('-', '_')
-		.replace(' ', '_')
-		.replace("'", "")
-		.replace("!", "")
-		.replace("@", "")
-		.replace("#", "")
-		.replace("$", "")
-		.replace("%", "")
-		.replace("^", "")
-		.replace("&", "")
-		.replace("*", "")
