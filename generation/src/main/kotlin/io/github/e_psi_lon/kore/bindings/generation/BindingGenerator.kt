@@ -183,11 +183,12 @@ class BindingGenerator(
         function(safeFunctionName) {
             contextParameter(contextParameterName, functionTag.componentType.requiredContext)
             returns(functionTag.componentType.returnType)
-            codeBlock {
-                add("return %L.%M(", contextParameterName, (functionTag.componentType.koreMethodOrClass as ClassOrMemberName.Member).name)
+            val block = codeBlock {
+                add("%L.%M(", contextParameterName, (functionTag.componentType.koreMethodOrClass as ClassOrMemberName.Member).name)
                 addParameters(functionTag, namespace)
                 add(")")
             }
+            addStatement("return %L", block)
         }
     }
 
