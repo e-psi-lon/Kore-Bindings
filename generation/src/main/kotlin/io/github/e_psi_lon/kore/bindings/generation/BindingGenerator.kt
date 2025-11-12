@@ -16,6 +16,7 @@ import io.github.e_psi_lon.kore.bindings.generation.data.Component
 import io.github.e_psi_lon.kore.bindings.generation.data.Datapack
 import io.github.e_psi_lon.kore.bindings.generation.data.ParsedNamespace
 import io.github.e_psi_lon.kore.bindings.generation.poet.TypeBuilder
+import io.github.e_psi_lon.kore.bindings.generation.poet.addDocs
 import io.github.e_psi_lon.kore.bindings.generation.poet.addParameter
 import io.github.e_psi_lon.kore.bindings.generation.poet.asMemberName
 import io.github.e_psi_lon.kore.bindings.generation.poet.codeBlock
@@ -250,6 +251,7 @@ class BindingGenerator(
             val typedFunctionWithMacros = functionWithMacros.parameterizedBy(clazzName)
             property(safeFunctionName, typedFunctionWithMacros) {
                 val lazyFunc: KFunction1<() -> FunctionWithMacros<*>, Lazy<FunctionWithMacros<*>>> = ::lazy
+                addDocs(*function.doc(namespace))
                 delegate(lazyFunc.asMemberName()) {
                     add("%T(", FunctionWithMacros::class.asClassName())
                     addParameters(function, namespace, builder = this@generateFunctionBindings) {
@@ -265,6 +267,7 @@ class BindingGenerator(
                 }
             }
             function(safeFunctionName) {
+                addDocs(*function.doc(namespace))
                 contextParameter(contextParameterName, functionClassName)
                 returns(function.componentType.returnType)
                 parameters.forEach { parameter ->
@@ -287,6 +290,7 @@ class BindingGenerator(
 
             // NBT tag overload
             function(safeFunctionName) {
+                addDocs(*function.doc(namespace))
                 contextParameter(contextParameterName, functionClassName)
                 returns(function.componentType.returnType)
                 addParameter<NbtCompoundBuilder.() -> Unit>("nbt") { defaultValue("%L", "{}") }
@@ -304,6 +308,7 @@ class BindingGenerator(
 
             // DataArgument overload
             function(safeFunctionName) {
+                addDocs(*function.doc(namespace))
                 contextParameter(contextParameterName, functionClassName)
                 returns(function.componentType.returnType)
                 addParameter<DataArgument>("arguments")
@@ -322,9 +327,11 @@ class BindingGenerator(
             }
         } else {
             property<FunctionArgument>(safeFunctionName) {
+                addDocs(*function.doc(namespace))
                 initializer("%T(%L = %S, %L = %L, %L = %L)", koreClass.name, "name", functionName, "namespace", "namespace", "directory", "$selfRef.PATH")
             }
             function(safeFunctionName) {
+                addDocs(*function.doc(namespace))
                 contextParameter(contextParameterName, functionClassName)
                 returns(function.componentType.returnType)
                 addStatement(
