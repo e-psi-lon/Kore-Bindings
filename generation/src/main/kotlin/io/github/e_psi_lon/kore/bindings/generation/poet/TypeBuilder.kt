@@ -33,6 +33,9 @@ internal class TypeBuilder(
 		builder = builder.superclass(name)
 	}
 
+	fun hasDuplicateProperty(name: String) = properties.containsKey(name)
+	fun hasDuplicateFunction(name: String) = functions.containsKey(name)
+
 	inline fun <reified T : Annotation> addAnnotation(noinline block: AnnotationSpec.Builder.() -> Unit = {}) {
 		builder.addAnnotation(AnnotationSpec.builder(T::class).apply(block).build())
 	}

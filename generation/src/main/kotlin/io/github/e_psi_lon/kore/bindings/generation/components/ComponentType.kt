@@ -13,7 +13,7 @@ interface ComponentType {
     val requiredContext: ClassName?
     val parameters: Map<String, ParameterValueSource>
     val duplicateSuffix: String
-        get() = name.pascalCase()
+        get() = name.lowercase().pascalCase()
 
     companion object {
         fun usualParam(name: String = "name") = mapOf(

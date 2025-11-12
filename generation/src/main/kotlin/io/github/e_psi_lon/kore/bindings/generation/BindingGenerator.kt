@@ -122,11 +122,11 @@ class BindingGenerator(
         }
     }
 
-    private fun getParameterValue(source: ParameterValueSource, component: Component, namespace: ParsedNamespace): Any {
+    private fun getParameterValue(source: ParameterValueSource, component: Component, namespace: ParsedNamespace, builder: TypeBuilder): Any {
         return when (source) {
             ParameterValueSource.Namespace -> "namespace"
             ParameterValueSource.Name -> $$"${PATH}$${component.fileName}"
-            ParameterValueSource.SelfSafeReference -> component.fileName.sanitizeCamel().let { if (it.isValidKotlinIdentifier()) it else "n$it" }
+            ParameterValueSource.SelfSafeReference -> component.fileName.sanitizeCamel().let { if (it.isValidKotlinIdentifier()) it else "n$it" }.let { builder.ensureNotDuplicatedName(it, component.componentType.duplicateSuffix) }
             ParameterValueSource.DataPack -> "dataPack"
             ParameterValueSource.Directory -> "${calculateSmartRef(component.directoryHierarchy, namespace)}.PATH"
             is ParameterValueSource.Type<*> -> source.value
@@ -161,31 +161,50 @@ class BindingGenerator(
 
     private fun TypeBuilder.generateRegularComponentBindings(component: Component.Simple, namespace: ParsedNamespace) {
         property(
-            component.fileName.sanitizeCamel(),
+            ensureNotDuplicatedName(component.fileName.sanitizeCamel(), component.componentType.duplicateSuffix, Type.PROPERTY),
             component.componentType.returnType
         ) {
+            addDocs(*component.doc(namespace))
             initializer {
                 val type = component.componentType
                 val isType =
                     type.koreMethodOrClass is ClassOrMemberName.Class && type.koreMethodOrClass.name == type.returnType
                 if (isType) add("%T(", type.returnType)
                 else add("%M(", (type.koreMethodOrClass as ClassOrMemberName.Member).name)
-                addParameters(component, namespace)
+                addParameters(component, namespace, builder = this@generateRegularComponentBindings)
                 add(")")
             }
         }
     }
 
+    private fun Component.doc(namespace: ParsedNamespace) = arrayOf("${componentType.name.lowercase()
+        .replace('_', ' ')
+        .capitalize()} reference for `$fileName` in namespace [${namespace.name}][${namespace.name.sanitizePascal()}.namespace]",
+        "References `${namespace.name}:${fullPath}` in Minecraft."
+    )
+
+    enum class Type { PROPERTY, FUNCTION }
+    private fun TypeBuilder.ensureNotDuplicatedName(name: String, duplicateSuffix: String = "1", type: Type = Type.PROPERTY) = if (
+        when (type) {
+            Type.PROPERTY -> hasDuplicateProperty(name)
+            Type.FUNCTION -> hasDuplicateFunction(name)
+        }) {
+        logger.warn("Duplicate name: $name")
+        "${name}$duplicateSuffix"
+    } else name
+
     @OptIn(ExperimentalKotlinPoetApi::class)
     internal fun TypeBuilder.generateFunctionTagBindings(functionTag: Component.FunctionTag, namespace: ParsedNamespace) {
         val safeFunctionName = functionTag.fileName.sanitizeCamel()
         val contextParameterName = functionTag.componentType.requiredContext!!.simpleName.sanitizeCamel()
-        function(safeFunctionName) {
+        val finalName = ensureNotDuplicatedName(safeFunctionName, functionTag.componentType.duplicateSuffix, Type.FUNCTION)
+        function(finalName) {
+            addDocs(*functionTag.doc(namespace))
             contextParameter(contextParameterName, functionTag.componentType.requiredContext)
             returns(functionTag.componentType.returnType)
             val block = codeBlock {
                 add("%L.%M(", contextParameterName, (functionTag.componentType.koreMethodOrClass as ClassOrMemberName.Member).name)
-                addParameters(functionTag, namespace)
+                addParameters(functionTag, namespace, builder = this@generateFunctionTagBindings)
                 add(")")
             }
             addStatement("return %L", block)
@@ -195,22 +214,23 @@ class BindingGenerator(
     private fun CodeBlock.Builder.addParameters(
         component: Component,
         namespace: ParsedNamespace,
-        componentListModifier: MutableList<Pair<String, ParameterValueSource>>.() -> Unit = { }
+        builder: TypeBuilder,
+        componentListModifier: MutableList<Pair<String, ParameterValueSource>>.() -> Unit = { },
     ) {
         val parameterList = component.componentType.parameters.toList().toMutableList().apply {
             componentListModifier()
         }
         parameterList.forEachIndexed { index, (paramName, paramValue) ->
-            add(getFormatPattern(paramValue), paramName, getParameterValue(paramValue, component, namespace))
+            add(getFormatPattern(paramValue), paramName, getParameterValue(paramValue, component, namespace, builder))
             if (index < parameterList.lastIndex) add(", ")
         }
     }
 
     @OptIn(ExperimentalKotlinPoetApi::class)
-    internal fun TypeBuilder.generateFunctionBindings(function: Component.Function, namespace: ParsedNamespace) {
+    private fun TypeBuilder.generateFunctionBindings(function: Component.Function, namespace: ParsedNamespace) {
         val functionName = function.fileName
         val selfRef = calculateSmartRef(function.directoryHierarchy, namespace)
-        val safeFunctionName = function.fileName.sanitizeCamel().let { if (it.isValidKotlinIdentifier()) it else "n$it" }
+        val safeFunctionName = ensureNotDuplicatedName(function.fileName.sanitizeCamel().let { if (it.isValidKotlinIdentifier()) it else "n$it" }, function.componentType.duplicateSuffix, Type.FUNCTION)
         val functionClassName = Function::class.asClassName()
         val koreClass = function.componentType.koreMethodOrClass as ClassOrMemberName.Class
         val contextParameterName = functionClassName.simpleName.sanitizeCamel()
@@ -234,7 +254,7 @@ class BindingGenerator(
                 val lazyFunc: KFunction1<() -> FunctionWithMacros<*>, Lazy<FunctionWithMacros<*>>> = ::lazy
                 delegate(lazyFunc.asMemberName()) {
                     add("%T(", FunctionWithMacros::class.asClassName())
-                    addParameters(function, namespace) {
+                    addParameters(function, namespace, builder = this@generateFunctionBindings) {
                         // Rename "function" to "name"
                         set(
                             indexOfFirst { it.first == "function" },
