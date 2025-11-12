@@ -93,6 +93,7 @@ enum class DatapackComponentType(
         parameters = ComponentType.usualParam("tagName")
     ) {
         override val duplicateSuffix = "FunctionTag"
+        override val humanReadableName = "Function tag"
     },
     GAME_EVENT_TAG("tags/game_event", koreMethodOrClass = classOrMemberOf<GameEventTagArgument>()),
     INSTRUMENT_TAG("tags/instrument", koreMethodOrClass = classOrMemberOf<InstrumentTagArgument>()),

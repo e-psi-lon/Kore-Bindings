@@ -14,6 +14,8 @@ interface ComponentType {
     val parameters: Map<String, ParameterValueSource>
     val duplicateSuffix: String
         get() = name.lowercase().pascalCase()
+    val humanReadableName: String
+        get() = name.lowercase().replace('_', ' ').capitalize()
 
     companion object {
         fun usualParam(name: String = "name") = mapOf(

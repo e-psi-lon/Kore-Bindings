@@ -177,9 +177,7 @@ class BindingGenerator(
         }
     }
 
-    private fun Component.doc(namespace: ParsedNamespace) = arrayOf("${componentType.name.lowercase()
-        .replace('_', ' ')
-        .capitalize()} reference for `$fileName` in namespace [${namespace.name}][${namespace.name.sanitizePascal()}.namespace]",
+    private fun Component.doc(namespace: ParsedNamespace) = arrayOf("${componentType.humanReadableName} reference for `$fileName` in namespace [${namespace.name}][${namespace.name.sanitizePascal()}.namespace]",
         "References `${namespace.name}:${fullPath}` in Minecraft."
     )
 
