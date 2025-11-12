@@ -5,6 +5,7 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import io.github.ayfri.kore.DataPack
 import io.github.ayfri.kore.arguments.types.DataArgument
 import io.github.ayfri.kore.arguments.types.resources.FunctionArgument
+import io.github.ayfri.kore.arguments.types.resources.StorageArgument
 import io.github.ayfri.kore.commands.Command
 import io.github.ayfri.kore.commands.function
 import io.github.ayfri.kore.functions.Function
@@ -15,6 +16,7 @@ import io.github.e_psi_lon.kore.bindings.generation.components.ParameterValueSou
 import io.github.e_psi_lon.kore.bindings.generation.data.Component
 import io.github.e_psi_lon.kore.bindings.generation.data.Datapack
 import io.github.e_psi_lon.kore.bindings.generation.data.ParsedNamespace
+import io.github.e_psi_lon.kore.bindings.generation.data.Storage
 import io.github.e_psi_lon.kore.bindings.generation.poet.TypeBuilder
 import io.github.e_psi_lon.kore.bindings.generation.poet.addDocs
 import io.github.e_psi_lon.kore.bindings.generation.poet.addParameter
@@ -110,8 +112,7 @@ class BindingGenerator(
                 }
 
                 for (storage in namespace.localStorages) {
-                    // TODO: Handle storages
-                    continue
+                    processStorage(storage, namespace)
                 }
             }
         }
@@ -342,6 +343,19 @@ class BindingGenerator(
                     safeFunctionName
                 )
             }
+        }
+    }
+
+    private fun TypeBuilder.processStorage(storage: Storage, namespace: ParsedNamespace) {
+        val name = storage.name.sanitizeCamel()
+        val safeName = if (name.isValidKotlinIdentifier()) name else "n$name"
+        val duplicateSafeName = if (properties.containsKey(safeName)) "${safeName}Storage" else safeName
+        property<StorageArgument>(duplicateSafeName) {
+            addDocs(
+                "Storage reference for `${storage.name}` in namespace [${namespace.name}][${namespace.name.sanitizePascal()}.namespace].",
+                "References to `${namespace.name}:${storage.name}` in Minecraft."
+            )
+            initializer("%T(%L = %S, %L = %L)", StorageArgument::class, "name", storage.name, "namespace", "namespace")
         }
     }
 }
