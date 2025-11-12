@@ -6,12 +6,12 @@ internal class TypeBuilder(
 	val name: String,
 	type: TypeSpec.Kind
 ) {
-	private var builder = when (type) {
+	private val builder = when (type) {
 		TypeSpec.Kind.INTERFACE -> TypeSpec.interfaceBuilder(name)
 		TypeSpec.Kind.CLASS -> TypeSpec.classBuilder(name)
 		TypeSpec.Kind.OBJECT -> TypeSpec.objectBuilder(name)
 	}
-	val properties = mutableMapOf<String, PropertyBuilder>()
+	val properties = mutableMapOf<String, PropertySpec.Builder>()
 	val functions = mutableMapOf<String, FunSpec.Builder>()
 	val typeSpecs = mutableMapOf<String, TypeBuilder>()
 
@@ -29,24 +29,21 @@ internal class TypeBuilder(
 		}.build()
 	}
 
-	fun superclass(name: ClassName) {
-		builder = builder.superclass(name)
-	}
+	fun superclass(name: ClassName) = builder.superclass(name)
 
 	fun hasDuplicateProperty(name: String) = properties.containsKey(name)
 	fun hasDuplicateFunction(name: String) = functions.containsKey(name)
 
-	inline fun <reified T : Annotation> addAnnotation(noinline block: AnnotationSpec.Builder.() -> Unit = {}) {
+	inline fun <reified T : Annotation> addAnnotation(noinline block: AnnotationSpec.Builder.() -> Unit = {}) =
 		builder.addAnnotation(AnnotationSpec.builder(T::class).apply(block).build())
-	}
 
-	inline fun <reified T> property(name: String, noinline block: PropertyBuilder.() -> Unit = {}): PropertyBuilder {
+	inline fun <reified T> property(name: String, noinline block: PropertySpec.Builder.() -> Unit = {}): PropertySpec.Builder {
 		val className = typeNameOf<T>()
 		return property(name, className, block)
 	}
 
 
-	fun property(name: String, type: TypeName, block: PropertyBuilder.() -> Unit = {}): PropertyBuilder {
+	fun property(name: String, type: TypeName, block: PropertySpec.Builder.() -> Unit = {}): PropertySpec.Builder {
 		return if (properties.containsKey(name) && name != "path") {
 			// while there's a suffix, add +1 to the suffix
 			var newName = name
@@ -55,10 +52,10 @@ internal class TypeBuilder(
 				newName = "$name$i"
 				i++
 			}
-			properties[newName] = PropertyBuilder(newName, type).apply(block)
+			properties[newName] = PropertySpec.builder(name, type).apply(block)
 			properties[newName]!!
 		} else {
-			properties[name] = PropertyBuilder(name, type).apply(block)
+			properties[name] = PropertySpec.builder(name, type).apply(block)
 			properties[name]!!
 		}
 	}

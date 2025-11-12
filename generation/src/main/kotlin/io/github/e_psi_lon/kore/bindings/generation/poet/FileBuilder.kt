@@ -6,27 +6,22 @@ internal class FileBuilder(
 	packageName: String,
 	fileName: String
 ) {
-	private var builder = FileSpec.builder(packageName, fileName)
+	private val builder = FileSpec.builder(packageName, fileName)
 	// Contains all builders to attach to the file
 	private val typeSpecs = mutableMapOf<String, TypeBuilder>()
-	val propertySpecs = mutableMapOf<String, PropertyBuilder>()
+	val propertySpecs = mutableMapOf<String, PropertySpec.Builder>()
 	private val funSpecs = mutableMapOf<String, FunSpec.Builder>()
 
-	fun addImport(import: ClassName, vararg names: String) {
-		builder = if (names.isEmpty()) {
-			builder.addImport(import.packageName, import.simpleName)
-		} else {
-			builder.addImport(import.packageName, *names)
-		}
+	fun addImport(import: ClassName, vararg names: String) = if (names.isEmpty()) {
+		builder.addImport(import.packageName, import.simpleName)
+	} else {
+		builder.addImport(import.packageName, *names)
 	}
 
-	inline fun <reified T : Annotation> addAnnotation(noinline block: AnnotationSpec.Builder.() -> Unit = {}) {
-		builder = builder.addAnnotation(AnnotationSpec.builder(T::class).apply(block).build())
-	}
+	inline fun <reified T : Annotation> addAnnotation(noinline block: AnnotationSpec.Builder.() -> Unit = {}) =
+		builder.addAnnotation(AnnotationSpec.builder(T::class).apply(block).build())
 
-	fun file(block: FileSpec.Builder.() -> Unit) {
-		builder = this.builder.apply(block)
-	}
+	fun file(block: FileSpec.Builder.() -> Unit) = builder.apply(block)
 
 	fun classBuilder(name: String, block: TypeBuilder.() -> Unit) {
 		typeSpecs[name] = typeSpecs.getOrPut(name) {
@@ -47,13 +42,13 @@ internal class FileBuilder(
 		}.apply(block)
 	}
 
-	fun property(name: String, type: ClassName, block: PropertyBuilder.() -> Unit) {
+	fun property(name: String, type: ClassName, block: PropertySpec.Builder.() -> Unit) {
 		propertySpecs[name] = propertySpecs.getOrPut(name) {
-            PropertyBuilder(name, type)
+			PropertySpec.builder(name, type)
         }.apply(block)
 	}
 
-	inline fun <reified T : Any> property(name: String, noinline block: PropertyBuilder.() -> Unit) {
+	inline fun <reified T : Any> property(name: String, noinline block: PropertySpec.Builder.() -> Unit) {
 		val className = T::class.asClassName()
 		property(name, className, block)
 	}
@@ -86,22 +81,22 @@ internal class FileBuilder(
 		// Add all builders to the file
 		typeSpecs.forEach { (_, builder) ->
 			builder.build().let {
-				this.builder = this.builder.addType(it)
+				this.builder.addType(it)
 			}
 		}
 		propertySpecs.forEach { (_, builder) ->
 			builder.build().let {
-				this.builder = this.builder.addProperty(it)
+				this.builder.addProperty(it)
 			}
 		}
 		// Add all functions to the file
 		funSpecs.forEach { (_, builder) ->
 			builder.build().let {
-				this.builder = this.builder.addFunction(it)
+				this.builder.addFunction(it)
 			}
 		}
 		// Add the package name to the file
-		return this.builder.build()
+		return builder.build()
 	}
 }
 
